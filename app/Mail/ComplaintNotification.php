@@ -30,8 +30,8 @@ class ComplaintNotification extends Mailable
 {
     $this->complaint = $complaint;
     $this->user = $user;
-    // $this->complaint->addressed_to = is_array($complaint->addressed_to) ? $complaint->addressed_to : json_decode($complaint->addressed_to, true);
-    // $this->complaint->followers = is_array($complaint->followers) ? $complaint->followers : json_decode($complaint->followers, true);
+    $this->complaint->addressed_to = is_array($complaint->addressed_to) ? $complaint->addressed_to : json_decode($complaint->addressed_to, true);
+    $this->complaint->followers = is_array($complaint->followers) ? $complaint->followers : json_decode($complaint->followers, true);
 }
     /**
      * Build the message.

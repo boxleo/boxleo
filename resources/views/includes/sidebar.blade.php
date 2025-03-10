@@ -4,7 +4,7 @@
         <!-- Logo Section -->
         <div class="logo-container">
             <a href="/dashboard">
-                <!-- <img src="{{ asset('assets/img/logo.png') }}" alt="Boxleo Logo" class="sidebar-logo" width="150"> -->
+                <img src="{{ asset('assets/img/logo.png') }}" alt="Boxleo Logo" class="sidebar-logo" width="150">
             </a>
         </div>
     </div>

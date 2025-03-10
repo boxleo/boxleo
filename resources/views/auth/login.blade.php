@@ -6,7 +6,7 @@
 <div class="login-container">
     <div class="login-box">
         <h1>Login</h1>
-        <!-- <img class="company-logo" src="{{asset('assets/img/logo.png')}}" alt="Boxleo Logo"> -->
+        <img class="company-logo" src="{{asset('assets/img/logo.png')}}" alt="Boxleo Logo">
         <form action="{{ route('login') }}" method="post">
             @csrf
             <div class="input-group">
@@ -35,22 +35,22 @@
 
 <script>
     // Wait for the image to load before showing the login container
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     const bgImage = new Image();
-    //     // bgImage.src = "/assets/img/bgs/login-bg.png"; // Update path if necessary
-
-    //     bgImage.onload = function() {
-    //         document.body.classList.remove('loading');
-    //         document.body.classList.add('loaded');
-    //     };
-    // });
-
-
-
     document.addEventListener('DOMContentLoaded', function() {
-        document.body.classList.remove('loading');
-        document.body.classList.add('loaded');
+        const bgImage = new Image();
+        // bgImage.src = "/assets/img/bgs/login-bg.png"; // Update path if necessary
+
+        bgImage.onload = function() {
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
+        };
     });
+
+
+
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     document.body.classList.remove('loading');
+    //     document.body.classList.add('loaded');
+    // });
 
 
     // Initial loading state

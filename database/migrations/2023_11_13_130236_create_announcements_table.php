@@ -17,13 +17,13 @@ return new class extends Migration
 
             $table->id(); // Primary key
 
-            $table->string('subject'); // Subject of the announcement
+            $table->string('subject'); 
 
-            $table->text('description'); // Description of the announcement
+            $table->text('description'); 
 
-            $table->unsignedBigInteger('author'); // Foreign key for the author
+            $table->unsignedBigInteger('author'); 
 
-            $table->date('publish_date'); // Date when the announcement is published
+            $table->date('publish_date'); 
 
             $table->date('expiration_date')->nullable(); // Date when the announcement expires
 

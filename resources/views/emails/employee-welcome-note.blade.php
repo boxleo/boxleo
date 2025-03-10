@@ -42,7 +42,7 @@
                     <td>
                         <h1>Welcome, {{ $user->firstname }}!</h1>
                         <p class="intro">
-                            You are now part of the HRMS family. Get ready to experience a seamless and
+                            You are now part of the Boxleo Courier HRMS family. Get ready to experience a seamless and
                             efficient work environment.
                         </p>
                         <div class="login-details">
@@ -62,7 +62,7 @@
                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                                             <tbody>
                                                 <tr>
-                                                    <td><a href="https://tolvinsol.solssa.com/login" target="_blank">
+                                                    <td><a href="https://hrm.boxleocourier.com/login" target="_blank">
                                                         Go to Portal</a>
                                                     </td>
                                                 </tr>
