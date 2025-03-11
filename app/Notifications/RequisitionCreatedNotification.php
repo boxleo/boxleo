@@ -11,12 +11,16 @@ class RequisitionCreatedNotification extends Notification
 {
     use Queueable;
 
+    protected $requisition;
+
+
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct($requisition)
     {
         //
+        $this->requisition = $requisition;
     }
 
     /**
@@ -35,13 +39,15 @@ class RequisitionCreatedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                
-                    ->subject('New Requisition Created')
-                    ->line('A new requisition has been created and is pending your approval.')
-                    ->action('View Requisition', url('/requisitions'))
+
+            ->greeting('Hello ' . $notifiable->firstname)
+            ->subject('New Requisition Created')
+            ->line('A new requisition has been created and is pending your approval.')
+            ->line('Status: ' . $this->requisition->status)
+            ->action('View Requisition', url('/requisitions'))
 
 
-                    ->line('Thank you for using our application!');
+            ->line('Thank you for using our application!');
     }
 
     /**

@@ -44,8 +44,10 @@ class RequisitionApprovedNotification extends Notification implements ShouldQueu
     {
         return (new MailMessage)
             ->subject('Requisition Approved')
-            ->greeting('Hello ' . $notifiable->firstname . ',')
-            ->line('Your requisition with ID #' . $this->requisition->id . ' has been approved.')
+            // ->greeting('Hello ' . $notifiable->firstname . ',')
+            ->greeting('Hello ' . $this->requisition->user->firstname)
+            // ->line('Your requisition with ID #' . $this->requisition->id . ' has been approved.')
+            ->line('Requisition with ID #' . $this->requisition->id . ' has been approved.')
             ->line('Status: Approved')
             ->action('View Requisition', url('/requisitions/' . $this->requisition->id))
             ->line('Thank you for using our system!');
