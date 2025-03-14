@@ -230,10 +230,13 @@
       <v-row justify="end" class="text-right">
         <v-col cols="auto">
           <v-icon size="16" color="primary mx-1" @click.stop="drawer = !drawer" small>mdi-filter</v-icon>
-          <v-btn @click="addEvaluationDialog = true" icon>
+          
+            <!-- <v-btn v-if="permissions.includes('evaluate')" @click="addEvaluationDialog = true" icon> -->
+              <v-btn  @click="addEvaluationDialog = true" icon>
+
             <v-tooltip activator="parent" location="top">Add Evaluation</v-tooltip>
             <v-icon color="primary">mdi-plus</v-icon>
-          </v-btn>
+            </v-btn>
         </v-col>
       </v-row>
 

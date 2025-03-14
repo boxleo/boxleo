@@ -83,6 +83,9 @@ class PermissionApiController extends Controller
         Log::info('User ID received in controller:', ['id' => $id]); // Log the ID received
 
         $user = User::findOrFail($id);
+
+        dd($user);
+    // return  response()->jsosn($user);
         $permissions = $request->input('permissions');
         $user->syncPermissions($permissions);
         return response()->json(['message' => 'Permissions updated successfully']);

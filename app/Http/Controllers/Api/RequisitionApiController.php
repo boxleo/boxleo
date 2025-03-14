@@ -385,6 +385,8 @@ class RequisitionApiController extends Controller
                 'requestData' => $request->all(),
             ]);
 
+            // type of requistion main  go through all steps  subsdiray manager then finance manager
+
             $userId = $request->input('user_id');
             $approver = User::find($userId);
 
