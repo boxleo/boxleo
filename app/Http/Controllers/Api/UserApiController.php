@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
+
 class UserApiController extends Controller
 {
 
@@ -271,56 +272,142 @@ class UserApiController extends Controller
     }
   }
 
-  public function update(Request $request, User $user)
-  {
+  // public function update(Request $request, User $user)
+  // {
+  //   $validatedData = $request->validate([
+  //     'firstname' => 'required|string',
+  //     'lastname' => 'required|string',
+  //     'email' => 'required|email',
+  //     'phone' => 'required|string',
+  //     'unit_id' => 'required|exists:units,id',
+  //     'office_id' => 'required|exists:offices,id',
+  //     'department_id' => 'required|exists:departments,id',
+  //     'designation_id' => 'required|exists:designations,id',
+  //     'role' => 'required|string|in:admin,employee',
+  //     'gender' => 'required|string|in:Male,Female',
+  //   ]);
+
+  //   $user->update($validatedData);
+
+  //   if ($request->has('role')) {
+  //     $user->syncPermissions([]);
+
+  //     $permissions = [];
+
+  //     switch ($request->role) {
+  //       case 'admin':
+  //         $permissions = [
+  //           'view_admin_panel',
+  //           'create_resource',
+  //           'edit_resource',
+  //           'delete_resource',
+  //           'view_employee_profile',
+  //           'edit_user',
+  //         ];
+  //         break;
+  //       case 'employee':
+  //         $permissions = [
+  //           'view_employee_panel',
+  //         ];
+
+  //         if ($user->designation_id == 1) {
+  //           $permissions[] = 'view_team_leaves';
+  //         }
+  //         break;
+  //     }
+  //     $user->syncPermissions($permissions);
+  //   }
+
+  //   $updatedUser = User::with('department', 'unit', 'office', 'designation', 'roles')->find($user->id);
+
+  //   return response()->json(['message' => 'User updated successfully', 'user' => $updatedUser], 200);
+  // }
+
+
+
+
+
+public function update(Request $request, User $user)
+{
+    Log::info('User update request received', ['user_id' => $user->id, 'request_data' => $request->all()]);
+
     $validatedData = $request->validate([
-      'firstname' => 'required|string',
-      'lastname' => 'required|string',
-      'email' => 'required|email',
-      'phone' => 'required|string',
-      'unit_id' => 'required|exists:units,id',
-      'office_id' => 'required|exists:offices,id',
-      'department_id' => 'required|exists:departments,id',
-      'designation_id' => 'required|exists:designations,id',
-      'role' => 'required|string|in:admin,employee',
-      'gender' => 'required|string|in:Male,Female',
+        'firstname' => 'required|string',
+        'lastname' => 'required|string',
+        'email' => 'required|email',
+        'phone' => 'required|string',
+        'unit_id' => 'required|exists:units,id',
+        'office_id' => 'required|exists:offices,id',
+        'department_id' => 'required|exists:departments,id',
+        'designation_id' => 'required|exists:designations,id',
+        'role' => 'required|string|in:admin,employee',
+        'gender' => 'required|string|in:Male,Female',
     ]);
 
-    $user->update($validatedData);
+    Log::info('User validation passed', ['validated_data' => $validatedData]);
 
-    if ($request->has('role')) {
-      $user->syncPermissions([]);
+    try {
+        $user->update($validatedData);
+        Log::info('User updated successfully', ['user_id' => $user->id]);
 
-      $permissions = [];
+        if ($request->has('role')) {
 
-      switch ($request->role) {
-        case 'admin':
-          $permissions = [
-            'view_admin_panel',
-            'create_resource',
-            'edit_resource',
-            'delete_resource',
-            'view_employee_profile',
-            'edit_user',
-          ];
-          break;
-        case 'employee':
-          $permissions = [
-            'view_employee_panel',
-          ];
 
-          if ($user->designation_id == 1) {
-            $permissions[] = 'view_team_leaves';
-          }
-          break;
-      }
-      $user->syncPermissions($permissions);
+          Log::info('Updating role for user', ['user_id' => $user->id, 'new_role' => $request->role]);
+
+    // Sync the role to remove old ones and assign the new one
+    $user->syncRoles($request->role);
+
+    Log::info('Role updated successfully', ['user_id' => $user->id, 'current_roles' => $user->roles->pluck('name')]);
+            Log::info('Syncing permissions for user', ['user_id' => $user->id, 'role' => $request->role]);
+
+            $user->syncPermissions([]);
+
+            $permissions = [];
+
+            switch ($request->role) {
+                case 'admin':
+                    $permissions = [
+                        'view_admin_panel',
+                        'create_resource',
+                        'edit_resource',
+                        'delete_resource',
+                        'view_employee_profile',
+                        'edit_user',
+                    ];
+                    break;
+                case 'employee':
+                    $permissions = [
+                        'view_employee_panel',
+                    ];
+
+                    if ($user->designation_id == 1) {
+                        $permissions[] = 'view_team_leaves';
+                    }
+                    break;
+            }
+
+            Log::info('Assigning permissions', ['user_id' => $user->id, 'permissions' => $permissions]);
+
+            $user->syncPermissions($permissions);
+        }
+
+        $updatedUser = User::with('department', 'unit', 'office', 'designation', 'roles')->find($user->id);
+
+        Log::info('Returning updated user data', ['user_id' => $user->id, 'updated_user' => $updatedUser]);
+
+        return response()->json(['message' => 'User updated successfully', 'user' => $updatedUser], 200);
+    } catch (\Exception $e) {
+        Log::error('Error updating user', [
+            'user_id' => $user->id,
+            'error_message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json(['message' => 'Error updating user', 'error' => $e->getMessage()], 500);
     }
+}
 
-    $updatedUser = User::with('department', 'unit', 'office', 'designation', 'roles')->find($user->id);
-
-    return response()->json(['message' => 'User updated successfully', 'user' => $updatedUser], 200);
-  }
 
 
   public function destroy(User $user)

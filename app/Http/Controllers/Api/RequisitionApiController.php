@@ -176,6 +176,7 @@ class RequisitionApiController extends Controller
     public function store(Request $request)
     {
 
+        Log::info("Raw request data", $request->all());
         $validated = $request->validate([
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
@@ -185,6 +186,7 @@ class RequisitionApiController extends Controller
             'items.*.total_cost' => 'required|numeric|min:0',
             'special_instructions' => 'nullable|string|max:500',
             'user_id' => 'required|exists:users,id',
+            'approver_type' =>'required',
         ]);
 
         // find user with department 
@@ -208,8 +210,7 @@ class RequisitionApiController extends Controller
                 'department_id' => $departmentId,
                 'unit_id' => $user->unit_id,
                 'office_id' => $user->office_id,
-
-
+                'approver_type' => $validated['approver_type'],
             ]);
 
             // Attach requisition items
@@ -377,36 +378,45 @@ class RequisitionApiController extends Controller
 
 
     public function approveRequisition(Request $request, Requisition $requisition)
-    {
-        try {
-            Log::info('Approve Requisition Request Received', [
-                'userId' => $request->input('user_id'),
-                'requisitionId' => $requisition->id,
-                'requestData' => $request->all(),
-            ]);
+{
+    try {
 
-            // type of requistion main  go through all steps  subsdiray manager then finance manager
+        // $test= $request->all();
+         
+        // dd($test);
+        // return response()->json($test);
+        Log::info('Approve Requisition Request Received', [
+            'userId' => $request->input('user_id'),
+            'requestData' => $request->all(),
+        ]);
+       
+      
 
-            $userId = $request->input('user_id');
-            $approver = User::find($userId);
+        Log::info('Approver type received', [
+            'approver_type' => $request->approver_type,
+        ]);
+        $userId = $request->input('user_id');
+        $approver = User::find($userId);
+        $requisition = Requisition::find($request->input('requisition_id'));
 
-            $requisition = Requisition::find($request->input('requisition_id'));
+        if (!$approver) {
+            Log::warning('Approver not found', ['userId' => $userId]);
+            return response()->json(['error' => 'Approver not found'], 404);
+        }
 
-            if (!$approver) {
-                Log::warning('Approver not found', ['userId' => $userId]);
-                return response()->json(['error' => 'Approver not found'], 404);
-            }
+        $approverDepartment = $approver->department_id;
+        $requestDepartment = $requisition->department_id;
+        $details = $request->input('comment'); // Capture the approver's comment
 
-            $approverDepartment = $approver->department_id;
-            $requestDepartment = $requisition->department_id;
+        Log::info('Approver Retrieved', ['approver' => $approver]);
+        Log::info('Department Check', [
+            'approverDepartment' => $approverDepartment,
+            'requisitionDepartment' => $requestDepartment,
+        ]);
 
-            Log::info('Approver Retrieved', ['approver' => $approver]);
-            Log::info('Department Check', [
-                'approverDepartment' => $approverDepartment,
-                'requisitionDepartment' => $requestDepartment,
-            ]);
-
-            $details = $request->input('comment'); // Capture the approver's comment
+        if ($requisition->approver_type === "HR") {
+            // Do something for HR
+            Log::info("Approver is HR");
 
             if ($approver->is_line_manager === 1 || ($approver->designation_id === 1 && $requisition->status === 'Pending')) {
                 if ($approverDepartment === $requestDepartment) {
@@ -427,8 +437,109 @@ class RequisitionApiController extends Controller
                 // Log the COO approval
                 $this->logRequisitionAction($requisition, 'HR Approved', $details, $userId);
                 Log::info('Requisition Status Updated', ['newStatus' => 'HR Approved']);
-
             } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'HR Approved') {
+                $requisition->status = 'Finance Manager Approved';
+                $requisition->is_finance_manager = 1;
+
+                // Log the HR approval
+                $this->logRequisitionAction($requisition, 'Finance Manager Approved', $details, $userId);
+                Log::info('Requisition Status Updated', ['newStatus' => 'Finance Manager Approved']);
+            } elseif ($approver->is_coo === 1 && $requisition->status === 'Finance Manager Approved') {
+                $requisition->status = 'COO Approved';
+                $requisition->is_coo = 1;
+
+                // Log the Finance Manager approval
+                $this->logRequisitionAction($requisition, 'COO Approved', $details, $userId);
+                Log::info('Requisition Status Updated', ['newStatus' => 'COO Approved']);
+            } elseif ($approver->is_cfo === 1 && $requisition->status === 'COO Approved') {
+                $requisition->status = 'Approved';
+                $requisition->is_cfo = 1;
+
+                // Log the CFO approval
+                $this->logRequisitionAction($requisition, 'Approved', $details, $userId);
+
+                // Send the Requisition Approved notification
+                // include finance team members
+                $requisition->user->notify(new RequisitionApprovedNotification($requisition));
+
+                Log::info('Requisition Approved Notification Sent');
+
+                Log::info('Notifying finance team members', ['requisition_id' => $requisition->id]);
+
+                $financeTeam = User::where('department_id', 2)->where('unit_id', 1)->get();
+
+                // Notify all finance team members
+                foreach ($financeTeam as $financeUser) {
+                    $financeUser->notify(new RequisitionApprovedNotification($requisition));
+                    Log::info('Finance team member notified', ['user_id' => $financeUser->id]);
+                }
+            } else {
+                Log::warning('Unauthorized Approval Attempt');
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        } 
+        // finance manager is final approval 
+        elseif ($requisition->approver_type === "Finance Manager") {
+            // Do something for Finance Manager
+            Log::info("Approver is Finance Manager");
+
+            if ($approver->is_line_manager === 1 || ($approver->designation_id === 1 && $requisition->status === 'Pending')) {
+                if ($approverDepartment === $requestDepartment) {
+                    $requisition->status = 'Manager Approved';
+                    $requisition->is_line_manager = 1;
+
+                    // Log the approval action
+                    $this->logRequisitionAction($requisition, 'Manager Approved', $details, $userId);
+                    Log::info('Requisition Status Updated', ['newStatus' => 'Manager Approved']);
+                } else {
+                    Log::warning('Department Mismatch');
+                    return response()->json(['error' => 'You can only approve requests in your department'], 403);
+                }
+            } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'Manager Approved') {
+                $requisition->status = 'Finance Manager Approved';
+                $requisition->is_finance_manager = 1;
+
+                // Log the FInance Manager approval
+                $this->logRequisitionAction($requisition, 'Finance Manager Approved', $details, $userId);
+                Log::info('Requisition Status Updated', ['newStatus' => 'Finance Manager Approved']);
+
+                // Send the Requisition Approved notification
+                // include finance team members
+                $requisition->user->notify(new RequisitionApprovedNotification($requisition));
+
+                Log::info('Requisition Approved Notification Sent');
+
+                Log::info('Notifying finance team members', ['requisition_id' => $requisition->id]);
+
+                $financeTeam = User::where('department_id', 2)->where('unit_id', 1)->get();
+
+                // Notify all finance team members
+                foreach ($financeTeam as $financeUser) {
+                    $financeUser->notify(new RequisitionApprovedNotification($requisition));
+                    Log::info('Finance team member notified', ['user_id' => $financeUser->id]);
+                }
+            } else {
+                Log::warning('Unauthorized Approval Attempt');
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        }
+        elseif ($requisition->approver_type === "CFO") {
+            // Do something for CFO
+            Log::info("Approver is CFO");
+
+            if ($approver->is_line_manager === 1 || ($approver->designation_id === 1 && $requisition->status === 'Pending')) {
+                if ($approverDepartment === $requestDepartment) {
+                    $requisition->status = 'Manager Approved';
+                    $requisition->is_line_manager = 1;
+
+                    // Log the approval action
+                    $this->logRequisitionAction($requisition, 'Manager Approved', $details, $userId);
+                    Log::info('Requisition Status Updated', ['newStatus' => 'Manager Approved']);
+                } else {
+                    Log::warning('Department Mismatch');
+                    return response()->json(['error' => 'You can only approve requests in your department'], 403);
+                }
+            } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'Manager Approved') {
                 $requisition->status = 'Finance Manager Approved';
                 $requisition->is_finance_manager = 1;
 
@@ -469,36 +580,41 @@ class RequisitionApiController extends Controller
                 Log::warning('Unauthorized Approval Attempt');
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
-
-            // Save any comment provided by the approver
-            $requisition->comment = $request->input('comment');
-            $requisition->save();
-
-            // Log the saved comment
-            Log::info('Requisition Comment Saved', [
-                'requisition_id' => $requisition->id,
-                'comment' => $requisition->comment,
-            ]);
-
-            // Check if there's a next approver
-            if ($requisition->status !== 'Approved') {
-                $nextApprover = $this->getNextApprover($requisition);
-                if ($nextApprover) {
-                    $nextApprover->notify(new RequisitionCreatedNotification($requisition));
-                    Log::info('Next Approver Notified', ['nextApproverId' => $nextApprover->id]);
-                }
-            }
-
-            return response()->json(['message' => 'Requisition approved successfully'], 200);
-        } catch (\Exception $e) {
-            Log::error('Error Approving Requisition', [
-                'exceptionMessage' => $e->getMessage(),
-                'stackTrace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json(['error' => 'Failed to approve requisition'], 500);
+        } else {
+            Log::warning('Invalid approver type');
+            return response()->json(['error' => 'Invalid approver type'], 400);
         }
+
+        // Save any comment provided by the approver
+        $requisition->comment = $request->input('comment');
+        $requisition->save();
+
+        // Log the saved comment
+        Log::info('Requisition Comment Saved', [
+            'requisition_id' => $requisition->id,
+            'comment' => $requisition->comment,
+        ]);
+
+        // Check if there's a next approver
+        if ($requisition->status !== 'Approved') {
+            $nextApprover = $this->getNextApprover($requisition);
+            if ($nextApprover) {
+                $nextApprover->notify(new RequisitionCreatedNotification($requisition));
+                Log::info('Next Approver Notified', ['nextApproverId' => $nextApprover->id]);
+            }
+        }
+
+        return response()->json(['message' => 'Requisition approved successfully'], 200);
+    
+    } catch (\Exception $e) {
+        Log::error('Error Approving Requisition', [
+            'exceptionMessage' => $e->getMessage(),
+            'stackTrace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json(['error' => 'Failed to approve requisition'], 500);
     }
+}
 
 
     private function getNextApprover($requisition)
@@ -648,3 +764,5 @@ class RequisitionApiController extends Controller
         }
     }
 }
+
+

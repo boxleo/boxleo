@@ -331,7 +331,7 @@
 <script>
 export default {
     props: {
-        x: Object,
+        user: Object,
         roles: Array,
         permissions: Array
     },

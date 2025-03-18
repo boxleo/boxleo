@@ -86,44 +86,54 @@
         <h1>New Suggestion Received</h1>
         <p>A new suggestion has been registered:</p>
 
-        <p><span class="label">Subject:</span> {{ $complaint->subject }}</p>
-        <p><span class="label">Description:</span> {{ $complaint->description }}</p>
-        <p><span class="label">Category:</span> {{ $complaint->category }}</p>
-        <p><span class="label priority">Priority:</span> {{ $complaint->priority }}</p>
+        <p><span class="label">Subject:</span> {{ $complaint->subject ?? 'N/A' }}</p>
+        <p><span class="label">Description:</span> {{ $complaint->description ?? 'N/A' }}</p>
+        <p><span class="label">Category:</span> {{ $complaint->category ?? 'N/A' }}</p>
+        <p><span class="label priority">Priority:</span> {{ $complaint->priority ?? 'N/A' }}</p>
+
+        @php
+            $statusClass = isset($complaint->status) && strtolower($complaint->status) === 'open' ? 'status-open' : 'status-closed';
+        @endphp
         <p><span class="label">Status:</span>
-            <span class="status {{ strtolower($complaint->status) === 'open' ? 'status-open' : 'status-closed' }}">
-                {{ $complaint->status }}
+            <span class="status {{ $statusClass }}">
+                {{ $complaint->status ?? 'N/A' }}
             </span>
         </p>
 
         <!-- Attachments -->
-        <!-- @if (!empty($complaint->attachments))
-        <div class="attachments">
-            <p><span class="label">Attachments:</span></p>
-            @foreach (json_decode($complaint->attachments, true) as $attachment)
-            <img src="{{ asset($attachment['path']) }}" alt="{{ $attachment['original_name'] }}">
-            @endforeach
-        </div>
-        @endif -->
-
-        <!-- Links -->
-        @if (!empty($complaint->links))
-        <div class="links">
-            <p><span class="label">Reference Links:</span></p>
-            @foreach (json_decode($complaint->links, true) as $link)
-            <a href="{{ $link }}" target="_blank">{{ $link }}</a>
-            @endforeach
-        </div>
+        @php
+            $attachments = isset($complaint->attachments) ? (is_array($complaint->attachments) ? $complaint->attachments : json_decode($complaint->attachments, true)) : [];
+        @endphp
+        @if (!empty($attachments))
+            <div class="attachments">
+                <p><span class="label">Attachments:</span></p>
+                @foreach ($attachments as $attachment)
+                    <img src="{{ asset($attachment['path'] ?? '#') }}" alt="{{ $attachment['original_name'] ?? 'Attachment' }}">
+                @endforeach
+            </div>
         @endif
 
-        <!-- <p><span class="label">Created By:</span> {{ $complaint->created_by }}</p> -->
-        <!-- <p><span class="label">Addressed To:</span>
-            {{ is_array($complaint->addressed_to) ? implode(', ', $complaint->addressed_to) : $complaint->addressed_to }}
-        </p>
+        <!-- Links -->
+        @php
+            $links = isset($complaint->links) ? (is_array($complaint->links) ? $complaint->links : json_decode($complaint->links, true)) : [];
+        @endphp
+        @if (!empty($links))
+            <div class="links">
+                <p><span class="label">Reference Links:</span></p>
+                @foreach ($links as $link)
+                    <a href="{{ $link }}" target="_blank">{{ $link }}</a>
+                @endforeach
+            </div>
+        @endif
 
-        <p><span class="label">Followers:</span>
-            {{ is_array($complaint->followers) ? implode(', ', $complaint->followers) : $complaint->followers }}
-        </p> -->
+
+
+           <!-- Login Button -->
+           <a href="https://hrm.boxleocourier.com" class="login-button" target="_blank">Login to HRM</a>
+
+</div>
+
+    
 
     </div>
 

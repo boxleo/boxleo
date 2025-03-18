@@ -43,13 +43,18 @@ class PermissionApiController extends Controller
             'permissions' => 'required|array',
         ]);
 
+        Log::info('Updating permissions for user:', ['userId' => $userId, 'permissions' => $request->input('permissions')]);
+
         $user = User::find($userId);
 
         if (!$user) {
+            Log::error('User not found:', ['userId' => $userId]);
             return response()->json(['message' => 'User not found'], 404);
         }
 
         $user->syncPermissions($request->input('permissions'));
+
+        Log::info('Permissions updated successfully for user:', ['userId' => $userId]);
 
         return response()->json(['message' => 'Permissions updated successfully']);
     }
@@ -84,8 +89,8 @@ class PermissionApiController extends Controller
 
         $user = User::findOrFail($id);
 
-        dd($user);
-    // return  response()->jsosn($user);
+        // dd($user);
+        // return  response()->jsosn($user);
         $permissions = $request->input('permissions');
         $user->syncPermissions($permissions);
         return response()->json(['message' => 'Permissions updated successfully']);

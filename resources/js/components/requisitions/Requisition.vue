@@ -191,7 +191,10 @@
                   <tbody>
                     <tr v-for="item in requisitionItems" :key="item.id">
                       <td>
-                        <v-text-field v-model="item.name" item-title="name" density="compact" hide-details />
+                        <!-- <v-text-field v-model="item.name" item-title="name" density="compact" hide-details /> -->
+                        <v-select v-model="item.name" :items="availableItems" item-title="name" density="compact"
+                          hide-details />
+
                       </td>
 
                       <td>
@@ -228,6 +231,9 @@
               <template v-slot:item.2>
 
                 <v-textarea v-model="specialInstructions" label="Special Instructions" rows="3" outlined />
+
+                <v-select v-model="approverType" :items="['Finance Manager', 'CFO', 'HR']" label="Select Approver Type"
+                  outlined dense></v-select>
 
               </template>
 
@@ -283,6 +289,7 @@ export default {
       selectedRequisition: "",
       requisition_id: "",
       specialInstructions: "",
+      approverType: "",
       comment: "",
       requisitions: [],
 
@@ -293,6 +300,19 @@ export default {
 
       // requisitionItems: [],
 
+      availableItems:[
+        "Airtime",
+        "Fuel - Riders",
+        "Welfare - Concerning welfare & kitchen expenses",
+        "Subscription",
+        "Rent",
+        "Stationery",
+        "Packaging materials",
+        "Fare facilitation",
+        "Asset purchase",
+        "Fuel - motor vehicle"
+      ],
+      // availableItem:"",
       requisitionItems: [
         {
           name: "",
@@ -315,6 +335,7 @@ export default {
         { title: "Requester", value: "user.firstname" },
         { title: "Status", value: "status" },
         { title: "Comments", value: "comment" },
+        { title: "Type", value: "approver_type" },
         { title: "Actions", value: "actions", sortable: false },
       ],
       loading: false,
@@ -529,6 +550,7 @@ export default {
         })),
         user_id: this.user.id,
         special_instructions: this.specialInstructions,
+        approver_type: this.approverType,
 
       };
 

@@ -32,7 +32,10 @@ class Requisition extends Model
         'office_id',
         'unit_id',
         'total_value_of_items',
-        'comment'
+        'comment',
+        'approver_type',
+        'paid',
+        'MPESA_code'
 
 
     ];
