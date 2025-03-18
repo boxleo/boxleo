@@ -390,8 +390,6 @@ class RequisitionApiController extends Controller
             'requestData' => $request->all(),
         ]);
        
-      
-
         Log::info('Approver type received', [
             'approver_type' => $request->approver_type,
         ]);
@@ -496,7 +494,7 @@ class RequisitionApiController extends Controller
                     return response()->json(['error' => 'You can only approve requests in your department'], 403);
                 }
             } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'Manager Approved') {
-                $requisition->status = 'Finance Manager Approved';
+                $requisition->status = 'Approved';
                 $requisition->is_finance_manager = 1;
 
                 // Log the FInance Manager approval
@@ -617,8 +615,14 @@ class RequisitionApiController extends Controller
 }
 
 
-    private function getNextApprover($requisition)
-    {
+
+
+private function getNextApprover($requisition)
+{
+    $nextRole = [];
+    
+    // Set the approval path based on approver_type
+    if ($requisition->approver_type === "HR") {
         $nextRole = [
             'Manager Approved' => 'is_hr',
             'HR Approved' => 'is_finance_manager',
@@ -626,15 +630,47 @@ class RequisitionApiController extends Controller
             'COO Approved' => 'is_cfo',
             'Approved' => 'is_cfo',
         ];
-
-
-        $currentStatus = $requisition->status;
-        if (isset($nextRole[$currentStatus])) {
-            return User::where($nextRole[$currentStatus], true)->first();
-        }
-
-        return null;
+    } elseif ($requisition->approver_type === "Finance Manager") {
+        $nextRole = [
+            'Manager Approved' => 'is_finance_manager',
+            'Approved' => 'is_finance_manager',
+        ];
+    } elseif ($requisition->approver_type === "CFO") {
+        $nextRole = [
+            'Manager Approved' => 'is_finance_manager',
+            'Finance Manager Approved' => 'is_coo',
+            'COO Approved' => 'is_cfo',
+            'Approved' => 'is_cfo',
+        ];
     }
+
+    $currentStatus = $requisition->status;
+    
+    if (isset($nextRole[$currentStatus])) {
+        return User::where($nextRole[$currentStatus], true)->first();
+    }
+    
+    return null;
+}
+
+    // private function getNextApprover($requisition)
+    // {
+    //     $nextRole = [
+    //         'Manager Approved' => 'is_hr',
+    //         'HR Approved' => 'is_finance_manager',
+    //         'Finance Manager Approved' => 'is_coo',
+    //         'COO Approved' => 'is_cfo',
+    //         'Approved' => 'is_cfo',
+    //     ];
+
+
+    //     $currentStatus = $requisition->status;
+    //     if (isset($nextRole[$currentStatus])) {
+    //         return User::where($nextRole[$currentStatus], true)->first();
+    //     }
+
+    //     return null;
+    // }
 
 
     protected function logRequisitionAction(Requisition $requisition, $action, $details = null, $userId = null)
