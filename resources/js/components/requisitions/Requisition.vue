@@ -1,6 +1,49 @@
 <template>
   <v-container fluid>
     <v-layout>
+
+      <v-navigation-drawer v-model="drawer" temporary location="right" width="500">
+        <v-card>
+          <v-card-title>Filter Requisitions</v-card-title>
+          <v-card-text>
+            <v-col class="mt-lg-5">
+              <v-autocomplete v-model="filterOptions.item_names" :items="availableItems" label="Item Name"
+                variant="outlined" multiple clearable />
+            </v-col>
+            <v-col>
+              <v-autocomplete v-model="filterOptions.department_ids" :items="departments" label="Department"
+                variant="outlined" multiple item-title="name" item-value="id" clearable />
+            </v-col>
+            <v-col>
+              <v-autocomplete v-model="filterOptions.statuses" :items="statusOptions" multiple label="Status"
+                item-value="name" item-title="name" variant="outlined" clearable>
+              </v-autocomplete>
+            </v-col>
+            <v-col>
+              <v-col>
+                <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar" clearable range></v-date-picker>
+              </v-col>
+
+            </v-col>
+            <v-col>
+              <v-autocomplete v-model="filterOptions.approver_types" :items="approverTypeOptions"
+                label="Type of Approval" item-value="name" item-title="name" variant="outlined" multiple clearable>
+              </v-autocomplete>
+            </v-col>
+            <v-col class="d-flex justify-end">
+              <v-btn color="dark" @click.prevent="filterRequisitions">
+                <v-icon color="light">mdi-filter</v-icon>
+              </v-btn>
+            </v-col>
+            <v-overlay :value="loading">
+              <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-overlay>
+          </v-card-text>
+        </v-card>
+      </v-navigation-drawer>
+
+
+
       <v-main>
         <!-- Filters and Actions -->
         <v-row class="my-3">
@@ -27,16 +70,36 @@
               New Request
             </v-btn>
 
-            <!-- <p>User ID: {{ userId }}</p> -->
+
+            <!-- include filter icon  and report download  -->
+
+            <v-btn @click="drawer = !drawer" color="primary" outlined class="mx-1">
+              <v-icon>mdi-filter</v-icon>
+              Filter
+            </v-btn>
+            <v-btn @click="downloadReport" color="primary" outlined class="mx-1">
+              <v-icon>mdi-download</v-icon>
+              Download Report
+            </v-btn>
 
 
 
           </div>
         </v-row>
 
+
+        <v-row>
+          <v-col>
+            <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line
+              hide-details></v-text-field>
+          </v-col>
+        </v-row>
+
         <!-- Data Table -->
         <v-card class="mt-2">
           <v-progress-linear v-if="loading" color="green" indeterminate></v-progress-linear>
+
+
           <v-data-table v-model="selected" :headers="headers" :items="requisitions" :search="search" item-key="id"
             responsive show-select>
 
@@ -75,6 +138,10 @@
                 <v-icon v-if="roles.includes('admin')" @click="deleteRequisition(item)" color="error"
                   title="Delete Requisition">
                   mdi-delete
+                </v-icon>
+
+                <v-icon @click="markAsPaid(item)" color="blue" title="Mark as Paid">
+                  mdi-cash-check
                 </v-icon>
 
               </div>
@@ -272,6 +339,18 @@ export default {
 
   data() {
     return {
+      drawer: false,
+      menu: false,
+
+      // Filter options
+      filterOptions: {
+        item_names: [],
+        department_ids: [],
+        statuses: [],
+        date_created: null,
+        approver_types: [],
+
+      },
       modalWidth: 1500,
       step: 1,
       items: [
@@ -298,9 +377,24 @@ export default {
       logsModal: false,
       loadingLogs: false,
 
-      // requisitionItems: [],
+      // Dropdown options
+      departments: [],
+      statusOptions: [
+        { name: 'Pending' },
+        { name: 'Approved' },
+        { name: 'Manager Approved' },
+        { name: 'HR Approved' },
+        { name: 'Finance Manager Approved' },
+        { name: 'Paid' }
 
-      availableItems:[
+      ],
+      approverTypeOptions: [
+        { name: 'Finance Manager' },
+        { name: 'CFO' },
+        { name: 'HR' }
+      ],
+
+      availableItems: [
         "Airtime",
         "Fuel - Riders",
         "Welfare - Concerning welfare & kitchen expenses",
@@ -341,7 +435,46 @@ export default {
       loading: false,
     };
   },
+  mounted() {
+    console.log("User:", this.user);
+    console.log("Roles:", this.roles);
+    console.log("Permissions:", this.permissions);
+    this.fetchStats();
+    this.fetchRequisitions();
+    this.fetchDepartments();
+  },
   methods: {
+
+
+
+    fetchDepartments() {
+      axios.get('/api/v1/departments')
+        .then(response => {
+          this.departments = response.data.departments;
+        })
+        .catch(error => {
+          console.error("Error fetching departments:", error);
+          this.$toastr.error("Failed to fetch departments");
+        });
+    },
+
+    // Filter requisitions based on current filter options
+    filterRequisitions() {
+      this.loading = true;
+
+      axios.post('/api/v1/filter-requisitions', this.filterOptions)
+        .then(response => {
+          this.requisitions = response.data.requisitions;
+          this.drawer = false; // Close drawer after filtering
+        })
+        .catch(error => {
+          console.error("Error filtering requisitions:", error);
+          this.$toastr.error("Failed to filter requisitions");
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
     viewRequisition(item) {
       const requisitionId = item.id;
       const pdfUrl = `/api/v1/requisitions/${requisitionId}/pdf`;
@@ -437,7 +570,6 @@ export default {
           );
         });
     },
-
 
     deleteRequisition(item) {
 
