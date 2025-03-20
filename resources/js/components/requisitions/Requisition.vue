@@ -21,7 +21,8 @@
             </v-col>
             <v-col>
               <v-col>
-                <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar" clearable range></v-date-picker>
+                <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar"
+                  clearable range></v-date-picker>
               </v-col>
 
             </v-col>
@@ -49,10 +50,10 @@
         <v-row class="my-3">
 
           <div class="d-flex justify-center">
-            <v-btn v-if="stats.totalRequisitions >= 0" @click="filterAllRequisitions" color="secondary" outlined>
+            <!-- <v-btn v-if="stats.totalRequisitions >= 0" @click="filterAllRequisitions" color="secondary" outlined>
               <v-icon class="mr-1">mdi-refresh</v-icon>
               All Requisitions: {{ stats.totalRequisitions }}
-            </v-btn>
+            </v-btn> -->
             <v-btn v-if="stats.pending > 0" @click="filterPending" color="orange" outlined class="mx-1">
               <v-icon>mdi-clock</v-icon>
               Pending: {{ stats.pending }}
@@ -70,6 +71,11 @@
               New Request
             </v-btn>
 
+            <v-btn @click="openAccountModal" color="primary" outlined class="mx-1">
+              <v-icon>mdi-account-plus</v-icon>
+              Add Account
+            </v-btn>
+
 
             <!-- include filter icon  and report download  -->
 
@@ -82,12 +88,8 @@
               Download Report
             </v-btn>
 
-
-
           </div>
         </v-row>
-
-
         <v-row>
           <v-col>
             <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line
@@ -119,6 +121,8 @@
               </v-list>
             </template>
 
+
+
             <template v-slot:item.actions="{ item }">
               <div class="action-icons">
 
@@ -148,6 +152,25 @@
             </template>
           </v-data-table>
         </v-card>
+
+        <!-- openAccountModal -->
+        <v-dialog v-model="accountModal" max-width="600px" persistent>
+          <v-card>
+            <v-card-title class="headline mb-3">
+              <v-icon color="primary">mdi-account-plus</v-icon>
+              Add Account
+            </v-card-title>
+            <v-card-text>
+              <v-text-field v-model="availableItem" label="Account Name" />
+            </v-card-text>
+            <v-card-actions class="justify-end">
+              <v-btn @click="closeAccountModal">Cancel</v-btn>
+              <v-btn color="primary" @click="saveAccount">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+
 
 
         <!-- requisition history -->
@@ -341,6 +364,8 @@ export default {
     return {
       drawer: false,
       menu: false,
+      accountModal: false,
+      availableItem: null,
 
       // Filter options
       filterOptions: {
@@ -430,6 +455,7 @@ export default {
         { title: "Status", value: "status" },
         { title: "Comments", value: "comment" },
         { title: "Type", value: "approver_type" },
+        { title: "POP", value: "pop" },
         { title: "Actions", value: "actions", sortable: false },
       ],
       loading: false,
@@ -444,9 +470,50 @@ export default {
     this.fetchDepartments();
   },
   methods: {
+    closeAccountModal() {
+      this.accountModal = false;
+    },
 
+    openAccountModal() {
+      this.accountModal = true;
+    },
+    markAsPaid(item) {
+      axios.post(`/api/v1/mark-as-paid/${item.id}`)
+        .then(response => {
+          this.$toastr.success(response.data.message || 'Requisition marked as paid successfully');
+          this.fetchRequisitions();
+        })
+        .catch(error => {
+          console.error('Error marking requisition as paid:', error.response?.data || error.message);
+          this.$toastr.error(
+            error.response?.data?.error || 'Failed to mark requisition as paid. Please try again.'
+          );
+        });
+    },
+    downloadReport() {
+      axios.post('/api/v1/download-requisitions-report', { requisitions: this.requisitions }, { responseType: 'blob' })
+        .then(response => {
+          // Create a blob from the response data
+          const blob = new Blob([response.data], { type: 'application/pdf' });
 
+          // Create a link element to trigger the download
+          const link = document.createElement('a');
+          link.href = window.URL.createObjectURL(blob);
+          link.download = 'requisition_invoice.pdf';
 
+          // Append the link to the document and trigger the click event
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          this.$toastr.success('PDF file downloaded successfully');
+        })
+        .catch(error => {
+          this.$toastr.error('Error generating PDF file');
+          console.error('Error generating PDF file:', error);
+        });
+    }
+    ,
     fetchDepartments() {
       axios.get('/api/v1/departments')
         .then(response => {

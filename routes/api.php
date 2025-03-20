@@ -223,6 +223,9 @@ Route::delete('v1/delete-requisition/{id}', [RequisitionApiController::class, 'd
 
 Route::get('v1/requisitions-logs/{id}', [RequisitionApiController::class, 'requisitionLogs']);
 Route::get('v1/requisitions/{id}/pdf', [RequisitionApiController::class, 'generatePdf']);
+Route::post('v1/filter-requisitions', [RequisitionApiController::class, 'filter']);
+Route::post('/v1/download-requisitions-report', [RequisitionApiController::class, 'downloadRequisitionsReport']);
+
 
 
 
