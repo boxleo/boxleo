@@ -75,8 +75,8 @@
 
 
                         <template v-slot:item.actions="{ item }">
-                            <v-icon small color="primary" @click="viewVoice(item.id)"
-                                title="View Voice">mdi-account-search</v-icon>
+                            <!-- <v-icon small color="primary" @click="viewVoice(item.id)"
+                                title="View Voice">mdi-account-search</v-icon> -->
                             <v-icon small color="success" @click="editVoice(item)"
                                 title="Edit Voice">mdi-pencil</v-icon>
                             <v-icon small color="red" @click="openconfirmDeleteDialog(item)"
@@ -138,7 +138,7 @@
                                             {{ log.action }}
                                         </v-chip>
                                         <!-- <strong>Logged By:</strong> {{ log.user ? log.user.firstname : 'Unknown' }} | -->
-                                        <strong>Complaint ID:</strong> {{ log.complaint_id }}
+                                        <strong>Voice ID:</strong> {{ log.complaint_id }}
                                     </v-card-subtitle>
 
                                     <v-divider></v-divider>
