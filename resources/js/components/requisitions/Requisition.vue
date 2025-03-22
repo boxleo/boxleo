@@ -137,8 +137,6 @@
                         </template>
 
 
-
-
                         <!-- <template v-slot:item.comments="{ item }">
                             <v-chip :color="getStatusColor(item.comments)" dark
                                 @click="openCommentsDialog(item, 'comments')">{{ item.comments }}</v-chip>
