@@ -217,14 +217,17 @@ Route::get('v1/requisitions', [RequisitionApiController::class, 'index']);
 Route::post('v1/requisitions', [RequisitionApiController::class, 'store']);
 Route::post('v1/approve-requisition', [RequisitionApiController::class, 'approveRequisition']);
 Route::post('v1/cancel-requisition/{id}', [RequisitionApiController::class, 'cancelRequisition']);
-// Route::put('v1/update-requisition/{id}', [RequisitionApiController::class, 'updateRequisition']);  
+Route::put('v1/update/{id}', [RequisitionApiController::class, 'update']);  
 Route::delete('v1/delete-requisition/{id}', [RequisitionApiController::class, 'deleteRequisition']);
 // Route::get('v1/requisitions/{id}', [RequisitionApiController::class, 'show']);
-
 Route::get('v1/requisitions-logs/{id}', [RequisitionApiController::class, 'requisitionLogs']);
 Route::get('v1/requisitions/{id}/pdf', [RequisitionApiController::class, 'generatePdf']);
 Route::post('v1/filter-requisitions', [RequisitionApiController::class, 'filter']);
 Route::post('/v1/download-requisitions-report', [RequisitionApiController::class, 'downloadRequisitionsReport']);
+Route::post('/v1/accounts', [RequisitionApiController::class, 'saveAccount']);
+Route::get('/v1/accounts', [RequisitionApiController::class, 'fetchAccounts']);
+
+
 
 
 

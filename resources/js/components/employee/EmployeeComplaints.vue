@@ -68,6 +68,12 @@
                         </template>
 
 
+
+                        <template v-slot:item.departments="{ item }">
+      <span v-if="item.departments.length">{{ item.departments.join(', ') }}</span>
+    </template>
+
+
                         <template v-slot:item.actions="{ item }">
                             <v-icon small color="primary" @click="viewVoice(item.id)"
                                 title="View Voice">mdi-account-search</v-icon>
@@ -270,18 +276,52 @@
                                 <v-text-field variant="outlined" v-model="editedVoice.subject" label="Subject"
                                     :rules="[v => !!v || 'Subject is required']"></v-text-field>
                             </v-col>
+                         \<v-col cols="12">
+  <v-select 
+    variant="outlined" 
+    v-model="editedVoice.category" 
+    :items="categories" 
+    label="Category" 
+    :rules="[v => !!v || 'Category is required']"
+  ></v-select>
+
+  <!-- Show text input only when 'Other' is selected -->
+  <v-text-field 
+    v-if="editedVoice.category === 'Other'" 
+    variant="outlined" 
+    v-model="editedVoice.category_other" 
+    label="Other (Specify Category)" 
+    class="mt-2" 
+    :rules="[v => !!v || 'Other category is required']"
+  ></v-text-field>
+</v-col>
+
+
                             <v-col cols="12">
-                                <v-select variant="outlined" v-model="editedVoice.category" :items="categories"
-                                    label="Category" :rules="[v => !!v || 'Category is required']"></v-select>
+                           
+              <v-autocomplete v-model="editedVoice.department_id" :items="departments" label="Department"
+                variant="outlined" multiple item-title="name" item-value="id" clearable />
+
                             </v-col>
+
+
+
                             <v-col cols="12">
-                                <v-select variant="outlined" v-model="editedVoice.addressed_to" :items="users"
-                                    label="Address To" item-value="id" item-title="fullname" multiple
-                                    :rules="[v => (v && v.length) || 'Addressee is required']"></v-select>
-                            </v-col>
+    <v-autocomplete 
+        variant="outlined" 
+        v-model="editedVoice.addressed_to" 
+        :items="users"
+        label="Address To" 
+        item-value="id" 
+        item-title="fullname" 
+        multiple
+        :rules="[v => !v || v.length >= 0 || '']">
+    ></v-autocomplete>
+</v-col>
+
                             <v-col cols="12">
-                                <v-select variant="outlined" v-model="editedVoice.followers" :items="users"
-                                    label="Followers" item-value="id" item-title="fullname" multiple></v-select>
+                                <v-autocomplete variant="outlined" v-model="editedVoice.followers" :items="users"
+                                    label="Followers" item-value="id" item-title="fullname" multiple></v-autocomplete>
                             </v-col>
                             <v-col cols="12">
                                 <v-textarea variant="outlined" v-model="editedVoice.description" label="Description"
@@ -366,6 +406,8 @@ export default {
                 { title: 'Followers', value: 'followers' },
                 { title: 'Comments', value: 'comments' },
                 { title: 'Status', value: 'status' },
+                {title: 'Department',value:'departments'},
+                
 
                 // { title: 'Resolution', value: 'resolution' },
                 { title: 'Creation Date', value: 'created_at' },
@@ -393,9 +435,22 @@ export default {
         console.log("Permissions:", this.permissions);
         this.fetchUsers();
         this.fetchVoices();
+        this.fetchDepartments();
     },
     methods:
     {
+
+
+        fetchDepartments() {
+      axios.get('/api/v1/departments')
+        .then(response => {
+          this.departments = response.data.departments;
+        })
+        .catch(error => {
+          console.error("Error fetching departments:", error);
+          this.$toastr.error("Failed to fetch departments");
+        });
+    },
         parseNewData(data) {
             try {
                 return JSON.parse(data);
@@ -487,11 +542,13 @@ export default {
             addressed_to: [],
             description: '',
             category: '',
+            category_other: '',
             priority: 'Medium',
             is_anonymous: true,
             attachments: [],
             links: [],
             followers: [],
+            department_id:[],
             viewVoiceDialog: false,
             };
         },
@@ -587,10 +644,22 @@ export default {
             const formData = new FormData();
             formData.append('subject', this.editedVoice.subject);
             formData.append('description', this.editedVoice.description);
-            formData.append('category', this.editedVoice.category);
+            if (this.editedVoice.category === "Other") {
+    formData.append('category', this.editedVoice.category_other); // Use custom input
+} else {
+    formData.append('category', this.editedVoice.category); // Use selected category
+}
+
             formData.append('status', this.editedVoice.status);
             formData.append('priority', this.editedVoice.priority);
             formData.append('user_id', this.user.id,);
+            // append department_id
+            if (this.editedVoice.department_id && this.editedVoice.department_id.length) {
+                console.log('department_id:', this.editedVoice.department_id);
+                this.editedVoice.department_id.forEach(department_id => {
+                    formData.append('department_id[]', department_id);
+                });
+            }
 
             // Handle array values correctly
             if (this.editedVoice.addressed_to && this.editedVoice.addressed_to.length) {
@@ -660,10 +729,6 @@ export default {
             }
             if (!this.editedVoice.category) {
                 this.showError('Category is required');
-                return false;
-            }
-            if (!this.editedVoice.addressed_to || !this.editedVoice.addressed_to.length) {
-                this.showError('At least one addressee is required');
                 return false;
             }
             return true;

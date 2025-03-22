@@ -31,4 +31,9 @@ class Department extends Model
     {
         return $this->belongsToMany(User::class, 'manager_departments', 'department_id', 'user_id');
     }
+
+
+    public function complaints() {
+        return $this->belongsToMany(Complaint::class, 'complaint_department');
+    }
 }

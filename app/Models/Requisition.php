@@ -35,7 +35,8 @@ class Requisition extends Model
         'comment',
         'approver_type',
         'paid',
-        'MPESA_code'
+        'pop',
+        'attachments'
 
 
     ];

@@ -18,16 +18,6 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->nullable();  
             $table->foreignId('department_id')->constrained()->cascadeOnDelete()->nullable(); 
             $table->string('status');
-
-            // $table->enum('status', [
-            //     'Pending', 
-            //     'Line Manager Approved', 
-            //     'COO Approved', 
-            //     'HR Approved', 
-            //     'Finance Manager Approved', 
-            //     'Approved',
-            //     'Rejected'
-            // ])->default('Pending'); // Status of the requisition
             $table->text('special_instructions')->nullable(); // Additional instructions
             $table->decimal('budgeted_expenses', 15, 2)->nullable(); // Estimated budgeted amount
             $table->decimal('funds_available', 15, 2)->nullable(); // Available funds

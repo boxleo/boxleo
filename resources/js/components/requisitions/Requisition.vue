@@ -7,9 +7,13 @@
           <v-card-title>Filter Requisitions</v-card-title>
           <v-card-text>
             <v-col class="mt-lg-5">
-              <v-autocomplete v-model="filterOptions.item_names" :items="availableItems" label="Item Name"
+              <v-autocomplete v-model="filterOptions.item_names" :items="availableItems" label="Item Name" item-title="name"
                 variant="outlined" multiple clearable />
             </v-col>
+
+
+           
+
             <v-col>
               <v-autocomplete v-model="filterOptions.department_ids" :items="departments" label="Department"
                 variant="outlined" multiple item-title="name" item-value="id" clearable />
@@ -120,6 +124,82 @@
                 </v-list-item>
               </v-list>
             </template>
+
+
+
+<!-- include slots to update status ,comments, pop-->
+        
+
+
+                        <template v-slot:item.status="{ item }">
+                            <v-chip :color="getStatusColor(item.status)" dark
+                                @click="openStatusDialog(item, 'status')">{{ item.status }}</v-chip>
+                        </template>
+
+
+
+
+                        <!-- <template v-slot:item.comments="{ item }">
+                            <v-chip :color="getStatusColor(item.comments)" dark
+                                @click="openCommentsDialog(item, 'comments')">{{ item.comments }}</v-chip>
+                        </template>
+ -->
+
+
+            <!-- <template v-slot:item.comments="{ item }">
+              <v-btn color="primary" @click="openCommentsDialog(item)">
+                Update Comments
+              </v-btn>
+            </template> -->
+
+            <!-- <template v-slot:item.pop="{ item }">
+              <v-btn color="primary" @click="openPopDialog(item)">
+                Update Pop Item
+              </v-btn>
+            </template> -->
+
+            <!-- Status Dialog -->
+            <!-- <v-dialog v-model="statusDialog" max-width="500px">
+              <v-card>
+                <v-card-title class="headline">Update Status</v-card-title>
+                <v-card-text>
+                  <v-select v-model="selectedItem.status" :items="statusOptions" label="Status"></v-select>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn text @click="statusDialog = false">Cancel</v-btn>
+                  <v-btn color="primary" @click="confirmStatusUpdate(selectedItem)">Save</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog> -->
+
+            <!-- Comments Dialog -->
+            <!-- <v-dialog v-model="commentsDialog" max-width="500px">
+              <v-card>
+                <v-card-title class="headline">Update Comments</v-card-title>
+                <v-card-text>
+                  <v-textarea v-model="selectedItem.comments" label="Comments"></v-textarea>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn text @click="commentsDialog = false">Cancel</v-btn>
+                  <v-btn color="primary" @click="confirmCommentsUpdate(selectedItem)">Save</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog> -->
+
+            <!-- Pop Item Dialog -->
+            <!-- <v-dialog v-model="popDialog" max-width="500px">
+              <v-card>
+                <v-card-title class="headline">Update Pop Item</v-card-title>
+                <v-card-text>
+                  <v-textarea v-model="selectedItem.pop" label="Pop Item"></v-textarea>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn text @click="popDialog = false">Cancel</v-btn>
+                  <v-btn color="primary" @click="confirmPopUpdate(selectedItem)">Save</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog> -->
+
 
 
 
@@ -351,17 +431,19 @@
 
 <script>
 export default {
-
-
   props: {
     user: Object,
     roles: Array,
     permissions: Array
   },
 
-
   data() {
     return {
+
+      statusDialog: false,
+        commentsDialog: false,
+        popDialog: false,
+        selectedItem: {},
       drawer: false,
       menu: false,
       accountModal: false,
@@ -419,18 +501,18 @@ export default {
         { name: 'HR' }
       ],
 
-      availableItems: [
-        "Airtime",
-        "Fuel - Riders",
-        "Welfare - Concerning welfare & kitchen expenses",
-        "Subscription",
-        "Rent",
-        "Stationery",
-        "Packaging materials",
-        "Fare facilitation",
-        "Asset purchase",
-        "Fuel - motor vehicle"
-      ],
+      // availableItems: [
+      //   "Airtime",
+      //   "Fuel - Riders",
+      //   "Welfare - Concerning welfare & kitchen expenses",
+      //   "Subscription",
+      //   "Rent",
+      //   "Stationery",
+      //   "Packaging materials",
+      //   "Fare facilitation",
+      //   "Asset purchase",
+      //   "Fuel - motor vehicle"
+      // ],
       // availableItem:"",
       requisitionItems: [
         {
@@ -465,11 +547,110 @@ export default {
     console.log("User:", this.user);
     console.log("Roles:", this.roles);
     console.log("Permissions:", this.permissions);
-    this.fetchStats();
+    // this.fetchStats();
     this.fetchRequisitions();
     this.fetchDepartments();
+    this.fetchAccounts();
   },
   methods: {
+
+
+    getStatusColor(status) {
+            switch (status) {
+                case 'Open':
+                    return 'blue';
+                case 'In Progress':
+                    return 'orange';
+                case 'Resolved':
+                    return 'green';
+                case 'Closed':
+                    return 'red';
+                default:
+                    return 'grey';
+            }
+        },
+    fetchAccounts(){
+      axios
+        .get(`/api/v1/accounts`)
+        .then(response => {
+          this.availableItems = response.data.accounts;
+        })
+        .catch(error => {
+          console.error("Error fetching accounts:", error);
+        });
+    },
+
+
+    saveAccount() {
+  axios
+    .post(`/api/v1/accounts`, { name: this.availableItem }) // Ensure you're sending the correct field
+    .then((response) => {
+      console.log(response);
+      this.$toastr.success("Account updated successfully!");
+      this.accountModal = false;
+    })
+    .catch((error) => {
+      console.error("Error updating account:", error);
+      this.$toastr.error("Failed to update account. Please try again.");
+    });
+},
+
+
+
+      openStatusDialog(item) {
+        this.selectedItem = item;
+        this.statusDialog = true;
+      },
+      openCommentsDialog(item) {
+        this.selectedItem = item;
+        this.commentsDialog = true;
+      },
+      openPopDialog(item) {
+        this.selectedItem = item;
+        this.popDialog = true;
+      },
+      confirmStatusUpdate(item) {
+        axios
+          .put(`/api/v1/update/${item.id}`, {
+            status: item.status,
+          })
+          .then((response) => {
+            console.log(response);
+            this.fetchRequisitions();
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+        this.statusDialog = false;
+      },
+      confirmCommentsUpdate(item) {
+        axios
+          .put(`/api/v1/update/${item.id}`, {
+            comments: item.comments,
+          })
+          .then((response) => {
+            console.log(response);
+            this.fetchRequisitions();
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+        this.commentsDialog = false;
+      },
+      confirmPopUpdate(item) {
+        axios
+          .put(`/api/v1/update/${item.id}`, {
+            pop: item.pop,
+          })
+          .then((response) => {
+            console.log(response);
+            this.fetchRequisitions();
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+        this.popDialog = false;
+      },
     closeAccountModal() {
       this.accountModal = false;
     },
@@ -478,7 +659,10 @@ export default {
       this.accountModal = true;
     },
     markAsPaid(item) {
-      axios.post(`/api/v1/mark-as-paid/${item.id}`)
+      axios.put(`/api/v1/update/${item.id}`,
+      {
+      paid: true // Ensure 'paid' is sent as true
+    })
         .then(response => {
           this.$toastr.success(response.data.message || 'Requisition marked as paid successfully');
           this.fetchRequisitions();
@@ -761,11 +945,12 @@ export default {
         .then((response) => {
           console.log('Requisition Saved:', response.data);
           this.$toastr.success('Requisition saved successfully!'); // Optional: Toast notification
+          this.fetchRequisitions(); // Fetch requisitions after saving
+
           this.requestModal = false; // Close the modal
           this.step = 1; // Reset stepper
           this.requisitionItems = []; // Clear requisition items
 
-          this.fetchRequisitions(); // Fetch requisitions after saving
 
         })
         // .catch((error) => {
@@ -802,10 +987,7 @@ export default {
     },
   },
   async created() {
-    console.log("User:", this.user);
-    console.log("Roles:", this.roles);
-    console.log("Permissions:", this.permissions);
-    await this.fetchStats();
+  
     await this.fetchRequisitions();
   },
   watch: {

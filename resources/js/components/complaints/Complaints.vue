@@ -57,6 +57,7 @@ export default {
                 { title: 'Attachment', value: 'attachment' },
                 { title: 'Addressee', value: 'addressed_to' },
                 { title: 'Date Closed', value: 'closed_date' },
+                {title:'Department',value:'department'},
                 { title: 'Actions', value: 'actions', sortable: false },
             ],
             editedIndex: -1,
@@ -68,8 +69,23 @@ export default {
     created() {
         this.fetchUsers();
         this.fetchComplaints();
+        this.fetchDepartments();
+        
     },
     methods: {
+
+
+
+        fetchDepartments() {
+      axios.get('/api/v1/departments')
+        .then(response => {
+          this.departments = response.data.departments;
+        })
+        .catch(error => {
+          console.error("Error fetching departments:", error);
+          this.$toastr.error("Failed to fetch departments");
+        });
+    },
         fetchUsers() {
             const apiUrl = `${this.base_url}api/v1/users`;
             axios.get(apiUrl)

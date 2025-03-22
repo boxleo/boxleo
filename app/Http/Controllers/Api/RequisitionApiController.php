@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\Requisition;
 use App\Models\RequisitionLog;
 use App\Models\User;
@@ -16,6 +17,52 @@ use Illuminate\Support\Facades\Log;
 class RequisitionApiController extends Controller
 {
     //
+
+    
+    public function fetchAccounts()
+    {
+        try {
+            $accounts = Account::all();
+
+            return response()->json([
+                'message' => 'Accounts fetched successfully',
+                'accounts' => $accounts
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to fetch accounts',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    
+
+
+    public function saveAccount(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        try {
+            $account = Account::updateOrCreate(
+                ['id' => $request->id ?? null],
+                ['name' => $request->name]
+            );
+
+            return response()->json([
+                'message' => 'Account saved successfully',
+                'account' => $account
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to save account',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 
     public function downloadRequisitionsReport(Request $request)
@@ -167,59 +214,84 @@ class RequisitionApiController extends Controller
 
     
 
-    public function updateRequisition(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.name' => 'required|string|max:255',
-            'items.*.description' => 'required|string|max:255',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_cost' => 'required|numeric|min:0',
-            'items.*.total_cost' => 'required|numeric|min:0',
-            'special_instructions' => 'nullable|string|max:500',
-            'status' => 'nullable|string|in:Pending,Manager Approved,COO Approved,HR Approved,Finance Manager Approved,Approved',
+    public function update(Request $request, $id)
+{
+    $validated = $request->validate([
+        'items' => 'sometimes|array',
+        'items.*.name' => 'nullable|string|max:255',
+        'items.*.description' => 'nullable|string|max:255',
+        'items.*.quantity' => 'nullable|integer|min:1',
+        'items.*.unit_cost' => 'nullable|numeric|min:0',
+        'items.*.total_cost' => 'nullable|numeric|min:0',
+        'special_instructions' => 'nullable|string|max:500',
+        'status' => 'nullable|string|in:Pending,Manager Approved,COO Approved,HR Approved,Finance Manager Approved,Approved,Paid',
+        'pop' => 'nullable|string',
+        'paid' => 'nullable|boolean',
+        'comment' => 'nullable|string',
+    ]);
+
+    try {
+        // Find the requisition
+        $requisition = Requisition::with('items')->findOrFail($id);
+
+        // Log the incoming request data for debugging
+        Log::info('Updating requisition', [
+            'requisition_id' => $requisition->id,
+            'user_id' => $requisition->user_id,
+            'request_data' => $validated,
         ]);
 
-        try {
-            // Find the requisition
-            $requisition = Requisition::with('items')->findOrFail($id);
+        // Update requisition details
+        $requisition->special_instructions = $validated['special_instructions'] ?? $requisition->special_instructions;
+        $requisition->status = $validated['status'] ?? $requisition->status;
+        $requisition->pop = $validated['pop'] ?? $requisition->pop;
+        $requisition->paid = $validated['paid'] ?? $requisition->paid;
+        $requisition->comment = $validated['comment'] ?? $requisition->comment;
 
-            // Update requisition details
-            $requisition->special_instructions = $validated['special_instructions'] ?? $requisition->special_instructions;
-            $requisition->status = $validated['status'] ?? $requisition->status;
-            $requisition->save();
+        // If the requisition is marked as paid, update the status to "Paid"
+        if ($validated['paid'] === true) {
+            $requisition->status = 'Paid';
+        }
 
-            // Update requisition items
+        $requisition->save();
+
+        // Update requisition items only if new items are provided
+        if (!empty($validated['items'])) {
             $requisition->items()->delete(); // Delete old items
+
             foreach ($validated['items'] as $item) {
                 $requisition->items()->create([
-                    'name' => $item['name'],
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_cost' => $item['unit_cost'],
-                    'total_cost' => $item['total_cost'],
+                    'name' => $item['name'] ?? null,
+                    'description' => $item['description'] ?? null,
+                    'quantity' => $item['quantity'] ?? null,
+                    'unit_cost' => $item['unit_cost'] ?? null,
+                    'total_cost' => $item['total_cost'] ?? null,
                 ]);
             }
-
-            // Log update
-            Log::info('Requisition updated successfully', [
-                'requisition_id' => $requisition->id,
-                'user_id' => $requisition->user_id,
-            ]);
-
-            return response()->json([
-                'message' => 'Requisition updated successfully',
-                'requisition' => $requisition->load('items'),
-            ], 200);
-        } catch (\Exception $e) {
-            // Log error
-            Log::error('Error updating requisition', [
-                'exception' => $e->getMessage(),
-            ]);
-
-            return response()->json(['error' => 'Failed to update requisition'], 500);
         }
+
+        // Log update success
+        Log::info('Requisition updated successfully', [
+            'requisition_id' => $requisition->id,
+            'user_id' => $requisition->user_id,
+        ]);
+
+        return response()->json([
+            'message' => 'Requisition updated successfully',
+            'requisition' => $requisition->load('items'),
+        ], 200);
+    } catch (\Exception $e) {
+        // Log error
+        Log::error('Error updating requisition', [
+            'exception' => $e->getMessage(),
+            'requisition_id' => $id,
+            'user_id' => $requisition->user_id ?? null,
+        ]);
+
+        return response()->json(['error' => 'Failed to update requisition'], 500);
     }
+}
+
 
 
     public function cancelRequisition(Request $request, $id)
@@ -350,119 +422,6 @@ class RequisitionApiController extends Controller
             ], 500);
         }
     }
-
-
-
-    // public function approveRequisition(Request $request, Requisition $requisition)
-    // {
-    //     try {
-    //         Log::info('Approve Requisition Request Received', [
-    //             'userId' => $request->input('user_id'),
-    //             'requisitionId' => $requisition->id,
-    //             'requestData' => $request->all(),
-    //         ]);
-
-    //         $userId = $request->input('user_id');
-    //         $approver = User::find($userId);
-
-    //         // find request 
-    //         // $requisition= Requisition::find($requisition->id);
-
-    //         $requisition = Requisition::find($request->input('requisition_id'));
-
-
-    //         //  dd($requisition);
-
-    //         if (!$approver) {
-    //             Log::warning('Approver not found', ['userId' => $userId]);
-    //             return response()->json(['error' => 'Approver not found'], 404);
-    //         }
-
-    //         $approverDepartment = $approver->department_id;
-    //         $requestDepartment = $requisition->department_id;
-
-    //         Log::info('Approver Retrieved', ['approver' => $approver]);
-    //         Log::info('Department Check', [
-    //             'approverDepartment' => $approverDepartment,
-    //             'requisitionDepartment' => $requestDepartment,
-    //         ]);
-
-    //         if ($approver->is_line_manager === 1 || ($approver->designation_id === 1 && $requisition->status === 'Pending')) {
-    //             if ($approverDepartment === $requestDepartment) {
-    //                 $requisition->status = 'Manager Approved';
-    //                 $requisition->is_line_manager = 1;
-    //                 Log::info('Requisition Status Updated', ['newStatus' => 'Manager Approved']);
-
-
-    //             } else {
-    //                 Log::warning('Department Mismatch');
-    //                 return response()->json(['error' => 'You can only approve requests in your department'], 403);
-    //             }
-    //         } elseif ($approver->is_coo === 1 && $requisition->status === 'Manager Approved') {
-    //             $requisition->status = 'COO Approved';
-    //             $requisition->is_coo = 1;
-    //             Log::info('Requisition Status Updated', ['newStatus' => 'COO Approved']);
-    //         } elseif ($approver->is_hr === 1 && $requisition->status === 'COO Approved') {
-    //             $requisition->status = 'HR Approved';
-    //             $requisition->is_hr = 1;
-
-    //             Log::info('Requisition Status Updated', ['newStatus' => 'HR Approved']);
-    //         } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'HR Approved') {
-    //             $requisition->status = 'Finance Manager Approved';
-    //             $requisition->is_finance_manager = 1;
-
-    //             Log::info('Requisition Status Updated', ['newStatus' => 'Finance Manager Approved']);
-    //         } elseif ($approver->is_cfo === 1 && $requisition->status === 'Finance Manager Approved') {
-    //             $requisition->status = 'Approved';
-    //             $requisition->is_cfo = 1;
-
-
-    //             // Send the Requisition Approved notification to the user 
-    //             // include finance team members  
-    //             //   
-    //             $requisition->user->notify(new RequisitionApprovedNotification($requisition));
-    //             Log::info('Requisition Approved Notification Sent');
-    //         } else {
-    //             Log::warning('Unauthorized Approval Attempt');
-    //             return response()->json(['error' => 'Unauthorized'], 403);
-    //         }
-
-
-
-    //         $requisition->comment = $request->input('comment'); 
-
-    //         $requisition->save();
-
-
-    //           // Log the saved comment
-    //     Log::info('Requisition Comment Saved', [
-    //         'requisition_id' => $requisition->id,
-    //         'comment' => $requisition->comment,
-    //     ]);
-
-
-
-    //         // Check if there's a next approver
-    //         if ($requisition->status !== 'Approved') {
-    //             $nextApprover = $this->getNextApprover($requisition);
-    //             if ($nextApprover) {
-    //                 $nextApprover->notify(new RequisitionCreatedNotification($requisition));
-    //                 Log::info('Next Approver Notified', ['nextApproverId' => $nextApprover->id]);
-    //             }
-    //         }
-
-    //         return response()->json(['message' => 'Requisition approved successfully'], 200);
-    //     } catch (\Exception $e) {
-    //         Log::error('Error Approving Requisition', [
-    //             'exceptionMessage' => $e->getMessage(),
-    //             'stackTrace' => $e->getTraceAsString(),
-    //         ]);
-
-    //         return response()->json(['error' => 'Failed to approve requisition'], 500);
-    //     }
-    // }
-
-
 
 
     public function approveRequisition(Request $request, Requisition $requisition)
@@ -700,8 +659,6 @@ class RequisitionApiController extends Controller
     }
 
 
-
-
     private function getNextApprover($requisition)
     {
         $nextRole = [];
@@ -738,8 +695,6 @@ class RequisitionApiController extends Controller
         return null;
     }
 
-
-
     protected function logRequisitionAction(Requisition $requisition, $action, $details = null, $userId = null)
     {
         Log::debug('logRequisitionAction invoked', [
@@ -773,8 +728,6 @@ class RequisitionApiController extends Controller
             ]);
         }
     }
-
-
 
     public function requisitionLogs($id)
     {
@@ -826,10 +779,6 @@ class RequisitionApiController extends Controller
             return response()->json(['error' => 'Failed to fetch requisition logs'], 500);
         }
     }
-
-
-
-
 
     public function generatePdf($id)
     {

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Mail\ComplaintNotification;
 use App\Http\Controllers\Controller;
 use App\Models\ComplaintLog;
+use App\Models\Department;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,7 +30,7 @@ class ComplaintApiController extends Controller
         $hod = $user->is_hod;
         $super_admin = $user->super_admin;
 
-        $query = Complaint::with(['user', 'addressedTo', 'followers']);
+        $query = Complaint::with(['user', 'addressedTo', 'followers','departments']);
 
         // Allow creators to see their complaints
         if (!($hr || $hod || $super_admin)) {
@@ -69,6 +70,9 @@ class ComplaintApiController extends Controller
             'created_by' => optional($complaint->user)->firstname . ' ' . optional($complaint->user)->lastname,
             'addressed_to' => $complaint->addressedTo->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
             'followers' => $complaint->followers->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
+
+            // given a complaint has department_ids, include department names
+            'departments' => $complaint->departments->map(fn($department) => $department->name)->toArray(),
         ]);
 
         return response()->json(['complaints' => $complaints], Response::HTTP_OK);
@@ -125,6 +129,36 @@ class ComplaintApiController extends Controller
             $complaint = Complaint::create($data);
             Log::info('Complaint created successfully.', ['complaint_id' => $complaint->id]);
 
+         
+            if ($request->filled('department_id')) {
+                // Ensure department_id is always treated as an array
+                $departmentIds = is_array($request->department_id) ? $request->department_id : [$request->department_id];
+            
+                $complaint->departments()->sync($departmentIds);
+            
+                Log::info('Department IDs synced.', [
+                    'complaint_id' => $complaint->id,
+                    'department_ids' => $departmentIds
+                ]);
+            
+                foreach ($departmentIds as $departmentId) {
+                    $department = Department::find($departmentId);
+                    if ($department && $department->manager_id) {
+                        $manager = User::find($department->manager_id);
+                        if ($manager) {
+
+                            $this->sendComplaintNotifications($request, $complaint);                          
+                              Log::info('Notification sent to department manager.', [
+                                'complaint_id' => $complaint->id,
+                                'department_id' => $departmentId,
+                                'manager_id' => $manager->id
+                            ]);
+                        }
+                    }
+                }
+            }
+            
+            
             // Attach Assigned Users (Role: addressed_to)
             if ($request->filled('addressed_to')) {
                 $complaint->users()->syncWithoutDetaching(
@@ -164,7 +198,7 @@ class ComplaintApiController extends Controller
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'category' => 'required|string|max:255',
-            'addressed_to' => 'required|array',
+            'addressed_to' => 'nullable|array',
             'addressed_to.*' => 'exists:users,id',
             'followers' => 'nullable|array',
             'followers.*' => 'exists:users,id',
@@ -176,6 +210,9 @@ class ComplaintApiController extends Controller
             'links' => 'nullable|array',
             'links.*' => 'string|url',
             'user_id' => 'required|exists:users,id',
+            'department_ids' => 'nullable|array',
+            'office_id' => 'nullable|exists:offices,id',
+             'unit_id' => 'nullable|exists:units,id',
 
         ]);
     }
@@ -197,6 +234,43 @@ class ComplaintApiController extends Controller
             }
             Log::info('Emails sent to followers.', ['users' => $request->followers]);
         }
+
+        if ($request->filled('department_id')) {
+            Log::info('Sending emails to department managers.', [
+                'has_department_id' => $request->filled('department_id'),
+                'department_ids' => $request->department_id
+            ]);
+        
+            // Get departments along with their managers
+            $departments = Department::with('managers','users')->whereIn('id', $request->department_id)->get();
+        
+            foreach ($departments as $department) {
+                if($department->name == 'Management'){
+                    // send email to all member of department management
+                    foreach ($department->users as $user) {
+                        Mail::to($user->email)->send(new ComplaintNotification($complaint, $user));
+                        Log::info('Email sent to department manager of management.', [
+                            'department_id' => $department->id,
+                            'user_id' => $user->id
+                        ]);
+                    }
+
+
+                }else 
+                foreach ($department->managers as $manager) { // Loop through managers
+                    Mail::to($manager->email)->send(new ComplaintNotification($complaint, $manager));
+                    Log::info('Email sent to department manager.', [
+                        'department_id' => $department->id,
+                        'manager_id' => $manager->id,
+                        'manager_email' => $manager->email
+                    ]);
+                }
+            }
+        
+            Log::info('Emails sent to department managers.', ['department_ids' => $request->department_id]);
+        }
+        
+        
     }
 
 
@@ -226,6 +300,8 @@ class ComplaintApiController extends Controller
             'links.*' => 'string|url',
             'comments' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:255',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id'
         ]);
 
         // Handle attachments - support both single and multiple files

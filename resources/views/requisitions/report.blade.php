@@ -103,6 +103,7 @@
         </table>
 
         <div class="footer">
+            
             <p>Grand Total: {{ number_format($grandTotal, 2) }}</p>
         </div>
     </div>

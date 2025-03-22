@@ -28,13 +28,17 @@ class Complaint extends Model
         'resolution',
         'links',
         'attachments',
+        'department_id',
+        'unit_id',
+        'office_id'
     ];
 
 
     // protected $casts = [
-    //     'attachments' => 'array',
-    //     'links' => 'array',
+     
+    //     'department_ids' => 'array',
     // ];
+    
 
     public function user(): BelongsTo
     {
@@ -63,5 +67,11 @@ class Complaint extends Model
 
     {
         return Carbon::parse($value)->format('Y-m-d H:i:s'); // Change format as needed
+    }
+
+
+
+    public function departments() {
+        return $this->belongsToMany(Department::class, 'complaint_department');
     }
 }
