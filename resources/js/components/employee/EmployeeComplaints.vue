@@ -276,7 +276,7 @@
                                 <v-text-field variant="outlined" v-model="editedVoice.subject" label="Subject"
                                     :rules="[v => !!v || 'Subject is required']"></v-text-field>
                             </v-col>
-                         \<v-col cols="12">
+                         <v-col cols="12">
   <v-select 
     variant="outlined" 
     v-model="editedVoice.category" 

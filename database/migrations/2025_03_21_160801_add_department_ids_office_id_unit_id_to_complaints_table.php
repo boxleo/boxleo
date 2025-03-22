@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('complaints', function (Blueprint $table) {
-            // $table->json('department_ids')->nullable()->after('user_id'); // Allow multiple departments
-            $table->foreignId('office_id')->nullable()->after('department_ids')->constrained('offices')->onDelete('set null');
-            $table->foreignId('unit_id')->nullable()->after('office_id')->constrained('units')->onDelete('set null');
+            $table->foreignId('office_id')->nullable()->constrained('offices')->onDelete('set null');
+            $table->foreignId('unit_id')->nullable()->constrained('units')->onDelete('set null');
         });
     }
 
@@ -24,7 +23,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('complaints', function (Blueprint $table) {
-            // $table->dropColumn('department_ids');
             $table->dropForeign(['office_id']);
             $table->dropColumn('office_id');
             $table->dropForeign(['unit_id']);
