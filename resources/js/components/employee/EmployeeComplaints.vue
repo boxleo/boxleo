@@ -116,7 +116,7 @@
         <v-dialog v-model="viewVoiceDialog" max-width="800px">
             <v-card>
                 <v-card-title class="d-flex justify-space-between align-center">
-                    <span class="headline font-weight-bold">Complaint Logs</span>
+                    <span class="headline font-weight-bold">Voice Logs</span>
                     <v-btn icon @click="viewVoiceDialog = false">
                         <v-icon>mdi-close</v-icon>
                     </v-btn>
@@ -137,7 +137,7 @@
                                         <v-chip small color="primary" class="mr-2">
                                             {{ log.action }}
                                         </v-chip>
-                                        <strong>Logged By:</strong> {{ log.user ? log.user.firstname : 'Unknown' }} |
+                                        <!-- <strong>Logged By:</strong> {{ log.user ? log.user.firstname : 'Unknown' }} | -->
                                         <strong>Complaint ID:</strong> {{ log.complaint_id }}
                                     </v-card-subtitle>
 
@@ -234,7 +234,7 @@
                     </v-container>
                     <v-container v-else class="text-center">
                         <v-alert type="info" outlined>
-                            No complaint logs found.
+                            No Voice logs found.
                         </v-alert>
                     </v-container>
                 </v-card-text>
