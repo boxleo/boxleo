@@ -7,12 +7,10 @@
           <v-card-title>Filter Requisitions</v-card-title>
           <v-card-text>
             <v-col class="mt-lg-5">
-              <v-autocomplete v-model="filterOptions.item_names" :items="availableItems" label="Item Name" item-title="name"
-                variant="outlined" multiple clearable />
+              <v-autocomplete v-model="filterOptions.item_names" :items="availableItems" label="Item Name"
+                item-title="name" variant="outlined" multiple clearable />
             </v-col>
 
-
-           
 
             <v-col>
               <v-autocomplete v-model="filterOptions.department_ids" :items="departments" label="Department"
@@ -125,84 +123,36 @@
               </v-list>
             </template>
 
+            <template v-slot:item.status="{ item }">
+              <v-chip :color="getStatusColor(item.status)" dark @click="openStatusDialog(item)">{{ item.status
+                }}</v-chip>
+            </template>
 
+                 <template v-slot:item.pop="{ item }">
+              <v-chip color="primary" @click="openPopDialog(item)">{{ item.pop
+                }}
+              
+              </v-chip>
+            </template>
 
-<!-- include slots to update status ,comments, pop-->
-        
-
-
-                        <template v-slot:item.status="{ item }">
-                            <v-chip :color="getStatusColor(item.status)" dark
-                                @click="openStatusDialog(item, 'status')">{{ item.status }}</v-chip>
+          <template v-slot:item.comment="{ item }">
+                            <v-chip color="primary"
+                                @click="openCommentsDialog(item)">{{ item.comment }}</v-chip>
                         </template>
-
-
-                        <!-- <template v-slot:item.comments="{ item }">
-                            <v-chip :color="getStatusColor(item.comments)" dark
-                                @click="openCommentsDialog(item, 'comments')">{{ item.comments }}</v-chip>
-                        </template>
- -->
-
-
-            <!-- <template v-slot:item.comments="{ item }">
-              <v-btn color="primary" @click="openCommentsDialog(item)">
-                Update Comments
-              </v-btn>
-            </template> -->
-
-            <!-- <template v-slot:item.pop="{ item }">
-              <v-btn color="primary" @click="openPopDialog(item)">
-                Update Pop Item
-              </v-btn>
-            </template> -->
-
-            <!-- Status Dialog -->
-            <!-- <v-dialog v-model="statusDialog" max-width="500px">
-              <v-card>
-                <v-card-title class="headline">Update Status</v-card-title>
-                <v-card-text>
-                  <v-select v-model="selectedItem.status" :items="statusOptions" label="Status"></v-select>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn text @click="statusDialog = false">Cancel</v-btn>
-                  <v-btn color="primary" @click="confirmStatusUpdate(selectedItem)">Save</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog> -->
-
-            <!-- Comments Dialog -->
-            <!-- <v-dialog v-model="commentsDialog" max-width="500px">
-              <v-card>
-                <v-card-title class="headline">Update Comments</v-card-title>
-                <v-card-text>
-                  <v-textarea v-model="selectedItem.comments" label="Comments"></v-textarea>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn text @click="commentsDialog = false">Cancel</v-btn>
-                  <v-btn color="primary" @click="confirmCommentsUpdate(selectedItem)">Save</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog> -->
-
-            <!-- Pop Item Dialog -->
-            <!-- <v-dialog v-model="popDialog" max-width="500px">
-              <v-card>
-                <v-card-title class="headline">Update Pop Item</v-card-title>
-                <v-card-text>
-                  <v-textarea v-model="selectedItem.pop" label="Pop Item"></v-textarea>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn text @click="popDialog = false">Cancel</v-btn>
-                  <v-btn color="primary" @click="confirmPopUpdate(selectedItem)">Save</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog> -->
-
-
-
 
             <template v-slot:item.actions="{ item }">
               <div class="action-icons">
+
+                <!-- edit requisition -->
+                <v-icon 
+  v-if="item.status == 'Pending' || item.status == 'Manager Approved' || item.status == 'HR Approved'" 
+  @click="openEditRequisitionModal(item)" 
+  color="primary"
+  style="margin-right: 8px;" 
+  title="Edit Requisition">
+  mdi-pencil
+</v-icon>
+
 
                 <v-icon @click="openLogsModal(item)" color="primary" style="margin-right: 8px;"
                   title="View Logs">mdi-history</v-icon>
@@ -230,6 +180,53 @@
             </template>
           </v-data-table>
         </v-card>
+
+
+
+                      <!-- Status Dialog -->
+            <v-dialog v-model="statusDialog" max-width="500px">
+              <v-card>
+                <v-card-title class="headline">Update Status</v-card-title>
+                <v-card-text>
+                  <v-autocomplete v-model="selectedItem.status" :items="statusOptions"  label="Status"
+                item-value="name" item-title="name" variant="outlined" clearable>
+              </v-autocomplete>                </v-card-text>
+                <v-card-actions>
+                  <v-btn text @click="statusDialog = false">Cancel</v-btn>
+                  <v-btn color="primary" @click="confirmStatusUpdate(selectedItem)">Save</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+    
+            <!-- Comments Dialog -->
+            <v-dialog v-model="commentsDialog" max-width="500px">
+              <v-card>
+                <v-card-title class="headline">Update Comments</v-card-title>
+                <v-card-text>
+                  <v-textarea v-model="selectedItem.comment" label="Comments"></v-textarea>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn text @click="commentsDialog = false">Cancel</v-btn>
+                  <v-btn color="primary" @click="confirmCommentsUpdate(selectedItem)">Save</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+
+            <!-- Pop Item Dialog -->
+            <v-dialog v-model="popDialog" max-width="500px">
+              <v-card>
+                <v-card-title class="headline">POP </v-card-title>
+                <v-card-text>
+                  <v-textarea v-model="selectedItem.pop" label="MPESA CODE"></v-textarea>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn text @click="popDialog = false">Cancel</v-btn>
+                  <v-btn color="primary" @click="confirmPopUpdate(selectedItem)">Save</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+
+
 
         <!-- openAccountModal -->
         <v-dialog v-model="accountModal" max-width="600px" persistent>
@@ -439,13 +436,15 @@ export default {
     return {
 
       statusDialog: false,
-        commentsDialog: false,
-        popDialog: false,
-        selectedItem: {},
+      commentsDialog: false,
+      EditRequisitionModa:false,
+      popDialog: false,
+      selectedItem: {},
       drawer: false,
       menu: false,
       accountModal: false,
       availableItem: null,
+      
 
       // Filter options
       filterOptions: {
@@ -552,22 +551,39 @@ export default {
   },
   methods: {
 
+    openEditRequisitionModal(item) {
+      this.selectedItem = item;
+      this.requestModal = true;
+    },
 
     getStatusColor(status) {
-            switch (status) {
-                case 'Open':
-                    return 'blue';
-                case 'In Progress':
-                    return 'orange';
-                case 'Resolved':
-                    return 'green';
-                case 'Closed':
-                    return 'red';
-                default:
-                    return 'grey';
-            }
-        },
-    fetchAccounts(){
+      switch (status) {
+        case 'Pending':
+          return 'blue';
+        case 'Approved':
+          return 'orange';
+        case 'Manager Approved':
+          return 'light green';
+        case 'Closed':
+          return 'red';
+        case 'HR Approved':
+        return 'purple';  
+
+        case 'Finance Manager Approved':
+          return 'indigo';
+
+        case 'Cancelled':
+          return 'red';
+         case 'COO Aproved':
+         return 'grey' 
+
+        case 'Paid':
+          return 'green';
+        default:
+          return 'grey';
+      }
+    },
+    fetchAccounts() {
       axios
         .get(`/api/v1/accounts`)
         .then(response => {
@@ -580,75 +596,82 @@ export default {
 
 
     saveAccount() {
+      axios
+        .post(`/api/v1/accounts`, { name: this.availableItem }) // Ensure you're sending the correct field
+        .then((response) => {
+          console.log(response);
+          this.$toastr.success("Account updated successfully!");
+          this.accountModal = false;
+        })
+        .catch((error) => {
+          console.error("Error updating account:", error);
+          this.$toastr.error("Failed to update account. Please try again.");
+        });
+    },
+
+
+
+    openStatusDialog(item) {
+      this.selectedItem = item;
+      this.statusDialog = true;
+    },
+    openCommentsDialog(item) {
+      this.selectedItem = item;
+      this.commentsDialog = true;
+    },
+    openPopDialog(item) {
+      this.selectedItem = item;
+      this.popDialog = true;
+    },
+    confirmStatusUpdate(item) {
+      axios
+        .put(`/api/v1/update/${item.id}`, {
+          status: item.status,
+        })
+        .then((response) => {
+          console.log(response);
+          this.fetchRequisitions();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+      this.statusDialog = false;
+    },
+    confirmCommentsUpdate(item) {
+      axios
+        .put(`/api/v1/update/${item.id}`, {
+          comment: item.comment,
+        })
+        .then((response) => {
+          console.log(response);
+          this.fetchRequisitions();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+      this.commentsDialog = false;
+    },
+    confirmPopUpdate(item) {
   axios
-    .post(`/api/v1/accounts`, { name: this.availableItem }) // Ensure you're sending the correct field
+    .put(`/api/v1/update/${item.id}`, {
+      pop: item.pop,
+    })
     .then((response) => {
       console.log(response);
-      this.$toastr.success("Account updated successfully!");
-      this.accountModal = false;
+      this.$toastr.success("Requisition updated successfully"); 
+      this.fetchRequisitions(); 
+      this.popDialog = false; 
     })
     .catch((error) => {
-      console.error("Error updating account:", error);
-      this.$toastr.error("Failed to update account. Please try again.");
+      if (error.response && error.response.data.error === "A requisition with the same POP already exists.") {
+        this.$toastr.error("A requisition with the same POP already exists.");
+      } else {
+        this.$toastr.error("Failed to update requisition. Please try again.");
+        console.log(error);
+      }
     });
 },
 
-
-
-      openStatusDialog(item) {
-        this.selectedItem = item;
-        this.statusDialog = true;
-      },
-      openCommentsDialog(item) {
-        this.selectedItem = item;
-        this.commentsDialog = true;
-      },
-      openPopDialog(item) {
-        this.selectedItem = item;
-        this.popDialog = true;
-      },
-      confirmStatusUpdate(item) {
-        axios
-          .put(`/api/v1/update/${item.id}`, {
-            status: item.status,
-          })
-          .then((response) => {
-            console.log(response);
-            this.fetchRequisitions();
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-        this.statusDialog = false;
-      },
-      confirmCommentsUpdate(item) {
-        axios
-          .put(`/api/v1/update/${item.id}`, {
-            comments: item.comments,
-          })
-          .then((response) => {
-            console.log(response);
-            this.fetchRequisitions();
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-        this.commentsDialog = false;
-      },
-      confirmPopUpdate(item) {
-        axios
-          .put(`/api/v1/update/${item.id}`, {
-            pop: item.pop,
-          })
-          .then((response) => {
-            console.log(response);
-            this.fetchRequisitions();
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-        this.popDialog = false;
-      },
     closeAccountModal() {
       this.accountModal = false;
     },
@@ -658,9 +681,9 @@ export default {
     },
     markAsPaid(item) {
       axios.put(`/api/v1/update/${item.id}`,
-      {
-      paid: true // Ensure 'paid' is sent as true
-    })
+        {
+          paid: true // Ensure 'paid' is sent as true
+        })
         .then(response => {
           this.$toastr.success(response.data.message || 'Requisition marked as paid successfully');
           this.fetchRequisitions();
@@ -985,7 +1008,7 @@ export default {
     },
   },
   async created() {
-  
+
     await this.fetchRequisitions();
   },
   watch: {

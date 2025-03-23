@@ -245,13 +245,32 @@ class RequisitionApiController extends Controller
         $requisition->special_instructions = $validated['special_instructions'] ?? $requisition->special_instructions;
         $requisition->status = $validated['status'] ?? $requisition->status;
         $requisition->pop = $validated['pop'] ?? $requisition->pop;
-        $requisition->paid = $validated['paid'] ?? $requisition->paid;
+        if (array_key_exists('pop', $validated)) {
+            $existingRequisition = Requisition::where('pop', $validated['pop'])->first();
+            if ($existingRequisition) {
+                return response()->json([
+                    'error' => 'A requisition with the same POP already exists.',
+                ], 400);
+            }
+        }
+
+
+
+// Check if 'paid' exists in the validated data before accessing it
+
+     if (array_key_exists('paid', $validated)) {
+    $requisition->paid = $validated['paid'];
+    // If the requisition is marked as paid, update the status to "Paid"
+    if ($validated['paid'] === true) {
+        $requisition->status = 'Paid';
+      }
+      }
         $requisition->comment = $validated['comment'] ?? $requisition->comment;
 
         // If the requisition is marked as paid, update the status to "Paid"
-        if ($validated['paid'] === true) {
-            $requisition->status = 'Paid';
-        }
+        // if ($validated['paid'] === true) {
+        //     $requisition->status = 'Paid';
+        // }
 
         $requisition->save();
 
@@ -276,10 +295,15 @@ class RequisitionApiController extends Controller
             'user_id' => $requisition->user_id,
         ]);
 
+           // Log creation action
+           $this->logRequisitionAction($requisition, 'updated', json_encode($request->all()), $requisition->user_id);
+
         return response()->json([
             'message' => 'Requisition updated successfully',
             'requisition' => $requisition->load('items'),
         ], 200);
+
+     
     } catch (\Exception $e) {
         // Log error
         Log::error('Error updating requisition', [
@@ -317,6 +341,12 @@ class RequisitionApiController extends Controller
                 'requisition_id' => $requisition->id,
             ]);
 
+
+            Log::info('Cancel Requisition Request Received', [
+                'requisition_id' => $requisition->id,
+                'user_id' => $requisition->user_id,
+                'request_data' => $request->all(),
+            ]);
 
             $this->logRequisitionAction($requisition, 'Canceled', json_encode($request->all()), $requisition->user_id);
 
@@ -792,8 +822,6 @@ class RequisitionApiController extends Controller
             ])->find($id);
 
             // return response()->json($requisition);
-
-
 
             if (!$requisition) {
                 return response()->json([

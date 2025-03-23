@@ -69,12 +69,13 @@
                     <th>Status</th>
                     <th>Special Instructions</th>
                     <th>Department</th>
+                    <th>Payment Code</th>
                     <th>Item Name</th>
                     <th>Description</th>
                     <th>Quantity</th>
                     <th>Unit Cost</th>
                     <th>Total Cost</th>
-                    <th>Payment Code</th>
+                  
                 </tr>
             </thead>
             <tbody>
@@ -90,12 +91,13 @@
                         <td>{{ $requisition['status'] }}</td>
                         <td>{{ $requisition['special_instructions'] }}</td>
                         <td>{{ $requisition['user']['department']['name'] }}</td>
+                        <td>{{ $requisition['pop']}}</td>
+
                         <td>{{ $item['name'] }}</td>
                         <td>{{ $item['description'] }}</td>
                         <td>{{ $item['quantity'] }}</td>
                         <td>{{ number_format($item['unit_cost'], 2) }}</td>
                         <td>{{ number_format($item['total_cost'], 2) }}</td>
-                        <td>{{ $item['payment_code'] ?? 'N/A' }}</td>
                     </tr>
                     @endforeach
                 @endforeach
