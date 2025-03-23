@@ -228,6 +228,8 @@ class RequisitionApiController extends Controller
         'pop' => 'nullable|string',
         'paid' => 'nullable|boolean',
         'comment' => 'nullable|string',
+        'approver_type' => 'nullable',
+
     ]);
 
     try {
@@ -245,6 +247,7 @@ class RequisitionApiController extends Controller
         $requisition->special_instructions = $validated['special_instructions'] ?? $requisition->special_instructions;
         $requisition->status = $validated['status'] ?? $requisition->status;
         $requisition->pop = $validated['pop'] ?? $requisition->pop;
+        $requisition->approver_type = $validated['approver_type'] ?? $requisition->approver_type;
         if (array_key_exists('pop', $validated)) {
             $existingRequisition = Requisition::where('pop', $validated['pop'])->first();
             if ($existingRequisition) {
@@ -253,25 +256,18 @@ class RequisitionApiController extends Controller
                 ], 400);
             }
         }
-
-
-
 // Check if 'paid' exists in the validated data before accessing it
-
      if (array_key_exists('paid', $validated)) {
     $requisition->paid = $validated['paid'];
     // If the requisition is marked as paid, update the status to "Paid"
     if ($validated['paid'] === true) {
         $requisition->status = 'Paid';
+
       }
       }
         $requisition->comment = $validated['comment'] ?? $requisition->comment;
 
-        // If the requisition is marked as paid, update the status to "Paid"
-        // if ($validated['paid'] === true) {
-        //     $requisition->status = 'Paid';
-        // }
-
+        
         $requisition->save();
 
         // Update requisition items only if new items are provided

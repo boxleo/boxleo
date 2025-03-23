@@ -357,7 +357,7 @@
                     <tr v-for="item in requisitionItems" :key="item.id">
                       <td>
                         <!-- <v-text-field v-model="item.name" item-title="name" density="compact" hide-details /> -->
-                        <v-select v-model="item.name" :items="availableItems" item-title="name" density="compact"
+                        <v-autocomplete v-model="item.name" :items="availableItems" item-title="name" density="compact"
                           hide-details />
 
                       </td>
@@ -406,7 +406,11 @@
 
               <template v-slot:item.3>
                 <p>Review your requisition and click 'Submit' to finalize.</p>
-                <v-btn @click="saveRequisition" color="success">Submit</v-btn>
+                <!-- <v-btn @click="saveRequisition" color="success">Submit</v-btn> -->
+
+                <v-btn @click="saveRequisition" color="success">
+                     {{ selectedItem ? "Update" : "Submit" }}
+                          </v-btn>
 
               </template>
 
@@ -550,11 +554,22 @@ export default {
     this.fetchAccounts();
   },
   methods: {
-
     openEditRequisitionModal(item) {
-      this.selectedItem = item;
+  this.selectedItem = item;
+  axios
+    .get(`/api/v1/requisition/${item.id}`)
+    .then((response) => {
+      const requisition = response.data.data;
+      this.requisitionItems = requisition.items || [];
+      this.specialInstructions = requisition.special_instructions || "";
+      this.approverType = requisition.approver_type || null;
       this.requestModal = true;
-    },
+    })
+    .catch((error) => {
+      console.error("Error fetching requisition:", error);
+    });
+}
+,
 
     getStatusColor(status) {
       switch (status) {
@@ -941,56 +956,103 @@ export default {
     removeItem(item) {
       this.requisitionItems = this.requisitionItems.filter((i) => i !== item);
     },
+    // saveRequisition() {
+
+
+    //   const requisitionData = {
+    //     items: this.requisitionItems.map((item) => ({
+    //       name: item.name,
+    //       description: item.description,
+    //       quantity: item.quantity,
+    //       unit_cost: item.unit_cost,
+    //       total_cost: item.total_cost, // Use the dynamically updated value
+    //     })),
+    //     user_id: this.user.id,
+    //     special_instructions: this.specialInstructions,
+    //     approver_type: this.approverType,
+
+    //   };
+
+    //   console.log('requisitionData', requisitionData);
+
+    //   // Make the POST request using Axios
+    //   axios
+    //     .post('/api/v1/requisitions', requisitionData)
+    //     .then((response) => {
+    //       console.log('Requisition Saved:', response.data);
+    //       this.$toastr.success('Requisition saved successfully!'); // Optional: Toast notification
+    //       this.fetchRequisitions(); // Fetch requisitions after saving
+
+    //       this.requestModal = false; // Close the modal
+    //       this.step = 1; // Reset stepper
+    //       this.requisitionItems = []; // Clear requisition items
+
+
+    //     })
+    //     // .catch((error) => {
+    //     //   console.error('Error saving requisition:', error.response?.data || error.message);
+    //     //   this.$toastr.error('Failed to save requisition. Please try again.'); // Optional: Error notification
+    //     // });
+    //     .catch((error) => {
+    //       const errorMessage = error.response?.data?.message || "An unexpected error occurred.";
+    //       console.error("Error saving requisition:", errorMessage, error.response?.data);
+    //       this.$toastr.error(errorMessage);
+    //     });
+    // },
+
+
     saveRequisition() {
+  const payload = {
+    items: this.requisitionItems,
+    special_instructions: this.specialInstructions,
+    approver_type: this.approverType,
+   user_id: this.user.id,
 
+  };
 
-      const requisitionData = {
-        items: this.requisitionItems.map((item) => ({
-          name: item.name,
-          description: item.description,
-          quantity: item.quantity,
-          unit_cost: item.unit_cost,
-          total_cost: item.total_cost, // Use the dynamically updated value
-        })),
-        user_id: this.user.id,
-        special_instructions: this.specialInstructions,
-        approver_type: this.approverType,
-
-      };
-
-      console.log('requisitionData', requisitionData);
-
-      // Make the POST request using Axios
-      axios
-        .post('/api/v1/requisitions', requisitionData)
-        .then((response) => {
-          console.log('Requisition Saved:', response.data);
-          this.$toastr.success('Requisition saved successfully!'); // Optional: Toast notification
-          this.fetchRequisitions(); // Fetch requisitions after saving
-
-          this.requestModal = false; // Close the modal
-          this.step = 1; // Reset stepper
-          this.requisitionItems = []; // Clear requisition items
-
-
-        })
-        // .catch((error) => {
-        //   console.error('Error saving requisition:', error.response?.data || error.message);
-        //   this.$toastr.error('Failed to save requisition. Please try again.'); // Optional: Error notification
-        // });
-        .catch((error) => {
-          const errorMessage = error.response?.data?.message || "An unexpected error occurred.";
-          console.error("Error saving requisition:", errorMessage, error.response?.data);
-          this.$toastr.error(errorMessage);
-        });
-    },
+  if (this.selectedItem) {
+    // Updating requisition
+    axios
+      .put(`/api/v1/update/${this.selectedItem.id}`, payload)
+      .then((response) => {
+        this.$toastr.success("Requisition updated successfully");
+        this.requestModal = false;
+        this.fetchRequisitions(); // Refresh list
+      })
+      .catch((error) => {
+        console.error("Error updating requisition:", error);
+      });
+  } else {
+    // Creating requisition
+    axios
+      .post("/api/v1/requisitions", payload)
+      .then((response) => {
+        this.$toastr.success("Requisition created successfully");
+        this.requestModal = false;
+        this.fetchRequisitions(); // Refresh list
+      })
+      .catch((error) => {
+        console.error("Error creating requisition:", error);
+      });
+  }
+}
+,
     openRequestModal() {
       this.requestModal = true;
     },
+    // closeRequestModal() {
+    //   this.requestModal = false;
+    //   this.step = 1; // Reset stepper
+    // },
+
     closeRequestModal() {
-      this.requestModal = false;
-      this.step = 1; // Reset stepper
-    },
+  this.requestModal = false;
+  this.selectedItem = null;
+  this.requisitionItems = [];
+  this.specialInstructions = "";
+  this.approverType = null;
+}
+,
     filterAllRequisitions() {
       this.fetchRequisitions();
     },
