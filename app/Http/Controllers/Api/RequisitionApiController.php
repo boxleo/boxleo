@@ -13,6 +13,8 @@ use App\Notifications\RequisitionCreatedNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+
 
 class RequisitionApiController extends Controller
 {
@@ -135,12 +137,32 @@ class RequisitionApiController extends Controller
             $query->whereIn('status', $request->statuses);
         }
 
-        // Filter by Date Created (Assuming `created_at` is the column)
         if ($request->has('date_created') && !empty($request->date_created)) {
             Log::info('Filtering by Date Created', ['date_created' => $request->date_created]);
-            $dates = explode(' - ', $request->date_created); // Split the range
+            $dates = explode(' - ', $request->date_created);
+        
             if (count($dates) === 2) {
-                $query->whereBetween('created_at', [$dates[0], $dates[1]]);
+                // Convert to Carbon instances and ensure correct format
+                $startDate = Carbon::parse($dates[0])->startOfDay();
+                $endDate = Carbon::parse($dates[1])->endOfDay();
+        
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } else {
+                $query->whereDate('created_at', Carbon::parse($request->date_created));
+            }
+        }
+        
+        if ($request->has('date_paid') && !empty($request->date_paid)) {
+            Log::info('Filtering by Date Paid', ['date_paid' => $request->date_paid]);
+            $dates = explode(' - ', $request->date_paid);
+        
+            if (count($dates) === 2) {
+                $startDate = Carbon::parse($dates[0])->startOfDay();
+                $endDate = Carbon::parse($dates[1])->endOfDay();
+        
+                $query->whereBetween('paid_at', [$startDate, $endDate]);
+            } else {
+                $query->whereDate('paid_at', Carbon::parse($request->date_paid));
             }
         }
 
@@ -260,6 +282,7 @@ class RequisitionApiController extends Controller
     // If the requisition is marked as paid, update the status to "Paid"
     if ($validated['paid'] === true) {
         $requisition->status = 'Paid';
+        $requisition->paid_at = now();
 
       }
       }

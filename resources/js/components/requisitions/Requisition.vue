@@ -22,17 +22,30 @@
               </v-autocomplete>
             </v-col>
             <v-col>
-              <v-col>
-                <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar"
-                  clearable range></v-date-picker>
-              </v-col>
 
-            </v-col>
-            <v-col>
+
+              <v-col>
               <v-autocomplete v-model="filterOptions.approver_types" :items="approverTypeOptions"
                 label="Type of Approval" item-value="name" item-title="name" variant="outlined" multiple clearable>
               </v-autocomplete>
             </v-col>
+              <v-col>
+                <!-- <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar"
+                  clearable range></v-date-picker> -->
+
+                <v-text-field v-model="filterOptions.date_created" type="date" label="Date Created" clearable
+                  variant="outlined">
+                </v-text-field> 
+              </v-col>
+
+              <!-- input type date  -->
+            <v-col>
+              <v-text-field v-model="filterOptions.date_paid" type="date" label="Date Paid" clearable variant="outlined">
+              </v-text-field>
+            </v-col>
+
+            </v-col>
+            
             <v-col class="d-flex justify-end">
               <v-btn color="dark" @click.prevent="filterRequisitions">
                 <v-icon color="light">mdi-filter</v-icon>
@@ -462,6 +475,7 @@ export default {
         statuses: [],
         date_created: null,
         approver_types: [],
+        date_paid: null,
 
       },
       modalWidth: 1500,

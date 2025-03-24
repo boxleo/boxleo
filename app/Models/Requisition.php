@@ -35,8 +35,10 @@ class Requisition extends Model
         'comment',
         'approver_type',
         'paid',
+        'paid_at',
         'pop',
         'attachments'
+
 
 
     ];
