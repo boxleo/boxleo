@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Log;
 class RequisitionApiController extends Controller
 {
     //
-
     
     public function fetchAccounts()
     {
@@ -35,8 +34,6 @@ class RequisitionApiController extends Controller
             ], 500);
         }
     }
-
-    
 
 
     public function saveAccount(Request $request)
@@ -92,6 +89,7 @@ class RequisitionApiController extends Controller
     {
         $requisitions = Requisition::with('items', 'user.department')
             ->withSum('items', 'total_cost')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json(['requisitions' => $requisitions]);
@@ -723,6 +721,21 @@ class RequisitionApiController extends Controller
 
     protected function logRequisitionAction(Requisition $requisition, $action, $details = null, $userId = null)
     {
+
+
+        $changes = $requisition->getChanges(); // Get changed attributes
+        $original = $requisition->getOriginal(); // Get original values
+    
+        $formattedChanges = [];
+        foreach ($changes as $key => $newValue) {
+            $oldValue = $original[$key] ?? null;
+            if ($oldValue !== $newValue) {
+                $formattedChanges[] = "{$key}: '{$oldValue}' → '{$newValue}'";
+            }
+        }
+    
+        $details = implode(', ', $formattedChanges) ?: 'No changes detected';
+    
         Log::debug('logRequisitionAction invoked', [
             'requisition_id' => $requisition->id,
             'user_id' => $userId,

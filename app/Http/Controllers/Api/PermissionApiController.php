@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Permission;
 
+
 class PermissionApiController extends Controller
 {
 
@@ -188,13 +189,19 @@ class PermissionApiController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:permissions,name',
+            'guard_name' => 'required|string', // Ensure guard_name is included
+
+            
         ]);
 
-        $permission = Permission::create(['name' => $validated['name']]);
+        $permission = Permission::create(['name' => $validated['name'],
+        'guard_name' => $validated['guard_name'], 
+    ]);
 
         return response()->json([
             'message' => 'Permission created successfully',
             'permission' => $permission->name,
+            'guard_name' => $permission->guard_name
         ]);
     }
 
@@ -240,18 +247,61 @@ class PermissionApiController extends Controller
     /**
      * Remove the specified permission from storage.
      */
-    public function destroyPermission($permissionId)
-    {
-        // Find the permission by ID
-        $permission = Permission::findById($permissionId);
+//     public function destroyPermission($permissionId)
+//     {
+//         // Find the permission by ID
+//         $permission = Permission::findOrFail($permissionId);
 
-        if (!$permission) {
-            return response()->json(['error' => 'Permission not found'], 404);
-        }
+//         // return response()->json($permission);
+
+//         // 	
+// // id	40
+// // name	"update requisition status"
+// // guard_name	"sanctum"
+// // roles	[]
+
+//         if (!$permission) {
+//             return response()->json(['error' => 'Permission not found'], 404);
+//         }
+
+//         // Delete the permission
+//         $permission->delete();
+
+//         return response()->json(['message' => 'Permission deleted successfully']);
+//     }
+
+
+public function destroyPermission($permissionId)
+{
+    try {
+        Log::info("Attempting to delete permission", ['permission_id' => $permissionId]);
+
+        // Find the permission by ID
+        $permission = Permission::findOrFail($permissionId);
+
+        Log::info("Permission found", [
+            'id' => $permission->id,
+            'name' => $permission->name,
+            'guard_name' => $permission->guard_name,
+        ]);
 
         // Delete the permission
         $permission->delete();
 
+        Log::info("Permission deleted successfully", ['permission_id' => $permissionId]);
+
         return response()->json(['message' => 'Permission deleted successfully']);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        Log::warning("Permission not found", ['permission_id' => $permissionId]);
+
+        return response()->json(['error' => 'Permission not found'], 404);
+    } catch (\Exception $e) {
+        Log::error("Error deleting permission", [
+            'exception' => $e->getMessage(),
+            'permission_id' => $permissionId
+        ]);
+
+        return response()->json(['error' => 'An error occurred while deleting the permission'], 500);
     }
+}
 }

@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
   // Route::post('v1/roles', [RoleApiController::class, 'store']);
   // storePermission
   Route::post('/v1/permissions' ,[PermissionApiController::class, 'storePermission']);
+  Route::delete('v1/permissions/{permissionId}', [PermissionApiController::class, 'destroyPermission']);
 
   //tasks
   Route::get('v1/tasks', [TaskApiController::class, 'index']);

@@ -75,8 +75,8 @@
 
 
                         <template v-slot:item.actions="{ item }">
-                            <!-- <v-icon small color="primary" @click="viewVoice(item.id)"
-                                title="View Voice">mdi-account-search</v-icon> -->
+                            <v-icon  v-if="permissions.includes('view voice logs')" small color="primary" @click="viewVoice(item.id)"
+                                title="View Voice" >mdi-account-search</v-icon>
                             <v-icon small color="success" @click="editVoice(item)"
                                 title="Edit Voice">mdi-pencil</v-icon>
                             <v-icon small color="red" @click="openconfirmDeleteDialog(item)"

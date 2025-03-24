@@ -73,7 +73,7 @@
               New Request
             </v-btn>
 
-            <v-btn @click="openAccountModal" color="primary" outlined class="mx-1">
+            <v-btn v-if="permissions.includes('add account')" @click="openAccountModal" color="primary" outlined class="mx-1">
               <v-icon>mdi-account-plus</v-icon>
               Add Account
             </v-btn>
@@ -159,7 +159,7 @@
                 <v-icon @click="viewRequisition(item)" color="info" title="View Requisition">
                   mdi-eye-check-outline
                 </v-icon>
-                <v-icon v-if="roles.includes('admin')" @click="OpenapproveRequisitionModal(item)" color="success"
+                <v-icon v-if="permissions.includes('approve requisition')" @click="OpenapproveRequisitionModal(item)" color="success"
                   title="Approve Requisition">
                   mdi-thumb-up-outline
                 </v-icon>
@@ -172,7 +172,7 @@
                   mdi-delete
                 </v-icon>
 
-                <v-icon @click="markAsPaid(item)" color="blue" title="Mark as Paid">
+                <v-icon v-if="permissions.includes('mark as paid')" @click="markAsPaid(item)" color="blue" title="Mark as Paid">
                   mdi-cash-check
                 </v-icon>
 
@@ -274,6 +274,9 @@
                         <v-icon color="secondary" class="mr-1">mdi-check-circle-outline</v-icon>
                         <strong>Action:</strong> {{ log.action }}
                       </v-list-item-title>
+
+
+                      
                       <v-list-item-subtitle>
                         <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
                         <strong>Time:</strong> {{ log.time }}
@@ -406,11 +409,11 @@
 
               <template v-slot:item.3>
                 <p>Review your requisition and click 'Submit' to finalize.</p>
-                <!-- <v-btn @click="saveRequisition" color="success">Submit</v-btn> -->
+                <v-btn @click="saveRequisition" color="success">Save</v-btn>
 
-                <v-btn @click="saveRequisition" color="success">
+                <!-- <v-btn @click="saveRequisition" color="success">
                      {{ selectedItem ? "Update" : "Submit" }}
-                          </v-btn>
+                          </v-btn> -->
 
               </template>
 
@@ -438,6 +441,8 @@ export default {
 
   data() {
     return {
+
+      // selectedItem: null,
 
       statusDialog: false,
       commentsDialog: false,
@@ -611,6 +616,7 @@ export default {
 
 
     saveAccount() {
+
       axios
         .post(`/api/v1/accounts`, { name: this.availableItem }) // Ensure you're sending the correct field
         .then((response) => {
@@ -774,18 +780,7 @@ export default {
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
     },
-    // safeParseDetails(details) {
-    //   try {
-    //     // Attempt to parse the details if it's valid JSON
-    //     return JSON.parse(details);
-    //   } catch (e) {
-    //     console.warn('Error parsing details:', e.message, 'Details:', details);
-    //     // Return the details as a string if parsing fails
-    //     return { rawDetails: details };
-    //   }
-    // },
-
-    closelogsModal() {
+       closelogsModal() {
       this.logsModal = false
     },
     openLogsModal(requisitionId) {
@@ -956,52 +951,11 @@ export default {
     removeItem(item) {
       this.requisitionItems = this.requisitionItems.filter((i) => i !== item);
     },
-    // saveRequisition() {
-
-
-    //   const requisitionData = {
-    //     items: this.requisitionItems.map((item) => ({
-    //       name: item.name,
-    //       description: item.description,
-    //       quantity: item.quantity,
-    //       unit_cost: item.unit_cost,
-    //       total_cost: item.total_cost, // Use the dynamically updated value
-    //     })),
-    //     user_id: this.user.id,
-    //     special_instructions: this.specialInstructions,
-    //     approver_type: this.approverType,
-
-    //   };
-
-    //   console.log('requisitionData', requisitionData);
-
-    //   // Make the POST request using Axios
-    //   axios
-    //     .post('/api/v1/requisitions', requisitionData)
-    //     .then((response) => {
-    //       console.log('Requisition Saved:', response.data);
-    //       this.$toastr.success('Requisition saved successfully!'); // Optional: Toast notification
-    //       this.fetchRequisitions(); // Fetch requisitions after saving
-
-    //       this.requestModal = false; // Close the modal
-    //       this.step = 1; // Reset stepper
-    //       this.requisitionItems = []; // Clear requisition items
-
-
-    //     })
-    //     // .catch((error) => {
-    //     //   console.error('Error saving requisition:', error.response?.data || error.message);
-    //     //   this.$toastr.error('Failed to save requisition. Please try again.'); // Optional: Error notification
-    //     // });
-    //     .catch((error) => {
-    //       const errorMessage = error.response?.data?.message || "An unexpected error occurred.";
-    //       console.error("Error saving requisition:", errorMessage, error.response?.data);
-    //       this.$toastr.error(errorMessage);
-    //     });
-    // },
-
+  
 
     saveRequisition() {
+      console.log("Selected Item:", JSON.stringify(this.selectedItem, null, 2));
+
   const payload = {
     items: this.requisitionItems,
     special_instructions: this.specialInstructions,
@@ -1010,7 +964,7 @@ export default {
 
   };
 
-  if (this.selectedItem) {
+  if (this.selectedItem && this.selectedItem.id) {
     // Updating requisition
     axios
       .put(`/api/v1/update/${this.selectedItem.id}`, payload)
