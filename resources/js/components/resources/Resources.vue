@@ -79,7 +79,7 @@
             <v-responsive>
                 <v-progress-linear v-if="loading" color="primary" indeterminate></v-progress-linear>
 
-                <v-data-table v-model="selected" :headers="headers" :items="resources" item-key="id"
+                <v-data-table search=search v-model="selected" :headers="headers" :items="resources" item-key="id"
                     class="elevation-10" responsive show-select>
 
                     <template v-slot:item.issued_to="{ item }">
@@ -344,7 +344,8 @@ export default {
     },
     data() {
         return {
-
+            
+            search: '',
             logsModal: false,
             logs: [],
             loadingLogs: false,
