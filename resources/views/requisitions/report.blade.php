@@ -29,7 +29,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            table-layout: fixed;
+            table-layout: auto;
 
         }
         table, th, td {
@@ -51,10 +51,21 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+    <div class="header">
+    <row>
+        <col>
             <img src="{{ public_path('assets/img/logo.png') }}" alt="Company Logo" style="max-width: 150px;">
-            <p>Requisition </p>
-        </div>
+            <p>Requisition</p>
+            <!-- <p style="text-align: right;">
+                Boxleo Courier & Fulfillment Services Ltd <br>
+                254791897936 / 254759142032 <br>
+                operations@boxleocourier.com <br>
+                Akshrap Godowns Gate A-2, JKIA Junction <br>
+            </p> -->
+        </col>
+    </row>
+</div>
+
         
         @php
             $grandTotal = 0;
@@ -69,12 +80,13 @@
                     <th>Status</th>
                     <th>Special Instructions</th>
                     <th>Department</th>
-                    <th>Payment Code</th>
+                   
                     <th>Item Name</th>
                     <th>Description</th>
                     <th>Quantity</th>
                     <th>Unit Cost</th>
                     <th>Total Cost</th>
+                    <th>Payment Code</th>
                   
                 </tr>
             </thead>
@@ -91,13 +103,14 @@
                         <td>{{ $requisition['status'] }}</td>
                         <td>{{ $requisition['special_instructions'] }}</td>
                         <td>{{ $requisition['user']['department']['name'] }}</td>
-                        <td>{{ $requisition['pop']}}</td>
+                     
 
                         <td>{{ $item['name'] }}</td>
                         <td>{{ $item['description'] }}</td>
                         <td>{{ $item['quantity'] }}</td>
                         <td>{{ number_format($item['unit_cost'], 2) }}</td>
                         <td>{{ number_format($item['total_cost'], 2) }}</td>
+                        <td>{{ $requisition['pop']}}</td>
                     </tr>
                     @endforeach
                 @endforeach

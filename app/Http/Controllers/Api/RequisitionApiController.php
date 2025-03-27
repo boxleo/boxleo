@@ -75,9 +75,11 @@ class RequisitionApiController extends Controller
 
         // Load requisitions data from request
         $requisitions = $validated['requisitions'];
+       
 
         // Generate PDF using Blade template
-        $pdf = Pdf::loadView('requisitions.report', compact('requisitions'));
+        $pdf = Pdf::loadView('requisitions.report', compact('requisitions'))
+        ->setPaper('a4', 'landscape');
 
         return response()->stream(
             fn() => print($pdf->output()),
@@ -471,6 +473,7 @@ class RequisitionApiController extends Controller
     }
 
 
+
     public function approveRequisition(Request $request, Requisition $requisition)
     {
         try {
@@ -790,6 +793,13 @@ class RequisitionApiController extends Controller
             ]);
         }
     }
+
+    /**
+     * Retrieves the logs for the given requisition.
+     *
+     * @param int $id The ID of the requisition
+     * @return \Illuminate\Http\JsonResponse
+     */
 
     public function requisitionLogs($id)
     {

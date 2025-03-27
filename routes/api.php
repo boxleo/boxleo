@@ -108,7 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('v1/leaves', [LeaveApiController::class, 'index']);
   Route::get('v1/leaves/{user_id}', [LeaveApiController::class, 'userLeaves']);
   Route::get('v1/leaves/{leave}/logs', [LeaveApiController::class, 'leaveLogs']);
-  Route::post('v1/leaves', [LeaveApiController::class, 'store']);
+  Route::post('v1/leaves', [LeaveApiController::class, 'stlaore']);
   Route::get('v1/leave-statistics', [LeaveApiController::class, 'statistics']);
   Route::post('v1/leaves/print', [LeaveApiController::class, 'leaveForm']);
   Route::get('v1/leave-balances', [LeaveApiController::class, 'leaveBalances']);
