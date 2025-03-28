@@ -23,7 +23,7 @@ use App\Http\Controllers\Api\AttendanceApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
 use App\Http\Controllers\Api\PermissionApiController;
 use App\Http\Controllers\Api\DesignationApiController;
-// use App\Http\Controllers\Api\AnnouncementApiController;
+use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\DisciplinaryApiController;
 use App\Http\Controllers\Api\PerformanceApiEvaluation;
 use App\Http\Controllers\Api\RequisitionApiController;
@@ -90,10 +90,11 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::delete('v1/disciplinaries/{disciplinary}', [DisciplinaryApiController::class, 'destroy']);
 
   //announcements
-  // Route::get('v1/announcements', [AnnouncementApiController::class, 'index']);
-  // Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
-  // Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
-  // Route::delete('v1/announcements/{announcement}', [AnnouncementApiController::class, 'destroy']);
+//   AnnouncementApiController
+  Route::get('v1/announcements', [AnnouncementApiController::class, 'index']);
+  Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
+  Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
+  Route::delete('v1/announcements/{announcement}', [AnnouncementApiController::class, 'destroy']);
 
   //attendance
   Route::get('v1/attendances', [AttendanceApiController::class, 'index']);
@@ -156,7 +157,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('v1/resource-logs/{id}', [ResourceApiController::class, 'resourceLogs']);
   Route::post('v1/resources/import', [ResourceApiController::class, 'upload']);
 
-  
+
 
   //tickets
   Route::get('/v1/tickets', [TicketApiController::class, 'index']);
@@ -173,7 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/v1/voices', [ComplaintApiController::class, 'store']);
   Route::put('/v1/voices/{voice}', [ComplaintApiController::class, 'update']);
   Route::delete('/v1/voices/{voice}', [ComplaintApiController::class, 'destroy']);
-  Route::get('/v1/voices/{id}', [ComplaintApiController::class, 'voiceLogs']);  
+  Route::get('/v1/voices/{id}', [ComplaintApiController::class, 'voiceLogs']);
 
   //reports
   Route::post('v1/attendance-report', [ReportApiController::class, 'attendanceReport']);
@@ -218,7 +219,7 @@ Route::get('v1/requisitions', [RequisitionApiController::class, 'index']);
 Route::post('v1/requisitions', [RequisitionApiController::class, 'store']);
 Route::post('v1/approve-requisition', [RequisitionApiController::class, 'approveRequisition']);
 Route::post('v1/cancel-requisition/{id}', [RequisitionApiController::class, 'cancelRequisition']);
-Route::put('v1/update/{id}', [RequisitionApiController::class, 'update']);  
+Route::put('v1/update/{id}', [RequisitionApiController::class, 'update']);
 Route::delete('v1/delete-requisition/{id}', [RequisitionApiController::class, 'deleteRequisition']);
 
 Route::get('v1/requisition/{id}', [RequisitionApiController::class, 'show']);

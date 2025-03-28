@@ -17,13 +17,13 @@ return new class extends Migration
 
             $table->id(); // Primary key
 
-            $table->string('subject'); 
+            $table->string('subject');
 
-            $table->text('description'); 
+            $table->text('description');
 
-            $table->unsignedBigInteger('author'); 
+            $table->unsignedBigInteger('author');
 
-            $table->date('publish_date'); 
+            $table->date('publish_date');
 
             $table->date('expiration_date')->nullable(); // Date when the announcement expires
 
@@ -39,12 +39,12 @@ return new class extends Migration
 
             $table->softDeletes(); // Soft delete column
 
-            
+
 
             // Foreign key constraint
 
             $table->foreign('author')->references('id')->on('users')->onDelete('cascade');
-       
+
         });
     }
 
