@@ -72,14 +72,14 @@
             </v-col>
         </v-row>
         <v-col>
-            <v-text-field v-model="search" label="Search"  prepend-inner-icon="mdi-magnify" clearable @clear="clearSearch"></v-text-field>
+            <v-text-field  :search="search" v-model="selected" label="Search"  prepend-inner-icon="mdi-magnify" clearable @clear="clearSearch"></v-text-field>
 
         </v-col>
         <v-row>
             <v-responsive>
                 <v-progress-linear v-if="loading" color="primary" indeterminate></v-progress-linear>
 
-                <v-data-table search=search v-model="selected" :headers="headers" :items="resources" item-key="id"
+                <v-data-table  v-model="selected" :headers="headers" :items="resources" item-key="id"
                     class="elevation-10" responsive show-select>
 
                     <template v-slot:item.issued_to="{ item }">
@@ -419,7 +419,53 @@ export default {
         this.fetchUsers();
 
     },
+
+
+    computed: {
+
+filteredResources() {
+
+  if (!this.search) {
+
+    return this.resources;
+
+  }
+
+  const searchLower = this.search.toLowerCase();
+
+  return this.resources.filter(item => {
+
+    return (
+
+      item.name.toLowerCase().includes(searchLower) ||
+
+    //   item.email.toLowerCase().includes(searchLower) ||
+
+      item.serial_no.toLowerCase().includes(searchLower) ||
+        // item.category.toLowerCase().includes(searchLower) ||
+
+        item.issued_to?.firstname.toLowerCase().includes(searchLower)
+
+        // item.issued_by?.firstname.toLowerCase().includes(searchLower) ||
+
+        // item.comment.toLowerCase().includes(searchLower)
+
+      // Add more fields to search as needed
+
+    );
+
+  });
+
+},
+
+},
     methods: {
+
+        clearSearch() {
+
+this.search = '';
+
+},
 
 
         importAsset() {

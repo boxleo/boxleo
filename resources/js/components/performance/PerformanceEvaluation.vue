@@ -527,10 +527,10 @@ export default {
   created() {
     this.fetchEvaluations();
     this.fetchEmployees();
-    // this.fetchEvaluators();
-    // this.fetchDepartments();
+    this.fetchEvaluators();
+    this.fetchDepartments();
     // this.filters.user_id = this.user.id;
-    // this.newEvaluation.user_id = this.user.id;
+    // this.  .user_id = this.user.id;
     console.log("User:", this.user);
     console.log("Roles:", this.roles);
     console.log("Permissions:", this.permissions);
