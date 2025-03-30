@@ -20,7 +20,8 @@ export default {
                 { title: '#', value: 'index' },
                 { title: 'Holiday Name', align: 'start', value: 'name' },
                 { title: 'Date', value: 'date' },
-                { title: 'Action', value: 'action', sortable: false }
+                { title: 'Action', value: 'action', sortable: false },
+                // { title: 'Branches', value: 'name', sortable: false }
             ],
             dataTableOptions: {
                 sortRowsBy: ['date']
@@ -90,21 +91,21 @@ export default {
                     });
             }
         },
+      
         deleteHoliday(holiday) {
-            // Delete holiday from the list
-            const index = this.holidays.indexOf(holiday);
-            if (index !== -1) {
-                this.holidays.splice(index, 1);
-                // Optionally, you can send a DELETE request to your API to delete the holiday
-                // axios.delete(`/api/v1/holidays/${holiday.id}`)
-                //   .then(response => {
-                //     // Handle success
-                //   })
-                //   .catch(error => {
-                //     console.error('Error deleting holiday:', error);
-                //   });
-            }
-        },
+    if (!holiday.id) return; // Ensure holiday has an ID
+
+    axios.delete(`/api/v1/holidays/${holiday.id}`)
+        .then(() => {
+            this.holidays = this.holidays.filter(h => h.id !== holiday.id);
+            this.$toastr.success("Holiday deleted successfully!");
+        })
+        .catch(error => {
+            console.error('Error deleting holiday:', error);
+            this.$toastr.error("Failed to delete holiday.");
+        });
+}
+,
         formatDate(date) {
             // Format date as needed
             return date ? new Date(date).toLocaleDateString() : '';
@@ -126,15 +127,16 @@ export default {
                         :options="dataTableOptions" :pagination.sync="pagination"
                         :rows-per-page-items="[10, 25, 50, 100]" responsive>
                         <template v-slot:top>
-                            <v-toolbar flat color="white">
-                                <v-toolbar-title class="text-primary">Holidays</v-toolbar-title>
-                                <v-spacer></v-spacer>
-                                <v-btn color="primary" @click="addHolidayDialog = true">
-                                    <v-icon size="22">mdi-plus</v-icon>
-                                </v-btn>
-                            </v-toolbar>
-                            <v-divider></v-divider>
-                        </template>
+    <v-container fluid class="pa-2">
+        <v-row justify="end">
+            <v-btn color="primary" @click="addHolidayDialog = true" class="elevation-2">
+                <v-icon size="22" left>mdi-plus</v-icon> Add Holiday
+            </v-btn>
+        </v-row>
+    </v-container>
+    <v-divider></v-divider>
+</template>
+
                         <template v-slot:item="{ item, index }">
                             <tr>
                                 <td>{{ index + 1 }}</td>

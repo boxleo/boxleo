@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\User;
 use Carbon\Carbon;
@@ -292,6 +293,13 @@ class AttendanceApiController extends Controller
     {
         $lateThreshold = '08:00';
         if (Carbon::parse($clockInTime)->dayOfWeek == Carbon::SATURDAY) {
+            $lateThreshold = '08:30';
+        }
+
+        // Check if today is a holiday in the Holiday table and set the threshold to 08:30
+        $isHoliday = Holiday::whereDate('date', Carbon::today())->exists();
+        Log::info('Checking if today is a holiday:', ['isHoliday' => $isHoliday]);
+        if ($isHoliday) {
             $lateThreshold = '08:30';
         }
 
