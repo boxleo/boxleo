@@ -12,7 +12,7 @@ class HolidayApiController extends Controller
 
     public function index()
     {
-        $holidays = Holiday::all();
+        $holidays = Holiday::whereYear('date', now()->year)->get();
 
         return response()->json(['holidays' => $holidays]);
     }
