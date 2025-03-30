@@ -118,12 +118,23 @@
           <v-progress-linear v-if="loading" color="green" indeterminate></v-progress-linear>
 
 
-          <v-data-table v-model="selected" :headers="headers" :items="requisitions" :search="search" item-key="id"
-            responsive show-select>
+          <v-data-table 
+       
+           :headers="headers"
+            :items="requisitions" 
+            :search="search" 
+            item-key="id"
+            responsive show-select
+            v-model:expanded="expandedItems"
+
+
+            show-expand
+
+            >
 
 
             <!-- Slot for Items Column -->
-            <template v-slot:item.items="{ item }">
+            <!-- <template v-slot:item.items="{ item }">
               <v-list dense>
                 <v-list-item v-for="(itemDetail, index) in item.items" :key="index">
                   <v-list-item-content>
@@ -135,7 +146,44 @@
                   </v-list-item-content>
                 </v-list-item>
               </v-list>
-            </template>
+            </template> -->
+
+
+         
+            <template v-slot:item.items="{ item }">
+  <v-btn
+    color="primary"
+    variant="tonal"
+    size="small"
+    @click="toggleExpand(item)"
+    density="comfortable"
+  >
+    <v-icon
+      :icon="expandedItems.includes(item.id) ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+      size="small"
+      class="mr-1"
+    ></v-icon>
+    {{ item.items.length }} Items
+  </v-btn>
+</template>
+
+<!-- Expanded Row -->
+<template v-slot:expanded-row="{ item }">
+  <tr>
+    <td :colspan="headers.length">
+      <v-list dense>
+        <v-list-item v-for="(detail, index) in item.items" :key="index">
+          <v-list-item-content>
+            <v-list-item-title>{{ detail.name }}</v-list-item-title>
+            <v-list-item-subtitle>
+              Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{ detail.total_cost }}
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </td>
+  </tr>
+</template>
 
             <template v-slot:item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" dark @click="openStatusDialog(item)">{{ item.status
@@ -445,7 +493,12 @@
 
 </template>
 
-<script>
+<script >
+
+import { ref } from "vue";
+
+
+
 export default {
   props: {
     user: Object,
@@ -455,6 +508,8 @@ export default {
 
   data() {
     return {
+      expandedItems: [], // Ensure this is initialized as an empty array
+
 
       // selectedItem: null,
 
@@ -499,6 +554,7 @@ export default {
       approverType: "",
       comment: "",
       requisitions: [],
+        //  v-model="selected"
 
       approveRequisitionModal: false,
       cancelRequisitionModal: false,
@@ -574,6 +630,16 @@ export default {
     this.fetchAccounts();
   },
   methods: {
+
+ 
+    toggleExpand(item) {
+    const index = this.expandedItems.indexOf(item.id);
+    if (index !== -1) {
+      this.expandedItems.splice(index, 1); // Remove if already expanded
+    } else {
+      this.expandedItems.push(item.id); // Add if collapsed
+    }
+  },
     openEditRequisitionModal(item) {
   this.selectedItem = item;
   axios
