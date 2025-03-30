@@ -133,24 +133,65 @@
             >
 
 
-            <!-- Slot for Items Column -->
-            <!-- <template v-slot:item.items="{ item }">
-              <v-list dense>
-                <v-list-item v-for="(itemDetail, index) in item.items" :key="index">
-                  <v-list-item-content>
-                    <v-list-item-title>{{ itemDetail.name }}</v-list-item-title>
-                    <v-list-item-subtitle>
-                      Quantity: {{ itemDetail.quantity }}, Unit Cost: {{ itemDetail.unit_cost }}, Total: {{
-                        itemDetail.total_cost }}
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-            </template> -->
+            <!-- Special Instructions Column -->
+      <template v-slot:item.special_instructions="{ item }">
+        <span v-if="item.special_instructions.length < 50">
+          {{ item.special_instructions }}
+        </span>
+        <span v-else>
+          {{ item.special_instructions.substring(0, 50) }}...
+          <v-icon @click="toggleExpand(item)">mdi-chevron-down</v-icon>
+        </span>
+      </template>
+
+      <!-- Items Column with Expand Button -->
+      <template v-slot:item.items="{ item }">
+        <v-btn
+          color="primary"
+          variant="tonal"
+          size="small"
+          @click="toggleExpand(item)"
+          density="comfortable"
+        >
+          <v-icon
+            :icon="expandedItems.includes(item.id) ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+            size="small"
+            class="mr-1"
+          ></v-icon>
+          {{ item.items.length }} Items
+        </v-btn>
+      </template>
+
+      <!-- ✅ Combined Expanded Row Slot -->
+      <template v-slot:expanded-row="{ item }">
+        <tr>
+          <td :colspan="headers.length">
+            <div class="pa-3">
+              <strong>Special Instructions:</strong> {{ item.special_instructions }}
+            </div>
+
+            <v-divider></v-divider>
+
+            <v-list dense>
+              <v-list-item v-for="(detail, index) in item.items" :key="index">
+                <v-list-item-content>
+                  <v-list-item-title>{{ detail.name }}</v-list-item-title>
+                  <v-list-item-subtitle>
+                    Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{ detail.total_cost }}
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </td>
+        </tr>
+      </template>
+
+
+           
 
 
          
-            <template v-slot:item.items="{ item }">
+            <!-- <template v-slot:item.items="{ item }">
   <v-btn
     color="primary"
     variant="tonal"
@@ -167,7 +208,6 @@
   </v-btn>
 </template>
 
-<!-- Expanded Row -->
 <template v-slot:expanded-row="{ item }">
   <tr>
     <td :colspan="headers.length">
@@ -183,7 +223,7 @@
       </v-list>
     </td>
   </tr>
-</template>
+</template> -->
 
             <template v-slot:item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" dark @click="openStatusDialog(item)">{{ item.status
@@ -508,8 +548,7 @@ export default {
 
   data() {
     return {
-      expandedItems: [], // Ensure this is initialized as an empty array
-
+      expandedItems: [], 
 
       // selectedItem: null,
 
