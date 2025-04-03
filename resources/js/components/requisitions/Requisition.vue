@@ -6,7 +6,7 @@
         <v-card>
           <v-card-title>Filter Requisitions</v-card-title>
           <v-card-text>
-            
+
             <v-col class="mt-lg-5">
               <v-autocomplete v-model="filterOptions.item_names" :items="availableItems" label="Item Name"
                 item-title="name" variant="outlined" multiple clearable />
@@ -26,27 +26,28 @@
 
 
               <v-col>
-              <v-autocomplete v-model="filterOptions.approver_types" :items="approverTypeOptions"
-                label="Type of Approval" item-value="name" item-title="name" variant="outlined" multiple clearable>
-              </v-autocomplete>
-            </v-col>
+                <v-autocomplete v-model="filterOptions.approver_types" :items="approverTypeOptions"
+                  label="Type of Approval" item-value="name" item-title="name" variant="outlined" multiple clearable>
+                </v-autocomplete>
+              </v-col>
               <v-col>
                 <!-- <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar"
                   clearable range></v-date-picker> -->
 
                 <v-text-field v-model="filterOptions.date_created" type="date" label="Date Created" clearable
                   variant="outlined">
-                </v-text-field> 
+                </v-text-field>
               </v-col>
 
               <!-- input type date  -->
-            <v-col>
-              <v-text-field v-model="filterOptions.date_paid" type="date" label="Date Paid" clearable variant="outlined">
-              </v-text-field>
-            </v-col>
+              <v-col>
+                <v-text-field v-model="filterOptions.date_paid" type="date" label="Date Paid" clearable
+                  variant="outlined">
+                </v-text-field>
+              </v-col>
 
             </v-col>
-            
+
             <v-col class="d-flex justify-end">
               <v-btn color="dark" @click.prevent="filterRequisitions">
                 <v-icon color="light">mdi-filter</v-icon>
@@ -87,7 +88,8 @@
               New Request
             </v-btn>
 
-            <v-btn v-if="permissions.includes('add account')" @click="openAccountModal" color="primary" outlined class="mx-1">
+            <v-btn v-if="permissions.includes('add account')" @click="openAccountModal" color="primary" outlined
+              class="mx-1">
               <v-icon>mdi-account-plus</v-icon>
               Add Account
             </v-btn>
@@ -118,151 +120,93 @@
           <v-progress-linear v-if="loading" color="green" indeterminate></v-progress-linear>
 
 
-          <v-data-table 
-       
-           :headers="headers"
-            :items="requisitions" 
-            :search="search" 
-            item-key="id"
-            responsive show-select
-            v-model:expanded="expandedItems"
-
-
-            show-expand
-
-            >
+          <v-data-table :headers="headers" :items="requisitions" :search="search" item-key="id" responsive show-select
+            v-model:expanded="expandedItems" show-expand>
 
 
             <!-- Special Instructions Column -->
-      <template v-slot:item.special_instructions="{ item }">
-        <span v-if="item.special_instructions.length < 50">
-          {{ item.special_instructions }}
-        </span>
-        <span v-else>
-          {{ item.special_instructions.substring(0, 50) }}...
-          <v-icon @click="toggleExpand(item)">mdi-chevron-down</v-icon>
-        </span>
-      </template>
+            <template v-slot:item.special_instructions="{ item }">
+              <span v-if="item.special_instructions.length < 50">
+                {{ item.special_instructions }}
+              </span>
+              <span v-else>
+                {{ item.special_instructions.substring(0, 50) }}...
+                <v-icon @click="toggleExpand(item)">mdi-chevron-down</v-icon>
+              </span>
+            </template>
 
-      <!-- Items Column with Expand Button -->
-      <template v-slot:item.items="{ item }">
-        <v-btn
-          color="primary"
-          variant="tonal"
-          size="small"
-          @click="toggleExpand(item)"
-          density="comfortable"
-        >
-          <v-icon
-            :icon="expandedItems.includes(item.id) ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-            size="small"
-            class="mr-1"
-          ></v-icon>
-          {{ item.items.length }} Items
-        </v-btn>
-      </template>
+            <!-- Items Column with Expand Button -->
+            <template v-slot:item.items="{ item }">
+              <v-btn color="primary" variant="tonal" size="small" @click="toggleExpand(item)" density="comfortable">
+                <v-icon :icon="expandedItems.includes(item.id) ? 'mdi-chevron-up' : 'mdi-chevron-down'" size="small"
+                  class="mr-1"></v-icon>
+                {{ item.items.length }} Items
+              </v-btn>
+            </template>
 
-      <!-- ✅ Combined Expanded Row Slot -->
-      <template v-slot:expanded-row="{ item }">
-        <tr>
-          <td :colspan="headers.length">
-            <div class="pa-3">
-              <strong>Special Instructions:</strong> {{ item.special_instructions }}
-            </div>
+            <!-- ✅ Combined Expanded Row Slot -->
+            <template v-slot:expanded-row="{ item }">
+              <tr>
+                <td :colspan="headers.length">
+                  <div class="pa-3">
+                    <strong>Special Instructions:</strong> {{ item.special_instructions }}
+                  </div>
 
-            <v-divider></v-divider>
+                  <v-divider></v-divider>
 
-            <v-list dense>
-              <v-list-item v-for="(detail, index) in item.items" :key="index">
-                <v-list-item-content>
-                  <v-list-item-title>{{ detail.name }}</v-list-item-title>
-                  <v-list-item-subtitle>
-                    Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{ detail.total_cost }}
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
-          </td>
-        </tr>
-      </template>
+                  <v-list dense>
+                    <v-list-item v-for="(detail, index) in item.items" :key="index">
+                      <v-list-item-content>
+                        <v-list-item-title>{{ detail.name }}</v-list-item-title>
+                        <v-list-item-subtitle>
+                          Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{
+                          detail.total_cost }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list>
+                </td>
+              </tr>
+            </template>
 
 
-           
-
-
-         
-            <!-- <template v-slot:item.items="{ item }">
-  <v-btn
-    color="primary"
-    variant="tonal"
-    size="small"
-    @click="toggleExpand(item)"
-    density="comfortable"
-  >
-    <v-icon
-      :icon="expandedItems.includes(item.id) ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-      size="small"
-      class="mr-1"
-    ></v-icon>
-    {{ item.items.length }} Items
-  </v-btn>
-</template>
-
-<template v-slot:expanded-row="{ item }">
-  <tr>
-    <td :colspan="headers.length">
-      <v-list dense>
-        <v-list-item v-for="(detail, index) in item.items" :key="index">
-          <v-list-item-content>
-            <v-list-item-title>{{ detail.name }}</v-list-item-title>
-            <v-list-item-subtitle>
-              Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{ detail.total_cost }}
-            </v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </td>
-  </tr>
-</template> -->
 
             <template v-slot:item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" dark @click="openStatusDialog(item)">{{ item.status
-                }}</v-chip>
+              }}</v-chip>
             </template>
 
-                 <template v-slot:item.pop="{ item }">
+            <template v-slot:item.pop="{ item }">
               <v-chip color="primary" @click="openPopDialog(item)">{{ item.pop
-                }}
-              
+              }}
+
               </v-chip>
             </template>
 
-          <template v-slot:item.comment="{ item }">
-                            <v-chip color="primary"
-                                @click="openCommentsDialog(item)">{{ item.comment }}</v-chip>
-                        </template>
+            <template v-slot:item.comment="{ item }">
+              <v-chip color="primary" @click="openCommentsDialog(item)">{{ item.comment }}</v-chip>
+            </template>
 
             <template v-slot:item.actions="{ item }">
               <div class="action-icons">
 
                 <!-- edit requisition -->
-                <v-icon 
-  v-if="item.status == 'Pending' || item.status == 'Manager Approved' || item.status == 'HR Approved'" 
-  @click="openEditRequisitionModal(item)" 
-  color="primary"
-  style="margin-right: 8px;" 
-  title="Edit Requisition">
-  mdi-pencil
-</v-icon>
+                <v-icon
+                  v-if="item.status == 'Pending' || item.status == 'Manager Approved' || item.status == 'HR Approved'"
+                  @click="openEditRequisitionModal(item)" color="primary" style="margin-right: 8px;"
+                  title="Edit Requisition">
+                  mdi-pencil
+                </v-icon>
 
 
                 <v-icon @click="openLogsModal(item)" color="primary" style="margin-right: 8px;"
                   title="View Logs">mdi-history</v-icon>
-                <v-icon @click="viewRequisition(item)" color="info" title="View Requisition">
+                <v-icon v-if="permissions.includes('view requisition')" @click="viewRequisition(item)" color="info"
+                  title="View Requisition">
                   mdi-eye-check-outline
                 </v-icon>
-                <v-icon v-if="permissions.includes('approve requisition')" @click="OpenapproveRequisitionModal(item)" color="success"
-                  title="Approve Requisition">
+                <v-icon v-if="permissions.includes('approve requisition')" @click="OpenapproveRequisitionModal(item)"
+                  color="success" title="Approve Requisition">
                   mdi-thumb-up-outline
                 </v-icon>
                 <v-icon v-if="roles.includes('admin')" @click="OpencancelRequisitionModal(item)" color="error"
@@ -274,7 +218,8 @@
                   mdi-delete
                 </v-icon>
 
-                <v-icon v-if="permissions.includes('mark as paid')" @click="markAsPaid(item)" color="blue" title="Mark as Paid">
+                <v-icon v-if="permissions.includes('mark as paid')" @click="markAsPaid(item)" color="blue"
+                  title="Mark as Paid">
                   mdi-cash-check
                 </v-icon>
 
@@ -285,48 +230,48 @@
 
 
 
-                      <!-- Status Dialog -->
-            <v-dialog v-model="statusDialog" max-width="500px">
-              <v-card>
-                <v-card-title class="headline">Update Status</v-card-title>
-                <v-card-text>
-                  <v-autocomplete v-model="selectedItem.status" :items="statusOptions"  label="Status"
-                item-value="name" item-title="name" variant="outlined" clearable>
-              </v-autocomplete>                </v-card-text>
-                <v-card-actions>
-                  <v-btn text @click="statusDialog = false">Cancel</v-btn>
-                  <v-btn color="primary" @click="confirmStatusUpdate(selectedItem)">Save</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-    
-            <!-- Comments Dialog -->
-            <v-dialog v-model="commentsDialog" max-width="500px">
-              <v-card>
-                <v-card-title class="headline">Update Comments</v-card-title>
-                <v-card-text>
-                  <v-textarea v-model="selectedItem.comment" label="Comments"></v-textarea>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn text @click="commentsDialog = false">Cancel</v-btn>
-                  <v-btn color="primary" @click="confirmCommentsUpdate(selectedItem)">Save</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
+        <!-- Status Dialog -->
+        <v-dialog v-model="statusDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">Update Status</v-card-title>
+            <v-card-text>
+              <v-autocomplete v-model="selectedItem.status" :items="statusOptions" label="Status" item-value="name"
+                item-title="name" variant="outlined" clearable>
+              </v-autocomplete> </v-card-text>
+            <v-card-actions>
+              <v-btn text @click="statusDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="confirmStatusUpdate(selectedItem)">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
-            <!-- Pop Item Dialog -->
-            <v-dialog v-model="popDialog" max-width="500px">
-              <v-card>
-                <v-card-title class="headline">POP </v-card-title>
-                <v-card-text>
-                  <v-textarea v-model="selectedItem.pop" label="MPESA CODE"></v-textarea>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn text @click="popDialog = false">Cancel</v-btn>
-                  <v-btn color="primary" @click="confirmPopUpdate(selectedItem)">Save</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
+        <!-- Comments Dialog -->
+        <v-dialog v-model="commentsDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">Update Comments</v-card-title>
+            <v-card-text>
+              <v-textarea v-model="selectedItem.comment" label="Comments"></v-textarea>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn text @click="commentsDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="confirmCommentsUpdate(selectedItem)">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Pop Item Dialog -->
+        <v-dialog v-model="popDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">POP </v-card-title>
+            <v-card-text>
+              <v-textarea v-model="selectedItem.pop" label="MPESA CODE"></v-textarea>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn text @click="popDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="confirmPopUpdate(selectedItem)">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
 
 
@@ -378,7 +323,7 @@
                       </v-list-item-title>
 
 
-                      
+
                       <v-list-item-subtitle>
                         <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
                         <strong>Time:</strong> {{ log.time }}
@@ -500,7 +445,7 @@
               <!-- Step 2: Special Instructions -->
               <template v-slot:item.2>
 
-                <v-textarea v-model="specialInstructions" label="Special Instructions" rows="3" outlined />
+                <v-textarea v-model="specialInstructions" label="Mode of Payment" rows="3" outlined />
 
                 <v-select v-model="approverType" :items="['Finance Manager', 'CFO', 'HR']" label="Select Approver Type"
                   outlined dense></v-select>
@@ -533,7 +478,7 @@
 
 </template>
 
-<script >
+<script>
 
 import { ref } from "vue";
 
@@ -548,20 +493,20 @@ export default {
 
   data() {
     return {
-      expandedItems: [], 
+      expandedItems: [],
 
       // selectedItem: null,
 
       statusDialog: false,
       commentsDialog: false,
-      EditRequisitionModa:false,
+      EditRequisitionModa: false,
       popDialog: false,
       selectedItem: {},
       drawer: false,
       menu: false,
       accountModal: false,
       availableItem: null,
-      
+
 
       // Filter options
       filterOptions: {
@@ -593,7 +538,7 @@ export default {
       approverType: "",
       comment: "",
       requisitions: [],
-        //  v-model="selected"
+      //  v-model="selected"
 
       approveRequisitionModal: false,
       cancelRequisitionModal: false,
@@ -617,19 +562,7 @@ export default {
         { name: 'HR' }
       ],
 
-      // availableItems: [
-      //   "Airtime",
-      //   "Fuel - Riders",
-      //   "Welfare - Concerning welfare & kitchen expenses",
-      //   "Subscription",
-      //   "Rent",
-      //   "Stationery",
-      //   "Packaging materials",
-      //   "Fare facilitation",
-      //   "Asset purchase",
-      //   "Fuel - motor vehicle"
-      // ],
-      // availableItem:"",
+   
       requisitionItems: [
         {
           name: "",
@@ -670,59 +603,56 @@ export default {
   },
   methods: {
 
- 
+
     toggleExpand(item) {
-    const index = this.expandedItems.indexOf(item.id);
-    if (index !== -1) {
-      this.expandedItems.splice(index, 1); // Remove if already expanded
-    } else {
-      this.expandedItems.push(item.id); // Add if collapsed
-    }
-  },
-    openEditRequisitionModal(item) {
-  this.selectedItem = item;
-  axios
-    .get(`/api/v1/requisition/${item.id}`)
-    .then((response) => {
-      const requisition = response.data.data;
-      this.requisitionItems = requisition.items || [];
-      this.specialInstructions = requisition.special_instructions || "";
-      this.approverType = requisition.approver_type || null;
-      this.requestModal = true;
-    })
-    .catch((error) => {
-      console.error("Error fetching requisition:", error);
-    });
-}
-,
-
-    getStatusColor(status) {
-      switch (status) {
-        case 'Pending':
-          return 'blue';
-        case 'Approved':
-          return 'orange';
-        case 'Manager Approved':
-          return 'light green';
-        case 'Closed':
-          return 'red';
-        case 'HR Approved':
-        return 'purple';  
-
-        case 'Finance Manager Approved':
-          return 'indigo';
-
-        case 'Cancelled':
-          return 'red';
-         case 'COO Aproved':
-         return 'grey' 
-
-        case 'Paid':
-          return 'green';
-        default:
-          return 'grey';
+      const index = this.expandedItems.indexOf(item.id);
+      if (index !== -1) {
+        this.expandedItems.splice(index, 1); // Remove if already expanded
+      } else {
+        this.expandedItems.push(item.id); // Add if collapsed
       }
     },
+    openEditRequisitionModal(item) {
+      this.selectedItem = item;
+      axios
+        .get(`/api/v1/requisition/${item.id}`)
+        .then((response) => {
+          const requisition = response.data.data;
+          this.requisitionItems = requisition.items || [];
+          this.specialInstructions = requisition.special_instructions || "";
+          this.approverType = requisition.approver_type || null;
+          this.requestModal = true;
+        })
+        .catch((error) => {
+          console.error("Error fetching requisition:", error);
+        });
+    }
+    ,
+
+    getStatusColor(status) {
+  switch (status) {
+    case 'Pending':
+      return '#2196F3'; // Blue
+    case 'Approved':
+      return '#FF9800'; // Orange
+    case 'Manager Approved':
+      return '#8BC34A'; // Light Green
+    case 'Closed':
+      return '#F44336'; // Red
+    case 'HR Approved':
+      return '#9C27B0'; // Purple
+    case 'Finance Manager Approved':
+      return '#3F51B5'; // Indigo
+    case 'Cancelled':
+      return '#F44336'; // Red (same as Closed for consistency)
+    case 'COO Approved':
+      return '#9E9E9E'; // Grey
+    case 'Paid':
+      return '#4CAF50'; // Green
+    default:
+      return '#B0BEC5'; // Light Grey for unknown status
+  }
+},
     fetchAccounts() {
       axios
         .get(`/api/v1/accounts`)
@@ -749,8 +679,6 @@ export default {
           this.$toastr.error("Failed to update account. Please try again.");
         });
     },
-
-
 
     openStatusDialog(item) {
       this.selectedItem = item;
@@ -793,25 +721,25 @@ export default {
       this.commentsDialog = false;
     },
     confirmPopUpdate(item) {
-  axios
-    .put(`/api/v1/update/${item.id}`, {
-      pop: item.pop,
-    })
-    .then((response) => {
-      console.log(response);
-      this.$toastr.success("Requisition updated successfully"); 
-      this.fetchRequisitions(); 
-      this.popDialog = false; 
-    })
-    .catch((error) => {
-      if (error.response && error.response.data.error === "A requisition with the same POP already exists.") {
-        this.$toastr.error("A requisition with the same POP already exists.");
-      } else {
-        this.$toastr.error("Failed to update requisition. Please try again.");
-        console.log(error);
-      }
-    });
-},
+      axios
+        .put(`/api/v1/update/${item.id}`, {
+          pop: item.pop,
+        })
+        .then((response) => {
+          console.log(response);
+          this.$toastr.success("Requisition updated successfully");
+          this.fetchRequisitions();
+          this.popDialog = false;
+        })
+        .catch((error) => {
+          if (error.response && error.response.data.error === "A requisition with the same POP already exists.") {
+            this.$toastr.error("A requisition with the same POP already exists.");
+          } else {
+            this.$toastr.error("Failed to update requisition. Please try again.");
+            console.log(error);
+          }
+        });
+    },
 
     closeAccountModal() {
       this.accountModal = false;
@@ -900,7 +828,7 @@ export default {
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
     },
-       closelogsModal() {
+    closelogsModal() {
       this.logsModal = false
     },
     openLogsModal(requisitionId) {
@@ -1071,46 +999,46 @@ export default {
     removeItem(item) {
       this.requisitionItems = this.requisitionItems.filter((i) => i !== item);
     },
-  
+
 
     saveRequisition() {
       console.log("Selected Item:", JSON.stringify(this.selectedItem, null, 2));
 
-  const payload = {
-    items: this.requisitionItems,
-    special_instructions: this.specialInstructions,
-    approver_type: this.approverType,
-   user_id: this.user.id,
+      const payload = {
+        items: this.requisitionItems,
+        special_instructions: this.specialInstructions,
+        approver_type: this.approverType,
+        user_id: this.user.id,
 
-  };
+      };
 
-  if (this.selectedItem && this.selectedItem.id) {
-    // Updating requisition
-    axios
-      .put(`/api/v1/update/${this.selectedItem.id}`, payload)
-      .then((response) => {
-        this.$toastr.success("Requisition updated successfully");
-        this.requestModal = false;
-        this.fetchRequisitions(); // Refresh list
-      })
-      .catch((error) => {
-        console.error("Error updating requisition:", error);
-      });
-  } else {
-    // Creating requisition
-    axios
-      .post("/api/v1/requisitions", payload)
-      .then((response) => {
-        this.$toastr.success("Requisition created successfully");
-        this.requestModal = false;
-        this.fetchRequisitions(); // Refresh list
-      })
-      .catch((error) => {
-        console.error("Error creating requisition:", error);
-      });
-  }
-}
-,
+      if (this.selectedItem && this.selectedItem.id) {
+        // Updating requisition
+        axios
+          .put(`/api/v1/update/${this.selectedItem.id}`, payload)
+          .then((response) => {
+            this.$toastr.success("Requisition updated successfully");
+            this.requestModal = false;
+            this.fetchRequisitions(); // Refresh list
+          })
+          .catch((error) => {
+            console.error("Error updating requisition:", error);
+          });
+      } else {
+        // Creating requisition
+        axios
+          .post("/api/v1/requisitions", payload)
+          .then((response) => {
+            this.$toastr.success("Requisition created successfully");
+            this.requestModal = false;
+            this.fetchRequisitions(); // Refresh list
+          })
+          .catch((error) => {
+            console.error("Error creating requisition:", error);
+          });
+      }
+    }
+    ,
     openRequestModal() {
       this.requestModal = true;
     },
@@ -1120,13 +1048,13 @@ export default {
     // },
 
     closeRequestModal() {
-  this.requestModal = false;
-  this.selectedItem = null;
-  this.requisitionItems = [];
-  this.specialInstructions = "";
-  this.approverType = null;
-}
-,
+      this.requestModal = false;
+      this.selectedItem = null;
+      this.requisitionItems = [];
+      this.specialInstructions = "";
+      this.approverType = null;
+    }
+    ,
     filterAllRequisitions() {
       this.fetchRequisitions();
     },

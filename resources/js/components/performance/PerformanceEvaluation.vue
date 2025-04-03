@@ -302,13 +302,20 @@
       </v-dialog>
 
       <!-- Add Evaluation Modal -->
-      <v-dialog v-model="addEvaluationDialog" max-width="600">
+      <v-dialog v-model="addEvaluationDialog" width="800">
         <v-card>
           <v-card-title>Add Performance Evaluation</v-card-title>
           <v-divider></v-divider>
           <v-card-text>
             <v-form ref="evaluationForm">
               <v-row>
+
+
+                  <v-col cols="12" >
+                  <v-select v-model="newEvaluation.department_id" :items="departments" item-title="name" item-value="id"
+                    label="Department" clearable dense>
+                  </v-select>
+                </v-col>
                 <v-col cols="12">
                   <v-autocomplete v-model="newEvaluation.user_id" :items="employees" item-title="fullName"
                     item-value="id" label="Employee" clearable dense>
@@ -319,11 +326,7 @@
                     item-value="id" label="Evaluator" clearable dense>
                   </v-autocomplete>
                 </v-col> -->
-                <!-- <v-col cols="12" sm="6">
-                  <v-select v-model="newEvaluation.department_id" :items="departments" item-title="name" item-value="id"
-                    label="Department" clearable dense>
-                  </v-select>
-                </v-col> -->
+              
                 <!-- <v-col cols="12" sm="6">
                   <v-text-field v-model="newEvaluation.evaluation_date" label="Evaluation Date" type="date" dense>
                   </v-text-field>
@@ -686,37 +689,7 @@ export default {
           this.loading = false;
         });
     },
-    // addEvaluation() {
-    //   axios.post('/api/v1/performance-evaluations', this.newEvaluation)
-    //     .then(response => {
-    //       this.fetchEvaluations();
-    //       this.$toastr.success('Evaluation added successfully!');
-    //       this.addEvaluationDialog = false;
-    //       // Reset form
-    //       this.newEvaluation = {
-    //         user_id: this.user.id,
-    //         evaluator_id: null,
-    //         department_id: null,
-    //         evaluation_date: null,
-    //         attendance: 0,
-    //         problems_solved: 0,
-    //         reports_submitted: 0,
-    //         knowledge_of_work: 0,
-    //         team_work: 0,
-    //         reliability_visibility: 0,
-    //         productivity: 0,
-    //         discipline: 0,
-    //         quality_of_work: 0,
-    //         communication: 0,
-    //         total_score: 0,
-    //         percentage: 0,
-    //       };
-    //     })
-    //     .catch(error => {
-    //       console.error('Error adding evaluation:', error);
-    //       this.$toastr.error('Failed to add evaluation.');
-    //     });
-    // },
+    
     viewEvaluation(evaluation) {
       this.selectedEvaluation = {
         evaluation_date: evaluation.evaluation_date,

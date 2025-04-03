@@ -49,7 +49,7 @@ class RequisitionApprovedNotification extends Notification implements ShouldQueu
             // ->line('Your requisition with ID #' . $this->requisition->id . ' has been approved.')
             ->line('Requisition with ID #' . $this->requisition->id . ' has been approved.')
             ->line('Status: Approved')
-            ->action('View Requisition', url('/requisitions/' . $this->requisition->id))
+            ->action('View Requisition', url('/api/v1/requisitions/' . $this->requisition->id . '/pdf'))
             ->line('Thank you for using our system!');
     }
 
