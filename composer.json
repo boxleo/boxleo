@@ -14,6 +14,7 @@
         "laravel/ui": "^4.2",
         "maatwebsite/excel": "^3.1",
         "octopyid/laravel-impersonate": "^4",
+        "opcodesio/log-viewer": "^2.0",
         "pusher/pusher-push-notifications": "^2.0",
         "spatie/laravel-permission": "*",
         "spatie/laravel-settings": "^3.2",

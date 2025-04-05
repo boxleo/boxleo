@@ -40,12 +40,12 @@
         <v-card variant="outlined">
           <v-card-title>Attendance Overview</v-card-title>
           <v-col v-for="(stat, index) in statistics" :key="index">
-            <v-card  class="pa-4 rounded-lg elevation-2" style=" text-align: center;">
+            <v-card class="pa-4 rounded-lg elevation-2" style=" text-align: center;">
               <v-row align="center" justify="space-between">
                 <v-icon :color="stat.color" size="36" class="mr-2">
                   {{ stat.icon }}
                 </v-icon>
-               
+
               </v-row>
               <v-divider class="my-2"></v-divider>
               <v-card-title class="text-h6 font-weight-bold">
@@ -84,8 +84,7 @@
             </v-text-field> -->
 
 
-            <v-text-field v-model="serverTime" label="Time (Readonly)" type="time"  outlined
-              dense readonly class="mb-4">
+            <v-text-field v-model="attendanceForm.serverTime" label="Time (Readonly)" type="time" outlined dense readonly class="mb-4">
             </v-text-field>
 
 
@@ -103,6 +102,7 @@
   </v-container>
 </template>
 <script>
+import { DateTime } from 'luxon';
 
 export default {
   props: {
@@ -113,6 +113,7 @@ export default {
   },
   data() {
     return {
+    serveTime:'',
 
       headers: [
         { title: 'Attendance Date', value: 'attendance_date' },
@@ -140,6 +141,7 @@ export default {
         time: '',
         notes: '',
         currentTime: '',
+        serverTime: '',
       },
     };
   },
@@ -179,57 +181,60 @@ export default {
   },
   methods: {
 
-    async fetchServerTime() {
-      try {
-        const response = await axios.get('/api/v1/server-time');
-        const serverDatetime = response.data.time;
-        this.serverTime = this.formatTime(serverDatetime);
-      } catch (error) {
-        console.error('Failed to fetch server time:', error);
-      }
-    },
-    formatTime(datetime) {
-      // Replace space with 'T' to make it ISO 8601 compliant
-      const isoString = datetime.replace(' ', 'T');
-      const date = new Date(isoString);
 
-      // Check for invalid date
-      if (isNaN(date.getTime())) {
-        console.error('Invalid datetime string:', datetime);
-        return '';
-      }
+async fetchServerTime() {
+  try {
+    const response = await axios.get('/api/v1/server-time');
+    const serverDatetime = response.data.time;
+    console.log('Server Datetime:', serverDatetime);
+    
+    // Call localizeTime and update the form
+    const localizedTime = await this.localizeTime();
+    this.attendanceForm.serverTime = localizedTime;
+    this.serverTime = localizedTime;
+    
+    console.log('Localized Server Time:', this.attendanceForm.serverTime);
+  } catch (error) {
+    console.error('Failed to fetch server time:', error);
+  }
+},
 
-      // Extract hours, minutes, and seconds
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      const seconds = date.getSeconds().toString().padStart(2, '0');
+async localizeTime() {
+  try {
+    // 1. Get server time string from your endpoint
+    const serverTimeRes = await axios.get('/api/v1/server-time');
+    const serverTimeString = serverTimeRes.data.time; // e.g., "2025-04-05 14:10:28"
 
-      // Return formatted time string
-      return `${hours}:${minutes}:${seconds}`;
-    },
+    // 2. Parse server time as from 'Africa/Nairobi' (UTC+3)
+    const serverTime = DateTime.fromFormat(serverTimeString, 'yyyy-MM-dd HH:mm:ss', {
+      zone: 'Africa/Nairobi',
+    });
 
+    // 3. Get user timezone
+    const timezoneRes = await axios.get('/api/v1/user-timezone');
+    const userTimezone = timezoneRes.data.timezone || 'UTC'; // e.g., 'Africa/Maputo'
 
-    // async fetchServerTime() {
-    //   try {
-    //     const response = await axios.get('/v1/server-time'); 
-    //     this.serverTime = response.data.time;
-    //   } catch (error) {
-    //     console.error('Failed to fetch server time:', error);
-    //   }
-    // },
-    // async clockIn() {
-    //   try {
-    //     const response = await axios.post('/api/clock-in'); // Replace with your clock-in API
-    //     alert('Clock-in successful!');
-    //   } catch (error) {
-    //     console.error('Clock-in failed:', error);
-    //   }
-    // }
-    // ,
+    // 4. Convert time to user's timezone
+    const localized = serverTime.setZone(userTimezone);
 
-    getStatusColorBadge(status) {
-      return status === 'Present' ? 'success' : status === 'Absent' ? 'error' : 'warning';
-    },
+    // 5. Return formatted time in HH:MM format (suitable for time input)
+    return localized.toFormat('HH:mm:ss'); // Format as HH:MM for time input field
+  } catch (err) {
+    console.error('Error localizing time:', err);
+    // Return time in format suitable for time input field
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  }
+},
+formatTime(date) {
+  // Extract hours, minutes, and seconds
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  // Return formatted time string
+  return `${hours}:${minutes}:${seconds}`;
+},
+
 
     getDeviceCoordinates() {
       if ('geolocation' in navigator) {

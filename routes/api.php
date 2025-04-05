@@ -50,6 +50,9 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('v1/branches', [UnitApiController::class, 'store']);
   Route::put('v1/branches/{unit}', [UnitApiController::class, 'update']);
   Route::delete('v1/branches/{unit}', [UnitApiController::class, 'destroy']);
+  Route::get('v1/timezones', [UnitApiController::class, 'timeZones']);
+  Route::get('v1/countries', [UnitApiController::class, 'countries']);
+
 
   //roles and permissions
   Route::get('v1/permissions', [PermissionApiController::class, 'index']);
@@ -104,6 +107,8 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::delete('v1/attendances/{attendance}', [AttendanceApiController::class, 'destroy']);
   Route::get('v1/attendance-analytics', [AttendanceApiController::class, 'attendanceAnalytics']);
   Route::put('v1/attendances/update/status', [AttendanceApiController::class, 'updateStatus']);
+  Route::get('v1/attendances/{user_id}/logs', [AttendanceApiController::class, 'attendanceLogs']);
+  Route::get('v1/user-timezone', [AttendanceApiController::class, 'Usertimezone']);
 
   //leave
   Route::get('v1/leaves', [LeaveApiController::class, 'index']);
