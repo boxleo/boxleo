@@ -2,21 +2,53 @@
     <v-container-fluid>
         <div class="text-center">
 
-            <v-chip @click="filterLaptops" class="ma-2" color="indigo" prepend-icon="mdi-laptop">
-                Laptops: {{ assets.laptops }}
-            </v-chip>
+            <v-row justify="center" class="my-4">
+                <v-chip-group column>
+                    <v-chip @click="filterLaptops" class="ma-2" color="deep-purple lighten-2" outlined elevation="4" prepend-icon="mdi-laptop">
+                        <strong class="white--text">Laptops:</strong> <span class="white--text">{{ assets.laptops }}</span>
+                    </v-chip>
 
-            <v-chip @click="filterDesktops" prepend-icon="mdi-monitor" class="ma-2" color="dark">
-                Desktops: {{ assets.desktops }}
-            </v-chip>
+                    <v-chip @click="filterDesktops" prepend-icon="mdi-monitor" class="ma-2" color="blue darken-3" outlined elevation="4">
+                        <strong class="white--text">Desktops:</strong> <span class="white--text">{{ assets.desktops }}</span>
+                    </v-chip>
 
-            <v-chip @click="filterHeadsets" prepend-icon="mdi-headset" class="ma-2" color="primary">
-                Headsets: {{ assets.headsets }}
-            </v-chip>
+                    <v-chip @click="filterHeadsets" prepend-icon="mdi-headset" class="ma-2" color="green accent-4" outlined elevation="4">
+                        <strong class="white--text">Headsets:</strong> <span class="white--text">{{ assets.headsets }}</span>
+                    </v-chip>
 
-            <v-chip @click="filterPhones" :model-value="true" class="ma-2" color="teal" prepend-icon="mdi-cellphone">
-                Phones: {{ assets.phones }}
-            </v-chip>
+                    <v-chip @click="filterPhones" class="ma-2" color="cyan darken-2" outlined elevation="4" prepend-icon="mdi-cellphone">
+                        <strong class="white--text">Phones:</strong> <span class="white--text">{{ assets.phones }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterCharger" class="ma-2" color="orange darken-3" outlined elevation="4" prepend-icon="mdi-battery-charging">
+                        <strong class="white--text">Chargers:</strong> <span class="white--text">{{ assets.chargers }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterMouses" class="ma-2" color="pink darken-1" outlined elevation="4" prepend-icon="mdi-mouse">
+                        <strong class="white--text">Mouses:</strong> <span class="white--text">{{ assets.mouses }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterPrinters" class="ma-2" color="purple darken-4" outlined elevation="4" prepend-icon="mdi-printer">
+                        <strong class="white--text">Printers:</strong> <span class="white--text">{{ assets.printers }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterScanners" class="ma-2" color="teal darken-3" outlined elevation="4" prepend-icon="mdi-scanner">
+                        <strong class="white--text">Scanners:</strong> <span class="white--text">{{ assets.scanners }}</span>
+                    </v-chip>
+                    
+                    <v-chip @click="filterSimcards" class="ma-2" color="lime darken-3" outlined elevation="4" prepend-icon="mdi-sim">
+                        <strong class="white--text">Sim_Cards:</strong> <span class="white--text">{{ assets.simcards }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterCamera" class="ma-2" color="indigo darken-3" outlined elevation="4" prepend-icon="mdi-camera">
+                        <strong class="white--text">Cameras:</strong> <span class="white--text">{{ assets.camera }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterOther" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">Other:</strong> <span class="white--text">{{ assets.other }}</span>
+                    </v-chip>
+                </v-chip-group>
+            </v-row>
         </div>
         <v-row justify="end" class="text-right">
             <v-col>
@@ -72,14 +104,30 @@
             </v-col>
         </v-row>
         <v-col>
-            <v-text-field v-model="search" label="Search"  prepend-inner-icon="mdi-magnify" clearable @clear="clearSearch"></v-text-field>
+            <v-text-field 
+            v-model="search" 
+            label="Search Items" 
+            prepend-inner-icon="mdi-magnify" 
+            clearable 
+            @clear="clearSearch"
+            outlined
+          
+            >
 
+            <!--   style="background: linear-gradient(to right, #2196F3, #21CBF3); color: white; border-radius: 8px;" -->
+            <!-- <template v-slot:append>
+                <v-icon color="white">mdi-close-circle</v-icon>
+            </template> -->
+            </v-text-field>
         </v-col>
         <v-row>
             <v-responsive>
                 <v-progress-linear v-if="loading" color="primary" indeterminate></v-progress-linear>
 
                 <v-data-table v-model="selected" :headers="headers" :items="resources" item-key="id"
+                    :search="search"
+
+
                     class="elevation-10" responsive show-select>
 
                     <template v-slot:item.issued_to="{ item }">
@@ -156,7 +204,7 @@
                             <v-row>
                                 <v-col cols="12" sm="6">
                                     <v-select v-model="formData.name"
-                                        :items="['Laptop', 'Headset', 'Desktop', 'Phone', 'Charger', 'Mouse', 'Other']"
+                                        :items="['Laptop', 'Headset', 'Desktop', 'Phone', 'Charger', 'Mouse','Sim Card','Printer','Camera','Other']"
                                         label="Name" variant="outlined">
                                     </v-select>
                                 </v-col>
@@ -172,7 +220,7 @@
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-select v-model="formData.category"
-                                        :items="['Hardware', 'Software', 'Stationery', 'Furniture', 'Electronics', 'Printer ']"
+                                        :items="['Hardware', 'Software', 'Stationery', 'Furniture', 'Electronics',]"
                                         label="Category" variant="outlined">
                                     </v-select>
                                 </v-col>
@@ -344,7 +392,10 @@ export default {
     },
     data() {
         return {
+            
 
+            search: '',
+            filter: '',
             logsModal: false,
             logs: [],
             loadingLogs: false,
@@ -543,6 +594,13 @@ export default {
                 desktops: this.resources.filter(resource => resource.name === 'Desktop').length,
                 headsets: this.resources.filter(resource => resource.name === 'Headset').length,
                 phones: this.resources.filter(resource => resource.name === 'Phone').length,
+                chargers: this.resources.filter(resource => resource.name === 'Charger').length,
+                mouses: this.resources.filter(resource => resource.name === 'Mouse').length,
+                printers: this.resources.filter(resource => resource.name === 'Printer').length,
+                scanners: this.resources.filter(resource => resource.name === 'Scanner').length,
+                simcards: this.resources.filter(resource => resource.name === 'Sim_Card').length,
+                camera: this.resources.filter(resource => resource.name === 'Camera').length,
+                other: this.resources.filter(resource => resource.name === 'Other').length,
             };
         },
 
@@ -563,6 +621,27 @@ export default {
 
         filterPhones() {
             this.filterResources('Phone');
+        },
+        filterCharger() {
+            this.filterResources('Charger');
+        },
+        filterMouses() {
+            this.filterResources('Mouse');
+        },
+        filterPrinters() {
+            this.filterResources('Printer');
+        },
+        filterScanners() {
+            this.filterResources('Scanner');
+        },
+        filterSimcards() {
+            this.filterResources('Sim_Card');
+        },
+        filterCamera() {
+            this.filterResources('Camera');
+        },
+        filterOther() {
+            this.filterResources('Other');
         },
         fetchUsers() {
             console.log('Fetching users from the API...');

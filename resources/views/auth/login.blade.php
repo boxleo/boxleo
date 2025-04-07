@@ -6,7 +6,7 @@
     <div class="login-container">
         <div class="login-box">
             <h1>Login</h1>
-            <img class="company-logo" src="{{asset('assets/img/logo.png')}}" alt="Boxleo Logo">
+            <!-- <img class="company-logo" src="{{asset('assets/img/logo.png')}}" alt="Boxleo Logo"> -->
             <form action="{{ route('login') }}" method="post">
                 @csrf
                 <div class="input-group">
