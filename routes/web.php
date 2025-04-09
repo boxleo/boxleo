@@ -55,6 +55,8 @@ Route::group(['middleware' => ['guest']], function () {
     Route::get('/', function () {
         return redirect()->route('login');
     })->name('home');
+    // Route::get('/employee-voice', [ComplaintController::class, 'employeeComplaints']);
+
 });
 
 // Admin routes

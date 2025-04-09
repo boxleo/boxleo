@@ -14,6 +14,27 @@
                             <!-- </v-toolbar> -->
                         </template>
 
+
+                        <template v-slot:item.attachments="{ item }">
+                            <div v-if="item.attachments">
+                                <template v-for="(attachment, index) in parseAttachments(item.attachments)"
+                                    :key="index">
+                                    <a :href="getAttachmentUrl(attachment)" target="_blank">
+                                        {{ attachment.original_name }}
+                                    </a>
+                                    <span v-if="index < parseAttachments(item.attachments).length - 1">, </span>
+                                </template>
+                            </div>
+                            <span v-else>-</span>
+                        </template>
+
+                        <template v-slot:item.links="{ item }">
+                            <v-chip v-for="(link, index) in parseLinks(item.links)" :key="index" class="ma-2">
+                                <a :href="link" target="_blank">{{ getDisplayLink(link) }}</a>
+                            </v-chip>
+                            <span v-if="!item.links || parseLinks(item.links).length === 0">-</span>
+                        </template>
+
                         <template v-slot:item.status="{ item }">
                             <v-chip :color="getStatusColor(item.status)" dark
                                 @click="openStatusDialog(item, 'status')">{{ item.status }}</v-chip>
@@ -33,10 +54,29 @@
                             <v-chip :color="getPriorityColor(item.priority)" dark
                                 @click="openStatusDialog(item, 'priority')">{{ item.priority }}</v-chip>
                         </template>
+                        <template v-slot:item.addressed_to="{ item }">
+                            <span v-if="item.addressed_to && item.addressed_to.length">
+                                {{ item.addressed_to.join(', ') }}
+                            </span>
+                            <span v-else>-</span>
+                        </template>
+                        <template v-slot:item.followers="{ item }">
+                            <span v-if="item.followers && item.followers.length">
+                                {{ item.followers.join(', ') }}
+                            </span>
+                            <span v-else>-</span>
+                        </template>
+
+
+
+                        <template v-slot:item.departments="{ item }">
+      <span v-if="item.departments.length">{{ item.departments.join(', ') }}</span>
+    </template>
+
 
                         <template v-slot:item.actions="{ item }">
-                            <v-icon small color="primary" @click="viewVoice(item.id)"
-                                title="View Voice">mdi-account-search</v-icon>
+                            <v-icon  v-if="permissions.includes('view voice logs')" small color="primary" @click="viewVoice(item.id)"
+                                title="View Voice" >mdi-account-search</v-icon>
                             <v-icon small color="success" @click="editVoice(item)"
                                 title="Edit Voice">mdi-pencil</v-icon>
                             <v-icon small color="red" @click="openconfirmDeleteDialog(item)"
@@ -52,7 +92,7 @@
         <v-dialog v-model="statusDialog" max-width="500px">
             <v-card>
                 <v-card-title class="headline">Update {{ dialogField.charAt(0).toUpperCase() + dialogField.slice(1)
-                }}</v-card-title>
+                    }}</v-card-title>
                 <v-card-text>
                     <v-select v-if="dialogField === 'status'" v-model="editedVoice.status" :items="statuses"
                         label="Status" :rules="[v => !!v || 'Status is required']"></v-select>
@@ -75,118 +115,137 @@
         <!-- dialog to view voice shows the history of the voice -->
         <v-dialog v-model="viewVoiceDialog" max-width="800px">
             <v-card>
-                <v-card-title>
-                    <span class="headline">Voice Details</span>
+                <v-card-title class="d-flex justify-space-between align-center">
+                    <span class="headline font-weight-bold">Voice Logs</span>
+                    <v-btn icon @click="viewVoiceDialog = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
+
+                <v-divider></v-divider>
+
                 <v-card-text>
-                    <v-container>
-                        <v-row>
+                    <v-container v-if="selectedVoice.length">
+                        <v-row v-for="(log, index) in selectedVoice" :key="log.id">
                             <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Subject: {{ selectedVoice.subject }}</v-list-item-title>
-                                        <v-list-item-subtitle>Description: {{ selectedVoice.description
-                                        }}</v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Category: {{ selectedVoice.category }}</v-list-item-title>
-                                        <v-list-item-subtitle>Status: {{ selectedVoice.status }}</v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Priority: {{ selectedVoice.priority }}</v-list-item-title>
-                                        <v-list-item-subtitle>Anonymous: {{ selectedVoice.is_anonymous ? 'Yes' : 'No'
-                                        }}</v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Assigned To:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="user in selectedVoice.assigned_to" :key="user.id"
-                                                class="ma-2">
-                                                {{ user.fullname }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Followers:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="user in selectedVoice.followers" :key="user.id" class="ma-2">
-                                                {{ user.fullname }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Attachments:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="(file, index) in selectedVoice.attachments" :key="index"
-                                                class="ma-2">
-                                                {{ file.name }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Links:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="(link, index) in selectedVoice.links" :key="index"
-                                                class="ma-2">
-                                                {{ link }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>History:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-timeline>
-                                                <v-timeline-item v-for="(history, index) in selectedVoice.history"
-                                                    :key="index" :color="getStatusColor(history.status)"
-                                                    :icon="getStatusIcon(history.status)">
-                                                    <v-card>
-                                                        <v-card-title>{{ history.status }}</v-card-title>
-                                                        <v-card-subtitle>{{ history.date }}</v-card-subtitle>
-                                                        <v-card-text>{{ history.description }}</v-card-text>
-                                                    </v-card>
-                                                </v-timeline-item>
-                                            </v-timeline>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
+                                <v-card outlined class="pa-4 elevation-2">
+                                    <v-card-title class="font-weight-medium">
+                                        Log #{{ index + 1 }}
+                                    </v-card-title>
+
+                                    <v-card-subtitle class="text-caption text-grey-darken-1">
+                                        <v-chip small color="primary" class="mr-2">
+                                            {{ log.action }}
+                                        </v-chip>
+                                        <!-- <strong>Logged By:</strong> {{ log.user ? log.user.firstname : 'Unknown' }} | -->
+                                        <strong>Voice ID:</strong> {{ log.complaint_id }}
+                                    </v-card-subtitle>
+
+                                    <v-divider></v-divider>
+
+                                    <v-card-text class="mt-3">
+                                        <v-list dense>
+                                            <v-list-item v-if="parseNewData(log.new_data).description">
+                                                <v-list-item-icon>
+                                                    <v-icon color="blue">mdi-note-text</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Description:</strong> {{
+                                                        parseNewData(log.new_data).description }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+
+                                            <v-list-item v-if="parseNewData(log.new_data).comments">
+                                                <v-list-item-icon>
+                                                    <v-icon color="purple">mdi-comment-text</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Comments:</strong> {{ parseNewData(log.new_data).comments }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+
+                                            <v-list-item v-if="parseNewData(log.new_data).category">
+                                                <v-list-item-icon>
+                                                    <v-icon color="purple">mdi-tag</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Category:</strong> {{ parseNewData(log.new_data).category }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <v-list-item v-if="parseNewData(log.new_data).addressed_to">
+                                                <v-list-item-icon>
+                                                    <v-icon color="teal">mdi-account-multiple</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Addressed To:</strong> {{
+                                                        parseNewData(log.new_data).addressed_to.join(', ') }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <!-- <v-list-item v-if="parseNewData(log.new_data).followers">
+                                                <v-list-item-icon>
+                                                    <v-icon color="amber">mdi-account-group</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Followers:</strong> {{
+                                                    parseNewData(log.new_data).followers.join(',
+                                                    ') }}
+                                                </v-list-item-content>
+                                            </v-list-item> -->
+
+                                            <v-list-item v-if="parseNewData(log.new_data).status">
+                                                <v-list-item-icon>
+                                                    <v-icon color="green">mdi-check-circle</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Status:</strong> {{ parseNewData(log.new_data).status }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+                                            <v-list-item v-if="parseNewData(log.new_data).priority">
+                                                <v-list-item-icon>
+                                                    <v-icon color="red">mdi-alert</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Priority:</strong> {{ parseNewData(log.new_data).priority }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+                                            <v-list-item v-if="parseNewData(log.new_data).is_anonymous">
+                                                <v-list-item-icon>
+                                                    <v-icon color="grey">mdi-incognito</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Anonymous:</strong> {{
+                                                        parseNewData(log.new_data).is_anonymous ?
+                                                            'Yes' : 'No' }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                        </v-list>
+
+                                        <p class="text-caption text-grey mt-3">
+                                            <strong>Updated At:</strong> {{ formatDate(log.updated_at) }}
+                                        </p>
+                                    </v-card-text>
+                                </v-card>
                             </v-col>
                         </v-row>
                     </v-container>
+                    <v-container v-else class="text-center">
+                        <v-alert type="info" outlined>
+                            No Voice logs found.
+                        </v-alert>
+                    </v-container>
                 </v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="viewVoiceDialog = false">Close</v-btn>
+
+                <v-card-actions class="justify-end">
+                    <v-btn color="primary" @click="viewVoiceDialog = false">Close</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+
         <!-- confirm delete modal -->
 
 
@@ -205,7 +264,7 @@
 
 
         <!-- edit voice -->
-        <v-dialog v-model="showDialog" max-width="600px">
+        <v-dialog v-model="showDialog" max-width="800px">
             <v-card>
                 <v-card-title>
                     <span class="headline">{{ formTitle }}</span>
@@ -217,18 +276,52 @@
                                 <v-text-field variant="outlined" v-model="editedVoice.subject" label="Subject"
                                     :rules="[v => !!v || 'Subject is required']"></v-text-field>
                             </v-col>
+                         <v-col cols="12">
+  <v-select 
+    variant="outlined" 
+    v-model="editedVoice.category" 
+    :items="categories" 
+    label="Category" 
+    :rules="[v => !!v || 'Category is required']"
+  ></v-select>
+
+  <!-- Show text input only when 'Other' is selected -->
+  <v-text-field 
+    v-if="editedVoice.category === 'Other'" 
+    variant="outlined" 
+    v-model="editedVoice.category_other" 
+    label="Other (Specify Category)" 
+    class="mt-2" 
+    :rules="[v => !!v || 'Other category is required']"
+  ></v-text-field>
+</v-col>
+
+
                             <v-col cols="12">
-                                <v-select variant="outlined" v-model="editedVoice.category" :items="categories"
-                                    label="Category" :rules="[v => !!v || 'Category is required']"></v-select>
+                           
+              <v-autocomplete v-model="editedVoice.department_id" :items="departments" label="Department"
+                variant="outlined" multiple item-title="name" item-value="id" clearable />
+
                             </v-col>
+
+
+
                             <v-col cols="12">
-                                <v-select variant="outlined" v-model="editedVoice.assigned_to" :items="users"
-                                    label="Address To" item-value="id" item-title="fullname" multiple
-                                    :rules="[v => (v && v.length) || 'Addressee is required']"></v-select>
-                            </v-col>
+    <v-autocomplete 
+        variant="outlined" 
+        v-model="editedVoice.addressed_to" 
+        :items="users"
+        label="Address To" 
+        item-value="id" 
+        item-title="fullname" 
+        multiple
+        :rules="[v => !v || v.length >= 0 || '']">
+    ></v-autocomplete>
+</v-col>
+
                             <v-col cols="12">
-                                <v-select variant="outlined" v-model="editedVoice.followers" :items="users"
-                                    label="Followers" item-value="id" item-title="fullname" multiple></v-select>
+                                <v-autocomplete variant="outlined" v-model="editedVoice.followers" :items="users"
+                                    label="Followers" item-value="id" item-title="fullname" multiple></v-autocomplete>
                             </v-col>
                             <v-col cols="12">
                                 <v-textarea variant="outlined" v-model="editedVoice.description" label="Description"
@@ -239,7 +332,8 @@
                             <v-col>
                                 <v-file-input ref="fileInput" v-model="attachments" label="Attach Documents (Optional)"
                                     multiple accept=".pdf, .doc, .docx, .png" outlined clearable
-                                    @change="handleFileUpload"></v-file-input>
+                                    @change="handleFileUpload">
+                                </v-file-input>
                                 <div v-if="attachments && attachments.length > 0">
                                     <v-chip v-for="(file, index) in attachments" :key="index" class="ma-2" close
                                         @click:close="removeAttachment(index)">
@@ -276,6 +370,11 @@
 
 <script>
 export default {
+    props: {
+        user: Object,
+        roles: Array,
+        permissions: Array
+    },
     data() {
         return {
 
@@ -285,6 +384,7 @@ export default {
             attachments: [],
             confirmDeleteDialog: false,
             followers: [],
+            addressed_to: [],
             filteredUsers: [],
             loading: false,
             base_url: '/',
@@ -306,6 +406,8 @@ export default {
                 { title: 'Followers', value: 'followers' },
                 { title: 'Comments', value: 'comments' },
                 { title: 'Status', value: 'status' },
+                {title: 'Department',value:'departments'},
+                
 
                 // { title: 'Resolution', value: 'resolution' },
                 { title: 'Creation Date', value: 'created_at' },
@@ -318,6 +420,7 @@ export default {
             statuses: ['Open', 'In Progress', 'Resolved', 'Closed'],
             categories: ['Harassment', 'Workplace Safety', 'Compensation & Benefits', 'Employee Rights', 'Workload & Scheduling', 'Other'],
             newLink: '',
+            links: [],
 
         };
     },
@@ -327,12 +430,74 @@ export default {
         }
     },
     created() {
+        console.log("User:", this.user);
+        console.log("Roles:", this.roles);
+        console.log("Permissions:", this.permissions);
         this.fetchUsers();
         this.fetchVoices();
+        this.fetchDepartments();
     },
     methods:
     {
 
+
+        fetchDepartments() {
+      axios.get('/api/v1/departments')
+        .then(response => {
+          this.departments = response.data.departments;
+        })
+        .catch(error => {
+          console.error("Error fetching departments:", error);
+          this.$toastr.error("Failed to fetch departments");
+        });
+    },
+        parseNewData(data) {
+            try {
+                return JSON.parse(data);
+            } catch (e) {
+                console.error("Error parsing JSON:", e);
+                return {};
+            }
+        },
+
+        formatDate(dateStr) {
+            return new Date(dateStr).toLocaleString();
+        },
+        parseLinks(linksString) {
+            try {
+                return typeof linksString === 'string'
+                    ? JSON.parse(linksString)
+                    : (Array.isArray(linksString) ? linksString : []);
+            } catch (e) {
+                console.error('Error parsing links:', e);
+                return [];
+            }
+        },
+        getDisplayLink(link) {
+            // Display a more readable version of the link
+            // This will show the domain name instead of the full URL
+            try {
+                const url = new URL(link);
+                return url.hostname;
+            } catch (e) {
+                return link;
+            }
+        },
+        parseAttachments(attachmentsString) {
+            try {
+                return typeof attachmentsString === 'string'
+                    ? JSON.parse(attachmentsString)
+                    : (Array.isArray(attachmentsString) ? attachmentsString : []);
+            } catch (e) {
+                console.error('Error parsing attachments:', e);
+                return [];
+            }
+        },
+
+        getAttachmentUrl(attachment) {
+
+            return `/storage/${attachment.path}`;
+        },
         updateField() {
             const field = this.dialogField;
             if (!field) return;
@@ -340,53 +505,58 @@ export default {
             const updatedVoice = { ...this.editedVoice };
 
             axios.put(`${this.base_url}api/v1/voices/${updatedVoice.id}`, {
-            [field]: updatedVoice[field]
+                [field]: updatedVoice[field]
             })
-            .then(response => {
-            this.showSuccess(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
-            this.statusDialog = false;
-            this.fetchVoices(); 
-            })
-            .catch(error => {
-            console.error(`Error updating ${field}:`, error);
-            this.showError(`Failed to update ${field}. Please try again.`);
-            });
+                .then(response => {
+                    this.showSuccess(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
+                    this.statusDialog = false;
+                    this.fetchVoices();
+                })
+                .catch(error => {
+                    console.error(`Error updating ${field}:`, error);
+                    this.showError(`Failed to update ${field}. Please try again.`);
+                });
         },
         openconfirmDeleteDialog(item) {
             this.editedVoice = item;
             this.confirmDeleteDialog = true;
         },
 
-
-
         handleFileUpload(file) {
             if (file instanceof File) {
                 console.log('Valid file selected:', file);
-                this.attachments = file;  // Store correctly
+                const file = this.attachments.document[0]; // Get the first file from the array
+
+                // this.attachments = file;  // Store correctly
             } else {
                 console.error('Invalid file selected:', file);
             }
-        }
-        ,
+        },
         removeAttachment(index) {
-            console.log('removeAttachment called with index:', index);
-            this.attachments.splice(index, 1);
-            console.log('Updated attachments after removal:', this.attachments);
+            this.attachments.splice(index, 1); // Remove the file at the specified index
         },
         getDefaultVoice() {
             return {
-                subject: '',
-                status: 'Open',
-                assigned_to: [],
-                description: '',
-                category: '',
-                priority: 'Medium',
-                is_anonymous: true,
-                attachments: [],
-                links: [],
-                followers: [],
-                viewVoiceDialog: false,
+            subject: '',
+            status: 'Open',
+            addressed_to: [],
+            description: '',
+            category: '',
+            category_other: '',
+            priority: 'Medium',
+            is_anonymous: true,
+            attachments: [],
+            links: [],
+            followers: [],
+            department_id:[],
+            viewVoiceDialog: false,
             };
+        },
+        editVoice(item) {
+            this.editedIndex = this.voices.indexOf(item);
+            this.editedVoice = Object.assign({}, item);
+            this.editedVoice.links = this.editedVoice.links || []; // Initialize links if undefined
+            this.showDialog = true;
         },
         fetchUsers() {
             this.loading = true;
@@ -410,6 +580,8 @@ export default {
                 .then(response => {
                     // Make sure the property name matches what the API returns
                     this.voices = response.data.complaints || response.data.voices || [];
+                    const test = this.voices
+                    console.log('voices:', test);
                     this.loading = false;
                 })
                 .catch(error => {
@@ -420,18 +592,19 @@ export default {
         },
         viewVoice(id) {
             this.viewVoiceDialog = true;
-            // this.loading = true;
-            // axios.get(`${this.base_url}api/v1/voices/${id}`)
-            // .then(response => {
-            //     this.selectedVoice = response.data.voice;
-            //     // this.viewVoiceDialog = true;
-            //     this.loading = false;
-            // })
-            // .catch(error => {
-            //     this.loading = false;
-            //     console.error('Error fetching voice details:', error);
-            //     this.showError('Failed to load voice details. Please try again.');
-            // });
+            this.loading = true;
+            axios.get(`${this.base_url}api/v1/voices/${id}`)
+                .then(response => {
+                    this.selectedVoice = response.data.logs;
+                    // this.viewVoiceDialog = true;
+                    console.log('Selected voice:', this.selectedVoice);
+                    this.loading = false;
+                })
+                .catch(error => {
+                    this.loading = false;
+                    console.error('Error fetching voice details:', error);
+                    this.showError('Failed to load voice details. Please try again.');
+                });
         },
         openDialog() {
             this.editedIndex = -1;
@@ -467,35 +640,39 @@ export default {
             if (!this.validateForm()) {
                 return;
             }
+
             const formData = new FormData();
             formData.append('subject', this.editedVoice.subject);
-            console.log('Appending subject:', this.editedVoice.subject);
             formData.append('description', this.editedVoice.description);
-            console.log('Appending description:', this.editedVoice.description);
-            formData.append('category', this.editedVoice.category);
-            console.log('Appending category:', this.editedVoice.category);
-            formData.append('status', this.editedVoice.status);
-            console.log('Appending status:', this.editedVoice.status);
-            formData.append('priority', this.editedVoice.priority);
-            console.log('Appending priority:', this.editedVoice.priority);
+            if (this.editedVoice.category === "Other") {
+    formData.append('category', this.editedVoice.category_other); // Use custom input
+} else {
+    formData.append('category', this.editedVoice.category); // Use selected category
+}
 
-            // Handle array values correctly
-            if (this.editedVoice.assigned_to && this.editedVoice.assigned_to.length) {
-                this.editedVoice.assigned_to.forEach(assignee => {
-                    formData.append('assigned_to[]', assignee);
-                    console.log('Appending assigned_to:', assignee);
+            formData.append('status', this.editedVoice.status);
+            formData.append('priority', this.editedVoice.priority);
+            formData.append('user_id', this.user.id,);
+            // append department_id
+            if (this.editedVoice.department_id && this.editedVoice.department_id.length) {
+                console.log('department_id:', this.editedVoice.department_id);
+                this.editedVoice.department_id.forEach(department_id => {
+                    formData.append('department_id[]', department_id);
                 });
             }
 
+            // Handle array values correctly
+            if (this.editedVoice.addressed_to && this.editedVoice.addressed_to.length) {
+                this.editedVoice.addressed_to.forEach(assignee => {
+                    formData.append('addressed_to[]', assignee);
+                });
+            }
             if (this.editedVoice.followers && this.editedVoice.followers.length) {
                 this.editedVoice.followers.forEach(follower => {
                     formData.append('followers[]', follower);
-                    console.log('Appending follower:', follower);
                 });
             }
-
             formData.append('is_anonymous', this.editedVoice.is_anonymous ? 1 : 0);
-            console.log('Appending is_anonymous:', this.editedVoice.is_anonymous ? 1 : 0);
 
             if (this.attachments && this.attachments.length > 0) {
                 formData.append('attachments', this.attachments[0]); // Only append the first file
@@ -503,17 +680,11 @@ export default {
             } else {
                 console.log('No file selected');
             }
-
+            // Handle links properly
             if (this.editedVoice.links && this.editedVoice.links.length) {
                 this.editedVoice.links.forEach(link => {
                     formData.append('links[]', link);
-                    console.log('Appending link:', link);
                 });
-            }
-
-            // Log the entire FormData object
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
             }
 
             this.loading = true;
@@ -539,7 +710,9 @@ export default {
                     console.error('Error saving voice:', error);
                     this.showError('Failed to save voice. Please try again.');
                 });
-        }, openStatusDialog(item, field) {
+        },
+
+        openStatusDialog(item, field) {
             this.editedVoice = item;
             this.dialogField = field;
             this.statusDialog = true;
@@ -556,10 +729,6 @@ export default {
             }
             if (!this.editedVoice.category) {
                 this.showError('Category is required');
-                return false;
-            }
-            if (!this.editedVoice.assigned_to || !this.editedVoice.assigned_to.length) {
-                this.showError('At least one addressee is required');
                 return false;
             }
             return true;
@@ -603,7 +772,6 @@ export default {
             }
         },
         showSuccess(message) {
-            // Replace with your preferred notification method
             if (typeof this.$toastr !== 'undefined') {
                 this.$toastr.success(message);
             } else {
@@ -611,7 +779,6 @@ export default {
             }
         },
         showError(message) {
-            // Replace with your preferred notification method
             if (typeof this.$toastr !== 'undefined') {
                 this.$toastr.error(message);
             } else {

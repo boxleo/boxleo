@@ -57,10 +57,16 @@ class SendLeaveApprovalReminder extends Command
         switch ($leave->status) {
             case 'Pending':
                 // Notify Manager
-                $approvers = User::where('designation_id', 1)
-                    ->where('department_id', $departmentId)
-                    ->where('unit_id', $unitId)
-                    ->get();
+                // $approvers = User::where('designation_id', 1)
+                //     ->where('department_id', $departmentId)
+                //     ->where('unit_id', $unitId)
+                //     ->get();
+
+                $approvers = User::whereHas('managerDepartments', function ($query) use ($departmentId) {
+                             $query->where('department_id', $departmentId);
+                         })
+                           ->where('unit_id', $unitId)
+                           ->get();
                 break;
 
             case 'Manager Approved';

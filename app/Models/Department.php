@@ -27,8 +27,13 @@ class Department extends Model
 
 
     // has manager 
-//     public function managers()
-//     {
-//         return $this->belongsToMany(User::class, 'user_id');
-//     }
+    public function managers()
+    {
+        return $this->belongsToMany(User::class, 'manager_departments', 'department_id', 'user_id');
+    }
+
+
+    public function complaints() {
+        return $this->belongsToMany(Complaint::class, 'complaint_department');
+    }
 }

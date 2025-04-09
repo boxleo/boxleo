@@ -52,7 +52,7 @@
 <body>
     <div class="container">
         <div class="logo">
-        <img src="{{ asset('assets/img/logo.png') }}" alt="Company Logo">
+        <img src="{{ public_path('assets/img/logo.png') }}" alt="Company Logo" style="max-width: 150px;">
 
         </div>
         <div class="title">
@@ -103,6 +103,10 @@
             </div>
             @endforeach
         </div>
+
+       <p> Status: {{$requisition->status}}</p>
+       <p> Proof Payment: {{$requisition->pop}}</p>
+
     </div>
 </body>
 </html>

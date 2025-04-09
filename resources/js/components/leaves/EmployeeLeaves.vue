@@ -452,10 +452,7 @@ export default {
         formData.append('days', this.newLeave.days);
         formData.append('manager', this.newLeave.manager);
         formData.append('hod', this.newLeave.hod);
-        formData.append('comment', this.newLeave.comment);
-
-
-      
+        formData.append('comment', this.newLeave.comment);      
         if (this.newLeave.document && this.newLeave.document.length > 0) {
           const file = this.newLeave.document[0]; // Get the first file from the array
           console.log('Appending file:', file);

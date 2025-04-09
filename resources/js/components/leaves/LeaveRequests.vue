@@ -127,9 +127,9 @@
                   v-if="(user.is_hr || user.is_hod || user.designation_id === 1 || item.status === 'Cancelled' || item.status === 'Pending') && item.status !== 'Approved' && item.status !== 'Expired'"
                   color="success" style="margin-right: 8px;" title="Approve Leave">mdi-thumb-up-outline
                 </v-icon>
-                <v-icon @click="deleteLeave(item)" v-if="item.status == 'Pending'" color="error"
+                <!-- <v-icon @click="deleteLeave(item)" v-if="item.status == 'Pending'" color="error"
                   style="margin-right: 8px;" title="Delete Leave">mdi-delete
-                </v-icon>
+                </v-icon> -->
               </div>
             </template>
 

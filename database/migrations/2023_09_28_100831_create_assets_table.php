@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('comment')->nullable();
             $table->decimal('purchase_cost', 10, 2)->nullable();
             $table->boolean('is_assigned')->default(0);
-            $table->foreignId('issued_to')->nullable();
+            // $table->foreignId('issued_to')->nullable();
             $table->foreignId('issued_by')->nullable();
             $table->decimal('repair_cost', 10, 2)->default(0.00);
             $table->timestamps();

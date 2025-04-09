@@ -207,6 +207,11 @@ class User extends Authenticatable
    }
 
 
+   public function managerDepartments()
+   {
+       return $this->belongsToMany(Department::class, 'manager_departments', 'user_id', 'department_id');
+   }
+
 
   //  public function fullName()
   //  {

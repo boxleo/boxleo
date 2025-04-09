@@ -19,12 +19,20 @@ class ComplaintNotification extends Mailable
      *
      * @return void
      */
-    public function __construct(Complaint $complaint, $user)
-    {
-        $this->complaint = $complaint;
-        $this->user = $user;
-    }
+    // public function __construct(Complaint $complaint, $user)
+    // {
+    //     $this->complaint = $complaint;
+    //     $this->user = $user;
+    // }
 
+
+    public function __construct(Complaint $complaint,  $user)
+{
+    $this->complaint = $complaint;
+    $this->user = $user;
+    $this->complaint->addressed_to = is_array($complaint->addressed_to) ? $complaint->addressed_to : json_decode($complaint->addressed_to, true);
+    $this->complaint->followers = is_array($complaint->followers) ? $complaint->followers : json_decode($complaint->followers, true);
+}
     /**
      * Build the message.
      *
@@ -32,7 +40,7 @@ class ComplaintNotification extends Mailable
      */
     public function build()
     {
-        return $this->subject('New Complaint Raised')
+        return $this->subject('New Suggestion Raised')
             ->view('emails.complaint-notification');
     }
 }

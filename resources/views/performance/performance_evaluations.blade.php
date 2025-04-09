@@ -11,5 +11,8 @@
 @endsection
 
 @section('content')
-    <Performance-Evaluation :user_id="{{ $user_id }}" />
+    <Performance-Evaluation
+    :user="{{ json_encode($user) }}" 
+        :roles="{{ json_encode($roles) }}" 
+        :permissions="{{ json_encode($permissions) }}"       />
 @endsection

@@ -13,10 +13,12 @@ class LeaveApprovalNotification extends Notification
     protected $leave;
     protected $role;
 
-    public function __construct($leave ,$role)
+    // public function __construct($leave ,$role)
+    public function __construct($leave )
+
     {
         $this->leave = $leave;
-        $this->role = $role;
+        // $this->role = $role;
     }
 
     public function toMail($notifiable)

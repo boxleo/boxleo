@@ -1,15 +1,76 @@
 <template>
   <v-container fluid>
     <v-layout>
+
+      <v-navigation-drawer v-model="drawer" temporary location="right" width="500">
+        <v-card>
+          <v-card-title>Filter Requisitions</v-card-title>
+          <v-card-text>
+
+            <v-col class="mt-lg-5">
+              <v-autocomplete v-model="filterOptions.item_names" :items="availableItems" label="Item Name"
+                item-title="name" variant="outlined" multiple clearable />
+            </v-col>
+
+
+            <v-col>
+              <v-autocomplete v-model="filterOptions.department_ids" :items="departments" label="Department"
+                variant="outlined" multiple item-title="name" item-value="id" clearable />
+            </v-col>
+            <v-col>
+              <v-autocomplete v-model="filterOptions.statuses" :items="statusOptions" multiple label="Status"
+                item-value="name" item-title="name" variant="outlined" clearable>
+              </v-autocomplete>
+            </v-col>
+            <v-col>
+
+
+              <v-col>
+                <v-autocomplete v-model="filterOptions.approver_types" :items="approverTypeOptions"
+                  label="Type of Approval" item-value="name" item-title="name" variant="outlined" multiple clearable>
+                </v-autocomplete>
+              </v-col>
+              <v-col>
+                <!-- <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar"
+                  clearable range></v-date-picker> -->
+
+                <v-text-field v-model="filterOptions.date_created" type="date" label="Date Created" clearable
+                  variant="outlined">
+                </v-text-field>
+              </v-col>
+
+              <!-- input type date  -->
+              <v-col>
+                <v-text-field v-model="filterOptions.date_paid" type="date" label="Date Paid" clearable
+                  variant="outlined">
+                </v-text-field>
+              </v-col>
+
+            </v-col>
+
+            <v-col class="d-flex justify-end">
+              <v-btn color="dark" @click.prevent="filterRequisitions">
+                <v-icon color="light">mdi-filter</v-icon>
+              </v-btn>
+            </v-col>
+            <v-overlay :value="loading">
+              <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-overlay>
+          </v-card-text>
+        </v-card>
+      </v-navigation-drawer>
+
+
+
       <v-main>
         <!-- Filters and Actions -->
         <v-row class="my-3">
 
           <div class="d-flex justify-center">
-            <v-btn v-if="stats.totalRequisitions >= 0" @click="filterAllRequisitions" color="secondary" outlined>
+            <!-- <v-btn v-if="stats.totalRequisitions >= 0" @click="filterAllRequisitions" color="secondary" outlined>
               <v-icon class="mr-1">mdi-refresh</v-icon>
               All Requisitions: {{ stats.totalRequisitions }}
-            </v-btn>
+            </v-btn> -->
             <v-btn v-if="stats.pending > 0" @click="filterPending" color="orange" outlined class="mx-1">
               <v-icon>mdi-clock</v-icon>
               Pending: {{ stats.pending }}
@@ -27,57 +88,211 @@
               New Request
             </v-btn>
 
-            <!-- <p>User ID: {{ userId }}</p> -->
+            <v-btn v-if="permissions.includes('add account')" @click="openAccountModal" color="primary" outlined
+              class="mx-1">
+              <v-icon>mdi-account-plus</v-icon>
+              Add Account
+            </v-btn>
 
 
-            
+            <!-- include filter icon  and report download  -->
+
+            <v-btn @click="drawer = !drawer" color="primary" outlined class="mx-1">
+              <v-icon>mdi-filter</v-icon>
+              Filter
+            </v-btn>
+            <v-btn @click="downloadReport" color="primary" outlined class="mx-1">
+              <v-icon>mdi-download</v-icon>
+              Download Report
+            </v-btn>
+
           </div>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line
+              hide-details></v-text-field>
+          </v-col>
         </v-row>
 
         <!-- Data Table -->
         <v-card class="mt-2">
           <v-progress-linear v-if="loading" color="green" indeterminate></v-progress-linear>
-          <v-data-table v-model="selected" :headers="headers" :items="requisitions" :search="search" item-key="id"
-            responsive show-select>
 
 
-            <!-- Slot for Items Column -->
+          <v-data-table :headers="headers" :items="requisitions" :search="search" item-key="id" responsive show-select
+            v-model:expanded="expandedItems" show-expand>
+
+
+            <!-- Special Instructions Column -->
+            <template v-slot:item.special_instructions="{ item }">
+              <span v-if="item.special_instructions.length < 50">
+                {{ item.special_instructions }}
+              </span>
+              <span v-else>
+                {{ item.special_instructions.substring(0, 50) }}...
+                <v-icon @click="toggleExpand(item)">mdi-chevron-down</v-icon>
+              </span>
+            </template>
+
+            <!-- Items Column with Expand Button -->
             <template v-slot:item.items="{ item }">
-              <v-list dense>
-                <v-list-item v-for="(itemDetail, index) in item.items" :key="index">
-                  <v-list-item-content>
-                    <v-list-item-title>{{ itemDetail.name }}</v-list-item-title>
-                    <v-list-item-subtitle>
-                      Quantity: {{ itemDetail.quantity }}, Unit Cost: {{ itemDetail.unit_cost }}, Total: {{
-                        itemDetail.total_cost }}
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
+              <v-btn color="primary" variant="tonal" size="small" @click="toggleExpand(item)" density="comfortable">
+                <v-icon :icon="expandedItems.includes(item.id) ? 'mdi-chevron-up' : 'mdi-chevron-down'" size="small"
+                  class="mr-1"></v-icon>
+                {{ item.items.length }} Items
+              </v-btn>
+            </template>
+
+            <!-- ✅ Combined Expanded Row Slot -->
+            <template v-slot:expanded-row="{ item }">
+              <tr>
+                <td :colspan="headers.length">
+                  <div class="pa-3">
+                    <strong>Special Instructions:</strong> {{ item.special_instructions }}
+                  </div>
+
+                  <v-divider></v-divider>
+
+                  <v-list dense>
+                    <v-list-item v-for="(detail, index) in item.items" :key="index">
+                      <v-list-item-content>
+                        <v-list-item-title>{{ detail.name }}</v-list-item-title>
+                        <v-list-item-subtitle>
+                          Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{
+                          detail.total_cost }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list>
+                </td>
+              </tr>
+            </template>
+
+
+
+            <template v-slot:item.status="{ item }">
+              <v-chip :color="getStatusColor(item.status)" dark @click="openStatusDialog(item)">{{ item.status
+              }}</v-chip>
+            </template>
+
+            <template v-slot:item.pop="{ item }">
+              <v-chip color="primary" @click="openPopDialog(item)">{{ item.pop
+              }}
+
+              </v-chip>
+            </template>
+
+            <template v-slot:item.comment="{ item }">
+              <v-chip color="primary" @click="openCommentsDialog(item)">{{ item.comment }}</v-chip>
             </template>
 
             <template v-slot:item.actions="{ item }">
               <div class="action-icons">
 
+                <!-- edit requisition -->
+                <v-icon
+                  v-if="item.status == 'Pending' || item.status == 'Manager Approved' || item.status == 'HR Approved'"
+                  @click="openEditRequisitionModal(item)" color="primary" style="margin-right: 8px;"
+                  title="Edit Requisition">
+                  mdi-pencil
+                </v-icon>
+
+
                 <v-icon @click="openLogsModal(item)" color="primary" style="margin-right: 8px;"
                   title="View Logs">mdi-history</v-icon>
-                <v-icon @click="viewRequisition(item)" color="info" title="View Requisition">
+                <v-icon v-if="permissions.includes('view requisition')" @click="viewRequisition(item)" color="info"
+                  title="View Requisition">
                   mdi-eye-check-outline
                 </v-icon>
-                <v-icon  v-if="roles.includes('admin')" @click="OpenapproveRequisitionModal(item)" color="success" title="Approve Requisition">
+                <v-icon v-if="permissions.includes('approve requisition')" @click="OpenapproveRequisitionModal(item)"
+                  color="success" title="Approve Requisition">
                   mdi-thumb-up-outline
                 </v-icon>
-                <v-icon v-if="roles.includes('admin')" @click="OpencancelRequisitionModal(item)" color="error" title="Reject Requisition">
+                <v-icon v-if="roles.includes('admin')" @click="OpencancelRequisitionModal(item)" color="error"
+                  title="Reject Requisition">
                   mdi-close-circle
                 </v-icon>
-                <v-icon v-if="roles.includes('admin')" @click="deleteRequisition(item)" color="error" title="Delete Requisition">
+                <v-icon v-if="roles.includes('admin')" @click="deleteRequisition(item)" color="error"
+                  title="Delete Requisition">
                   mdi-delete
+                </v-icon>
+
+                <v-icon v-if="permissions.includes('mark as paid')" @click="markAsPaid(item)" color="blue"
+                  title="Mark as Paid">
+                  mdi-cash-check
                 </v-icon>
 
               </div>
             </template>
           </v-data-table>
         </v-card>
+
+
+
+        <!-- Status Dialog -->
+        <v-dialog v-model="statusDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">Update Status</v-card-title>
+            <v-card-text>
+              <v-autocomplete v-model="selectedItem.status" :items="statusOptions" label="Status" item-value="name"
+                item-title="name" variant="outlined" clearable>
+              </v-autocomplete> </v-card-text>
+            <v-card-actions>
+              <v-btn text @click="statusDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="confirmStatusUpdate(selectedItem)">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Comments Dialog -->
+        <v-dialog v-model="commentsDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">Update Comments</v-card-title>
+            <v-card-text>
+              <v-textarea v-model="selectedItem.comment" label="Comments"></v-textarea>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn text @click="commentsDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="confirmCommentsUpdate(selectedItem)">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Pop Item Dialog -->
+        <v-dialog v-model="popDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">POP </v-card-title>
+            <v-card-text>
+              <v-textarea v-model="selectedItem.pop" label="MPESA CODE"></v-textarea>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn text @click="popDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="confirmPopUpdate(selectedItem)">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+
+
+        <!-- openAccountModal -->
+        <v-dialog v-model="accountModal" max-width="600px" persistent>
+          <v-card>
+            <v-card-title class="headline mb-3">
+              <v-icon color="primary">mdi-account-plus</v-icon>
+              Add Account
+            </v-card-title>
+            <v-card-text>
+              <v-text-field v-model="availableItem" label="Account Name" />
+            </v-card-text>
+            <v-card-actions class="justify-end">
+              <v-btn @click="closeAccountModal">Cancel</v-btn>
+              <v-btn color="primary" @click="saveAccount">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+
 
 
         <!-- requisition history -->
@@ -106,6 +321,9 @@
                         <v-icon color="secondary" class="mr-1">mdi-check-circle-outline</v-icon>
                         <strong>Action:</strong> {{ log.action }}
                       </v-list-item-title>
+
+
+
                       <v-list-item-subtitle>
                         <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
                         <strong>Time:</strong> {{ log.time }}
@@ -167,7 +385,7 @@
 
 
         <!-- Request Modal with Steppers -->
-        <v-dialog v-model="requestModal" :max-width="(step===1) ? 1500 : 800" persistent>
+        <v-dialog v-model="requestModal" :max-width="(step === 1) ? 1500 : 800" persistent>
           <v-card>
             <v-stepper v-model="step" :items="items" show-actions>
               <!-- Stepper Items -->
@@ -188,7 +406,10 @@
                   <tbody>
                     <tr v-for="item in requisitionItems" :key="item.id">
                       <td>
-                        <v-text-field v-model="item.name" item-title="name" density="compact" hide-details />
+                        <!-- <v-text-field v-model="item.name" item-title="name" density="compact" hide-details /> -->
+                        <v-autocomplete v-model="item.name" :items="availableItems" item-title="name" density="compact"
+                          hide-details />
+
                       </td>
 
                       <td>
@@ -224,7 +445,10 @@
               <!-- Step 2: Special Instructions -->
               <template v-slot:item.2>
 
-                <v-textarea v-model="specialInstructions" label="Special Instructions" rows="3" outlined />
+                <v-textarea v-model="specialInstructions" label="Mode of Payment" rows="3" outlined />
+
+                <v-select v-model="approverType" :items="['Finance Manager', 'CFO', 'HR']" label="Select Approver Type"
+                  outlined dense></v-select>
 
               </template>
 
@@ -232,7 +456,11 @@
 
               <template v-slot:item.3>
                 <p>Review your requisition and click 'Submit' to finalize.</p>
-                <v-btn @click="saveRequisition" color="success">Submit</v-btn>
+                <v-btn @click="saveRequisition" color="success">Save</v-btn>
+
+                <!-- <v-btn @click="saveRequisition" color="success">
+                     {{ selectedItem ? "Update" : "Submit" }}
+                          </v-btn> -->
 
               </template>
 
@@ -247,22 +475,49 @@
       </v-main>
     </v-layout>
   </v-container>
-  
+
 </template>
 
 <script>
+
+import { ref } from "vue";
+
+
+
 export default {
-
-  
-    props: {
-      user: Object,
-      roles: Array,
-      permissions: Array
-    },
-
+  props: {
+    user: Object,
+    roles: Array,
+    permissions: Array
+  },
 
   data() {
     return {
+      expandedItems: [],
+
+      // selectedItem: null,
+
+      statusDialog: false,
+      commentsDialog: false,
+      EditRequisitionModa: false,
+      popDialog: false,
+      selectedItem: {},
+      drawer: false,
+      menu: false,
+      accountModal: false,
+      availableItem: null,
+
+
+      // Filter options
+      filterOptions: {
+        item_names: [],
+        department_ids: [],
+        statuses: [],
+        date_created: null,
+        approver_types: [],
+        date_paid: null,
+
+      },
       modalWidth: 1500,
       step: 1,
       items: [
@@ -280,16 +535,34 @@ export default {
       selectedRequisition: "",
       requisition_id: "",
       specialInstructions: "",
+      approverType: "",
       comment: "",
       requisitions: [],
+      //  v-model="selected"
 
       approveRequisitionModal: false,
       cancelRequisitionModal: false,
       logsModal: false,
       loadingLogs: false,
 
-      // requisitionItems: [],
+      // Dropdown options
+      departments: [],
+      statusOptions: [
+        { name: 'Pending' },
+        { name: 'Approved' },
+        { name: 'Manager Approved' },
+        { name: 'HR Approved' },
+        { name: 'Finance Manager Approved' },
+        { name: 'Paid' }
 
+      ],
+      approverTypeOptions: [
+        { name: 'Finance Manager' },
+        { name: 'CFO' },
+        { name: 'HR' }
+      ],
+
+   
       requisitionItems: [
         {
           name: "",
@@ -312,21 +585,242 @@ export default {
         { title: "Requester", value: "user.firstname" },
         { title: "Status", value: "status" },
         { title: "Comments", value: "comment" },
+        { title: "Type", value: "approver_type" },
+        { title: "POP", value: "pop" },
         { title: "Actions", value: "actions", sortable: false },
       ],
       loading: false,
     };
   },
+  mounted() {
+    console.log("User:", this.user);
+    console.log("Roles:", this.roles);
+    console.log("Permissions:", this.permissions);
+    // this.fetchStats();
+    this.fetchRequisitions();
+    this.fetchDepartments();
+    this.fetchAccounts();
+  },
   methods: {
 
+
+    toggleExpand(item) {
+      const index = this.expandedItems.indexOf(item.id);
+      if (index !== -1) {
+        this.expandedItems.splice(index, 1); // Remove if already expanded
+      } else {
+        this.expandedItems.push(item.id); // Add if collapsed
+      }
+    },
+    openEditRequisitionModal(item) {
+      this.selectedItem = item;
+      axios
+        .get(`/api/v1/requisition/${item.id}`)
+        .then((response) => {
+          const requisition = response.data.data;
+          this.requisitionItems = requisition.items || [];
+          this.specialInstructions = requisition.special_instructions || "";
+          this.approverType = requisition.approver_type || null;
+          this.requestModal = true;
+        })
+        .catch((error) => {
+          console.error("Error fetching requisition:", error);
+        });
+    }
+    ,
+
+    getStatusColor(status) {
+  switch (status) {
+    case 'Pending':
+      return '#2196F3'; // Blue
+    case 'Approved':
+      return '#FF9800'; // Orange
+    case 'Manager Approved':
+      return '#8BC34A'; // Light Green
+    case 'Closed':
+      return '#F44336'; // Red
+    case 'HR Approved':
+      return '#9C27B0'; // Purple
+    case 'Finance Manager Approved':
+      return '#3F51B5'; // Indigo
+    case 'Cancelled':
+      return '#F44336'; // Red (same as Closed for consistency)
+    case 'COO Approved':
+      return '#9E9E9E'; // Grey
+    case 'Paid':
+      return '#4CAF50'; // Green
+    default:
+      return '#B0BEC5'; // Light Grey for unknown status
+  }
+},
+    fetchAccounts() {
+      axios
+        .get(`/api/v1/accounts`)
+        .then(response => {
+          this.availableItems = response.data.accounts;
+        })
+        .catch(error => {
+          console.error("Error fetching accounts:", error);
+        });
+    },
+
+
+    saveAccount() {
+
+      axios
+        .post(`/api/v1/accounts`, { name: this.availableItem }) // Ensure you're sending the correct field
+        .then((response) => {
+          console.log(response);
+          this.$toastr.success("Account updated successfully!");
+          this.accountModal = false;
+        })
+        .catch((error) => {
+          console.error("Error updating account:", error);
+          this.$toastr.error("Failed to update account. Please try again.");
+        });
+    },
+
+    openStatusDialog(item) {
+      this.selectedItem = item;
+      this.statusDialog = true;
+    },
+    openCommentsDialog(item) {
+      this.selectedItem = item;
+      this.commentsDialog = true;
+    },
+    openPopDialog(item) {
+      this.selectedItem = item;
+      this.popDialog = true;
+    },
+    confirmStatusUpdate(item) {
+      axios
+        .put(`/api/v1/update/${item.id}`, {
+          status: item.status,
+        })
+        .then((response) => {
+          console.log(response);
+          this.fetchRequisitions();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+      this.statusDialog = false;
+    },
+    confirmCommentsUpdate(item) {
+      axios
+        .put(`/api/v1/update/${item.id}`, {
+          comment: item.comment,
+        })
+        .then((response) => {
+          console.log(response);
+          this.fetchRequisitions();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+      this.commentsDialog = false;
+    },
+    confirmPopUpdate(item) {
+      axios
+        .put(`/api/v1/update/${item.id}`, {
+          pop: item.pop,
+        })
+        .then((response) => {
+          console.log(response);
+          this.$toastr.success("Requisition updated successfully");
+          this.fetchRequisitions();
+          this.popDialog = false;
+        })
+        .catch((error) => {
+          if (error.response && error.response.data.error === "A requisition with the same POP already exists.") {
+            this.$toastr.error("A requisition with the same POP already exists.");
+          } else {
+            this.$toastr.error("Failed to update requisition. Please try again.");
+            console.log(error);
+          }
+        });
+    },
+
+    closeAccountModal() {
+      this.accountModal = false;
+    },
+
+    openAccountModal() {
+      this.accountModal = true;
+    },
+    markAsPaid(item) {
+      axios.put(`/api/v1/update/${item.id}`,
+        {
+          paid: true // Ensure 'paid' is sent as true
+        })
+        .then(response => {
+          this.$toastr.success(response.data.message || 'Requisition marked as paid successfully');
+          this.fetchRequisitions();
+        })
+        .catch(error => {
+          console.error('Error marking requisition as paid:', error.response?.data || error.message);
+          this.$toastr.error(
+            error.response?.data?.error || 'Failed to mark requisition as paid. Please try again.'
+          );
+        });
+    },
+    downloadReport() {
+      axios.post('/api/v1/download-requisitions-report', { requisitions: this.requisitions }, { responseType: 'blob' })
+        .then(response => {
+          // Create a blob from the response data
+          const blob = new Blob([response.data], { type: 'application/pdf' });
+
+          // Create a link element to trigger the download
+          const link = document.createElement('a');
+          link.href = window.URL.createObjectURL(blob);
+          link.download = 'requisition_invoice.pdf';
+
+          // Append the link to the document and trigger the click event
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          this.$toastr.success('PDF file downloaded successfully');
+        })
+        .catch(error => {
+          this.$toastr.error('Error generating PDF file');
+          console.error('Error generating PDF file:', error);
+        });
+    }
+    ,
+    fetchDepartments() {
+      axios.get('/api/v1/departments')
+        .then(response => {
+          this.departments = response.data.departments;
+        })
+        .catch(error => {
+          console.error("Error fetching departments:", error);
+          this.$toastr.error("Failed to fetch departments");
+        });
+    },
+
+    // Filter requisitions based on current filter options
+    filterRequisitions() {
+      this.loading = true;
+
+      axios.post('/api/v1/filter-requisitions', this.filterOptions)
+        .then(response => {
+          this.requisitions = response.data.requisitions;
+          this.drawer = false; // Close drawer after filtering
+        })
+        .catch(error => {
+          console.error("Error filtering requisitions:", error);
+          this.$toastr.error("Failed to filter requisitions");
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
     viewRequisition(item) {
       const requisitionId = item.id;
       const pdfUrl = `/api/v1/requisitions/${requisitionId}/pdf`;
       window.open(pdfUrl, '_blank');
     },
-
-
-
     capitalizeEachWord(text) {
       if (!text) return '';
       return text
@@ -334,22 +828,9 @@ export default {
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
     },
-    // safeParseDetails(details) {
-    //   try {
-    //     // Attempt to parse the details if it's valid JSON
-    //     return JSON.parse(details);
-    //   } catch (e) {
-    //     console.warn('Error parsing details:', e.message, 'Details:', details);
-    //     // Return the details as a string if parsing fails
-    //     return { rawDetails: details };
-    //   }
-    // },
-
     closelogsModal() {
       this.logsModal = false
-
     },
-
     openLogsModal(requisitionId) {
       this.logsModal = true; // Open the modal
       this.logs = []; // Clear existing logs
@@ -419,7 +900,6 @@ export default {
           );
         });
     },
-
 
     deleteRequisition(item) {
 
@@ -519,56 +999,62 @@ export default {
     removeItem(item) {
       this.requisitionItems = this.requisitionItems.filter((i) => i !== item);
     },
+
+
     saveRequisition() {
+      console.log("Selected Item:", JSON.stringify(this.selectedItem, null, 2));
 
-
-      const requisitionData = {
-        items: this.requisitionItems.map((item) => ({
-          name: item.name,
-          description: item.description,
-          quantity: item.quantity,
-          unit_cost: item.unit_cost,
-          total_cost: item.total_cost, // Use the dynamically updated value
-        })),
-        user_id: this.user.id,
+      const payload = {
+        items: this.requisitionItems,
         special_instructions: this.specialInstructions,
+        approver_type: this.approverType,
+        user_id: this.user.id,
 
       };
 
-      console.log('requisitionData', requisitionData);
-
-      // Make the POST request using Axios
-      axios
-        .post('/api/v1/requisitions', requisitionData)
-        .then((response) => {
-          console.log('Requisition Saved:', response.data);
-          this.$toastr.success('Requisition saved successfully!'); // Optional: Toast notification
-          this.requestModal = false; // Close the modal
-          this.step = 1; // Reset stepper
-          this.requisitionItems = []; // Clear requisition items
-
-          this.fetchRequisitions(); // Fetch requisitions after saving
-
-        })
-        // .catch((error) => {
-        //   console.error('Error saving requisition:', error.response?.data || error.message);
-        //   this.$toastr.error('Failed to save requisition. Please try again.'); // Optional: Error notification
-        // });
-        .catch((error) => {
-  const errorMessage = error.response?.data?.message || "An unexpected error occurred.";
-  console.error("Error saving requisition:", errorMessage, error.response?.data);
-  this.$toastr.error(errorMessage);
-});
-
-    },
-
+      if (this.selectedItem && this.selectedItem.id) {
+        // Updating requisition
+        axios
+          .put(`/api/v1/update/${this.selectedItem.id}`, payload)
+          .then((response) => {
+            this.$toastr.success("Requisition updated successfully");
+            this.requestModal = false;
+            this.fetchRequisitions(); // Refresh list
+          })
+          .catch((error) => {
+            console.error("Error updating requisition:", error);
+          });
+      } else {
+        // Creating requisition
+        axios
+          .post("/api/v1/requisitions", payload)
+          .then((response) => {
+            this.$toastr.success("Requisition created successfully");
+            this.requestModal = false;
+            this.fetchRequisitions(); // Refresh list
+          })
+          .catch((error) => {
+            console.error("Error creating requisition:", error);
+          });
+      }
+    }
+    ,
     openRequestModal() {
       this.requestModal = true;
     },
+    // closeRequestModal() {
+    //   this.requestModal = false;
+    //   this.step = 1; // Reset stepper
+    // },
+
     closeRequestModal() {
       this.requestModal = false;
-      this.step = 1; // Reset stepper
-    },
+      this.selectedItem = null;
+      this.requisitionItems = [];
+      this.specialInstructions = "";
+      this.approverType = null;
+    }
+    ,
     filterAllRequisitions() {
       this.fetchRequisitions();
     },
@@ -587,14 +1073,6 @@ export default {
   },
   async created() {
 
-
-    console.log("User:", this.user);
-    console.log("Roles:", this.roles);
-    console.log("Permissions:", this.permissions);
-
-
-
-    await this.fetchStats();
     await this.fetchRequisitions();
   },
   watch: {

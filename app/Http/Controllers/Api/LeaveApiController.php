@@ -650,7 +650,7 @@ class LeaveApiController extends Controller
       'days' => 'required|integer',
       'hod' => 'required|exists:users,id',
       'manager' => 'required|exists:users,id',
-      'document' => 'nullable|file|mimes:pdf,doc,docx',
+      'document' => 'nullable|file|mimes:pdf,doc,docx,jpeg,jpg,png',
     ]);
       
 

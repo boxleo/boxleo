@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PerformanceEvaluation;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -81,52 +82,77 @@ class PerformanceApiEvaluation extends Controller
     }
 
 
-    // get all monthly performance evaluations
+
     public function index(Request $request)
     {
         Log::info('Fetching performance evaluations', ['user_id' => $request->user()->id]);
-        
-        $user = $request->user();
 
-        $role = $user->role;
-        $isHod = $user->is_hod;
-        $isHr = $user->is_hr; 
-        $isManager = $user->designation->name == 'manager';
+        $user = $request->user();
+        $roles = $user->getRoleNames(); // Get roles as a collection
 
         Log::info('Fetching performance evaluations', [
-
             'user_id' => $user->id,
-    
-            'roles' => $user->getRoleNames() // This will return a collection of role names
-    
+            'roles' => $roles
         ]);
 
-        if ($role == 'employee') {
-        if ($user->role == 'employee') {
-            Log::info('Role is employee');
-            $evaluations = PerformanceEvaluation::where('user_id', $user->id)->with('user')->get();
-        } elseif ($isHr) {
-            Log::info('Role is hr');
-            $evaluations = PerformanceEvaluation::with('user')->get();
-        } elseif ($isManager) {
-            Log::info('Role is manager');
-            $evaluations = PerformanceEvaluation::where('department_id', $user->department_id)->with('user')->get();
-        } elseif ($isHod) {
-            Log::info('Role is hod');
-            $evaluations = PerformanceEvaluation::whereIn('department_id', $user->departments->pluck('id'))->with('user')->get();
-        } else {
-            return response()->json(['message' => 'Unauthorized', 'role' => $role], 403);
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        // Initialize $evaluations as null
+        $evaluations = null;
 
-      
+        switch (true) {
+            case $user->is_hr:
+                Log::info('Role is HR');
+                $evaluations = PerformanceEvaluation::with('user')->get();
+                break;
+
+            case ($user->designation_id == 1):
+                Log::info('Role is Manager');
+                // fetch only the managerDepartments
+
+
+                //    $evaluations = PerformanceEvaluation::with('user.department')->get();
+
+                $departmentIds = $user->managerDepartments->pluck('id');
+
+                if ($departmentIds->isNotEmpty()) {
+                    // Get all users in these departments
+                    $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
+
+                    Log::info('Manager oversees users', ['user_ids' => $userIds]);
+
+                    // Fetch evaluations only for users in these departments
+                    $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
+                } else {
+                    Log::warning('Manager has no assigned departments');
+                    return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
+                }
+
+                break;
+
+            case $user->is_hod:
+                Log::info('Role is HOD');
+                $departmentIds = $user->hodDepartments->pluck('id');
+
+                $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
+
+                // return response()->json($departments);
+                if ($departmentIds->isNotEmpty()) {
+                    // evaluations of user with department that exist in $departments = $user->hodDepartments->pluck('id');
+                    // $evaluations = PerformanceEvaluation::with('user')->get();
+                    $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
+
+                } else {
+                    Log::warning('HOD has no assigned departments');
+                    return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
+                }
+                break;
+
+            default:
+                // Default case: authenticated user who is not manager, HR, or HOD
+                $evaluations = PerformanceEvaluation::where('user_id', $user->id)->with('user')->get();
+                break;
+        }
 
         Log::info('Performance evaluations fetched successfully', ['count' => $evaluations->count()]);
         return response()->json(['evaluations' => $evaluations]);
     }
-
-
-    
-   
-}
 }

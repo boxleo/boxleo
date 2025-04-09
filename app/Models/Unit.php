@@ -10,11 +10,22 @@ class Unit extends Model
 {
   use SoftDeletes;
 
+
   protected $fillable = [
     'name',
+    'timezone',
+    'work_start_time',
+    'late_threshold',
+    'weekend_day',
+    'weekend_clock_in_time',
+    'weekend_clock_out_time',
+    'weekday_threshold',
+    'weekend_threshold',
+    'clock_in_time',
+    'clock_out_time',
     'address',
     'phone',
-  ];
+];
 
   public function users()
   {
@@ -25,5 +36,10 @@ class Unit extends Model
   public function offices()
   {
     return $this->hasMany(Office::class);
+  }
+
+  public function getFormattedTime($time)
+  {
+    return date('H:i', strtotime($this->getAttribute($time)));
   }
 }

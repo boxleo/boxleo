@@ -104,30 +104,14 @@
             </v-col>
         </v-row>
         <v-col>
-            <v-text-field 
-            v-model="search" 
-            label="Search Items" 
-            prepend-inner-icon="mdi-magnify" 
-            clearable 
-            @clear="clearSearch"
-            outlined
-          
-            >
+            <v-text-field   v-model="search" label="Search"  prepend-inner-icon="mdi-magnify" clearable @clear="clearSearch"></v-text-field>
 
-            <!--   style="background: linear-gradient(to right, #2196F3, #21CBF3); color: white; border-radius: 8px;" -->
-            <!-- <template v-slot:append>
-                <v-icon color="white">mdi-close-circle</v-icon>
-            </template> -->
-            </v-text-field>
         </v-col>
         <v-row>
             <v-responsive>
                 <v-progress-linear v-if="loading" color="primary" indeterminate></v-progress-linear>
 
-                <v-data-table v-model="selected" :headers="headers" :items="resources" item-key="id"
-                    :search="search"
-
-
+                <v-data-table  v-model="selected" :headers="headers" :items="resources" item-key="id" :search="search"
                     class="elevation-10" responsive show-select>
 
                     <template v-slot:item.issued_to="{ item }">
@@ -202,6 +186,16 @@
                     <v-form>
                         <v-container>
                             <v-row>
+<!--                                 
+                                <v-col cols="12" sm="4">
+                                    <v-select v-model="formData.unit"
+                                        :items="branches" 
+                                        item-title="name" 
+                                        item-value="id"
+                                        label="Branch" variant="outlined">                                        label="Operating unit" variant="outlined">
+                                    </v-select>
+                                </v-col> -->
+                                
                                 <v-col cols="12" sm="6">
                                     <v-select v-model="formData.name"
                                         :items="['Laptop', 'Headset', 'Desktop', 'Phone', 'Charger', 'Mouse','Sim Card','Printer','Camera','Other']"
@@ -393,9 +387,7 @@ export default {
     data() {
         return {
             
-
             search: '',
-            filter: '',
             logsModal: false,
             logs: [],
             loadingLogs: false,
@@ -468,9 +460,54 @@ export default {
         this.fetchResources();
         this.fetchUsers();
 
-
     },
+
+
+    computed: {
+
+filteredResources() {
+
+  if (!this.search) {
+
+    return this.resources;
+
+  }
+
+  const searchLower = this.search.toLowerCase();
+
+  return this.resources.filter(item => {
+
+    return (
+
+      item.name.toLowerCase().includes(searchLower) ||
+
+    //   item.email.toLowerCase().includes(searchLower) ||
+
+      item.serial_no.toLowerCase().includes(searchLower) ||
+        // item.category.toLowerCase().includes(searchLower) ||
+
+        item.issued_to?.firstname.toLowerCase().includes(searchLower)
+
+        // item.issued_by?.firstname.toLowerCase().includes(searchLower) ||
+
+        // item.comment.toLowerCase().includes(searchLower)
+
+      // Add more fields to search as needed
+
+    );
+
+  });
+
+},
+
+},
     methods: {
+
+        clearSearch() {
+
+this.search = '';
+
+},
 
 
         importAsset() {

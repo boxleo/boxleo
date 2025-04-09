@@ -10,5 +10,13 @@
     </div>
 @endsection
 @section('content')
-    <employee-complaints :user_id="{{ $user_id }}" />
+
+    <employee-complaints 
+    :user='@json($user, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)'
+    :roles='@json($roles, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)'
+    :permissions='@json($permissions, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)'
+     />
+
+
+
 @endsection

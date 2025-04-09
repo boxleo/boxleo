@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class PerformanceController extends Controller
@@ -30,7 +31,6 @@ class PerformanceController extends Controller
         $user_id = $this->getUserID();
 
         return view('performance.award_types', ['user_id' => $user_id]);
-
     }
 
     public function appraisals()
@@ -38,17 +38,16 @@ class PerformanceController extends Controller
         $user_id = $this->getUserID();
 
         return view('performance.appraisals', ['user_id' => $user_id]);
-
     }
 
     public function performanceEvaluations()
     {
-        $user_id = $this->getUserID();
+        $user = auth()->user();
+        $roles = $user->getRoleNames(); // Collection of role names
+        $permissions = $user->getAllPermissions()->pluck('name'); // Collection of permission names
 
         Log::info('performanceEvaluations method called');
-        return view('performance.performance_evaluations', ['user_id' => $user_id]);
-        // return view('performance.appraisals', ['user_id' => $user_id]);
 
-
+        return view('performance.performance_evaluations', compact('user', 'roles', 'permissions'));
     }
 }

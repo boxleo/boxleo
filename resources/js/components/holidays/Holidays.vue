@@ -20,7 +20,8 @@ export default {
                 { title: '#', value: 'index' },
                 { title: 'Holiday Name', align: 'start', value: 'name' },
                 { title: 'Date', value: 'date' },
-                { title: 'Action', value: 'action', sortable: false }
+                { title: 'Action', value: 'action', sortable: false },
+                // { title: 'Branches', value: 'name', sortable: false }
             ],
             dataTableOptions: {
                 sortRowsBy: ['date']
@@ -90,21 +91,21 @@ export default {
                     });
             }
         },
+      
         deleteHoliday(holiday) {
-            // Delete holiday from the list
-            const index = this.holidays.indexOf(holiday);
-            if (index !== -1) {
-                this.holidays.splice(index, 1);
-                // Optionally, you can send a DELETE request to your API to delete the holiday
-                // axios.delete(`/api/v1/holidays/${holiday.id}`)
-                //   .then(response => {
-                //     // Handle success
-                //   })
-                //   .catch(error => {
-                //     console.error('Error deleting holiday:', error);
-                //   });
-            }
-        },
+    if (!holiday.id) return; // Ensure holiday has an ID
+
+    axios.delete(`/api/v1/holidays/${holiday.id}`)
+        .then(() => {
+            this.holidays = this.holidays.filter(h => h.id !== holiday.id);
+            this.$toastr.success("Holiday deleted successfully!");
+        })
+        .catch(error => {
+            console.error('Error deleting holiday:', error);
+            this.$toastr.error("Failed to delete holiday.");
+        });
+}
+,
         formatDate(date) {
             // Format date as needed
             return date ? new Date(date).toLocaleDateString() : '';

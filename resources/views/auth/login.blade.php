@@ -1,7 +1,7 @@
 @extends('layouts.auth')
 
 @section('content')
-    <div class="preloader">Loading...</div>
+<div class="preloader">Loading...</div>
 
     <div class="login-container">
         <div class="login-box">
@@ -29,23 +29,31 @@
                 </div>
                 <button type="submit" class="login-btn">Login</button>
 
-            </form>
-        </div>
+        </form>
     </div>
+</div>
 
-    <script>
-        // Wait for the image to load before showing the login container
-        document.addEventListener('DOMContentLoaded', function() {
-            const bgImage = new Image();
-            bgImage.src = "/assets/img/bgs/login-bg.png"; // Update path if necessary
+<script>
+    // Wait for the image to load before showing the login container
+    document.addEventListener('DOMContentLoaded', function() {
+        const bgImage = new Image();
+        bgImage.src = "/assets/img/bgs/login-bg.png"; // Update path if necessary
 
-            bgImage.onload = function() {
-                document.body.classList.remove('loading');
-                document.body.classList.add('loaded');
-            };
-        });
+        bgImage.onload = function() {
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
+        };
+    });
 
-        // Initial loading state
-        document.body.classList.add('loading');
-    </script>
+
+
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     document.body.classList.remove('loading');
+    //     document.body.classList.add('loaded');
+    // });
+
+
+    // Initial loading state
+    document.body.classList.add('loading');
+</script>
 @endsection

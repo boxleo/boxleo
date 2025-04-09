@@ -10,8 +10,18 @@ class Leave extends Model
 {
     use Notifiable, Notifiable;
     protected $fillable = [
-        'leave_type_id', 'user_id', 'phone', 'document','days',
-        'from', 'to', 'comment', 'status', 'manager_approval','hod_approval','hr_approval'
+        'leave_type_id',
+        'user_id',
+        'phone',
+        'document',
+        'days',
+        'from',
+        'to',
+        'comment',
+        'status',
+        'manager_approval',
+        'hod_approval',
+        'hr_approval'
     ];
 
     protected $dates = ['from', 'to', 'created_at', 'updated_at'];
@@ -40,5 +50,14 @@ class Leave extends Model
     public function logs()
     {
         return $this->hasMany(LeaveLog::class);
+    }
+
+
+
+
+    public function getCreatedAtAttribute($value)
+
+    {
+        return Carbon::parse($value)->format('Y-m-d H:i:s'); // Change format as needed
     }
 }

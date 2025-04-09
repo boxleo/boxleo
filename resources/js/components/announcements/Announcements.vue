@@ -4,16 +4,19 @@
             <v-responsive>
                 <v-data-table :headers="headers" :items="announcements" item-key="id" class="elevation-1" show-select>
                     <template v-slot:top>
-                        <v-toolbar flat color="primary">
+                        <v-col class="d-flex justify-end">
+                                <v-btn class="mr-4" color="primary" @click="createAnnouncement">Create Announcement</v-btn>
+                        </v-col>
+                        <!-- <v-toolbar flat color="primary">
                             <v-btn color="success" class="mr-4" @click="createAnnouncement">Create Announcement
-                                (CTR+N)</v-btn>
+                                </v-btn>
                             <v-select v-model="selectedFilter" :items="filters" label="-- select --"
                                 class="mr-4"></v-select>
                             <v-spacer></v-spacer>
                             <v-btn color="secondary" class="mr-4">Discard current criteria</v-btn>
                             <v-text-field v-model="search" append-icon="mdi-magnify" label="Introduce your search"
                                 single-line hide-details></v-text-field>
-                        </v-toolbar>
+                        </v-toolbar> -->
                     </template>
 
                     <template v-slot:item.actions="{ item }">
@@ -36,15 +39,15 @@
                     <v-container>
                         <v-row>
                             <v-col cols="12">
-                                <v-text-field v-model="editedAnnouncement.title" label="Title"></v-text-field>
+                                <v-text-field v-model="editedAnnouncement.subject" label="Subject"></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <v-textarea v-model="editedAnnouncement.description" label="Description"></v-textarea>
                             </v-col>
-                            <v-col cols="12" sm="6">
+                            <!-- <v-col cols="12" sm="6">
                                 <v-select v-model="editedAnnouncement.author_id" :items="authors"
                                     label="Author"></v-select>
-                            </v-col>
+                            </v-col> -->
                             <v-col cols="12" sm="6">
                                 <v-text-field v-model="editedAnnouncement.publish_date" label="Publish Date"
                                     type="date"></v-text-field>
@@ -53,10 +56,10 @@
                                 <v-text-field v-model="editedAnnouncement.expiration_date" label="Expiration Date"
                                     type="date"></v-text-field>
                             </v-col>
-                            <v-col cols="12" sm="6">
+                            <!-- <v-col cols="12" sm="6">
                                 <v-select v-model="editedAnnouncement.priority" :items="priorities"
                                     label="Priority"></v-select>
-                            </v-col>
+                            </v-col> -->
                             <v-col cols="12" sm="6">
                                 <v-select v-model="editedAnnouncement.status" :items="statuses"
                                     label="Status"></v-select>
@@ -97,7 +100,7 @@ export default {
                 { title: 'Publish Date', value: 'publish_date' },
                 { title: 'Expiration Date', value: 'expiration_date' },
                 { title: 'Active', value: 'is_active' },
-                { title: 'Priority', value: 'priority' },
+                // { title: 'Priority', value: 'priority' },
                 { title: 'Status', value: 'status' },
                 { title: 'Actions', value: 'actions', sortable: false },
             ],
@@ -110,7 +113,7 @@ export default {
                 expiration_date: '',
                 is_active: false,
                 attachment: '',
-                priority: '',
+                // priority: '',
                 status: ''
             },
             defaultAnnouncement: {
@@ -121,11 +124,11 @@ export default {
                 expiration_date: '',
                 is_active: false,
                 attachment: '',
-                priority: '',
+                // priority: '',
                 status: ''
             },
             authors: [],
-            priorities: ['High', 'Medium', 'Low'],
+            // priorities: ['High', 'Medium', 'Low'],
             statuses: ['Published', 'Draft', 'Expired']
         }
     },
@@ -155,12 +158,24 @@ export default {
             this.editedIndex = -1;
         },
         saveAnnouncement() {
-            if (this.editedIndex > -1) {
-                Object.assign(this.announcements[this.editedIndex], this.editedAnnouncement);
-            } else {
-                this.announcements.push({ ...this.editedAnnouncement, id: this.announcements.length + 1 });
-            }
-            this.closeDialog();
+            axios.post('/api/v1/announcements', this.editedAnnouncement)
+                .then(response => {
+                    if (this.editedIndex > -1) {
+                        Object.assign(this.announcements[this.editedIndex], response.data);
+                    } else {
+                        axios.put(`/api/v1/announcements/${response.data.id}`, response.data)
+                            .then(() => {
+                                Object.assign(this.announcements[this.editedIndex], response.data);
+                            })
+                            .catch(error => {
+                                console.log(error);
+                            });
+                    }
+                    this.closeDialog();
+                })
+                .catch(error => {
+                    console.log(error);
+                });
         }
     }
 }

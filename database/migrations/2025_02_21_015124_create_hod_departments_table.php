@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('hod_departments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // HOD User ID
-        $table->foreignId('department_id')->constrained('departments')->onDelete('cascade'); // Department ID
+            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade'); // Department ID
             $table->timestamps();
         });
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,13 +28,17 @@ class Complaint extends Model
         'resolution',
         'links',
         'attachments',
+        'department_id',
+        'unit_id',
+        'office_id'
     ];
 
 
     // protected $casts = [
-    //     'attachments' => 'array',
-    //     'links' => 'array',
+     
+    //     'department_ids' => 'array',
     // ];
+    
 
     public function user(): BelongsTo
     {
@@ -55,5 +60,18 @@ class Complaint extends Model
     {
         return $this->belongsToMany(User::class, 'complaint_user')
             ->wherePivot('role', 'follower');
+    }
+
+
+    public function getCreatedAtAttribute($value)
+
+    {
+        return Carbon::parse($value)->format('Y-m-d H:i:s'); // Change format as needed
+    }
+
+
+
+    public function departments() {
+        return $this->belongsToMany(Department::class, 'complaint_department');
     }
 }

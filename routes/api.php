@@ -23,7 +23,7 @@ use App\Http\Controllers\Api\AttendanceApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
 use App\Http\Controllers\Api\PermissionApiController;
 use App\Http\Controllers\Api\DesignationApiController;
-// use App\Http\Controllers\Api\AnnouncementApiController;
+use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\DisciplinaryApiController;
 use App\Http\Controllers\Api\PerformanceApiEvaluation;
 use App\Http\Controllers\Api\RequisitionApiController;
@@ -50,6 +50,9 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('v1/branches', [UnitApiController::class, 'store']);
   Route::put('v1/branches/{unit}', [UnitApiController::class, 'update']);
   Route::delete('v1/branches/{unit}', [UnitApiController::class, 'destroy']);
+  Route::get('v1/timezones', [UnitApiController::class, 'timeZones']);
+  Route::get('v1/countries', [UnitApiController::class, 'countries']);
+
 
   //roles and permissions
   Route::get('v1/permissions', [PermissionApiController::class, 'index']);
@@ -57,7 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::put('v1/users/{userId}/update-permissions', [PermissionApiController::class, 'updateUserPermissions']);
   Route::get('v1/roles', [RoleApiController::class, 'index']);
   // Route::post('v1/roles', [RoleApiController::class, 'store']);
-
+  // storePermission
+  Route::post('/v1/permissions' ,[PermissionApiController::class, 'storePermission']);
+  Route::delete('v1/permissions/{permissionId}', [PermissionApiController::class, 'destroyPermission']);
 
   //tasks
   Route::get('v1/tasks', [TaskApiController::class, 'index']);
@@ -88,10 +93,11 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::delete('v1/disciplinaries/{disciplinary}', [DisciplinaryApiController::class, 'destroy']);
 
   //announcements
-  // Route::get('v1/announcements', [AnnouncementApiController::class, 'index']);
-  // Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
-  // Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
-  // Route::delete('v1/announcements/{announcement}', [AnnouncementApiController::class, 'destroy']);
+//   AnnouncementApiController
+  Route::get('v1/announcements', [AnnouncementApiController::class, 'index']);
+  Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
+  Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
+  Route::delete('v1/announcements/{announcement}', [AnnouncementApiController::class, 'destroy']);
 
   //attendance
   Route::get('v1/attendances', [AttendanceApiController::class, 'index']);
@@ -101,6 +107,8 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::delete('v1/attendances/{attendance}', [AttendanceApiController::class, 'destroy']);
   Route::get('v1/attendance-analytics', [AttendanceApiController::class, 'attendanceAnalytics']);
   Route::put('v1/attendances/update/status', [AttendanceApiController::class, 'updateStatus']);
+  Route::get('v1/attendances/{user_id}/logs', [AttendanceApiController::class, 'attendanceLogs']);
+  Route::get('v1/user-timezone', [AttendanceApiController::class, 'Usertimezone']);
 
   //leave
   Route::get('v1/leaves', [LeaveApiController::class, 'index']);
@@ -125,7 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('v1/holidays', [HolidayApiController::class, 'index']);
   Route::post('v1/holidays', [HolidayApiController::class, 'store']);
   Route::put('v1/holidays', [HolidayApiController::class, 'update']);
-  Route::delete('v1/holidays', [HolidayApiController::class, 'destroy']);
+  Route::delete('v1/holidays/{id}', [HolidayApiController::class, 'destroy']);
 
   //leave types
   Route::get('v1/leave-types', [LeaveTypeApiController::class, 'index']);
@@ -154,7 +162,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('v1/resource-logs/{id}', [ResourceApiController::class, 'resourceLogs']);
   Route::post('v1/resources/import', [ResourceApiController::class, 'upload']);
 
-  
+
 
   //tickets
   Route::get('/v1/tickets', [TicketApiController::class, 'index']);
@@ -171,7 +179,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/v1/voices', [ComplaintApiController::class, 'store']);
   Route::put('/v1/voices/{voice}', [ComplaintApiController::class, 'update']);
   Route::delete('/v1/voices/{voice}', [ComplaintApiController::class, 'destroy']);
-  
+  Route::get('/v1/voices/{id}', [ComplaintApiController::class, 'voiceLogs']);
 
   //reports
   Route::post('v1/attendance-report', [ReportApiController::class, 'attendanceReport']);
@@ -216,12 +224,20 @@ Route::get('v1/requisitions', [RequisitionApiController::class, 'index']);
 Route::post('v1/requisitions', [RequisitionApiController::class, 'store']);
 Route::post('v1/approve-requisition', [RequisitionApiController::class, 'approveRequisition']);
 Route::post('v1/cancel-requisition/{id}', [RequisitionApiController::class, 'cancelRequisition']);
-// Route::put('v1/update-requisition/{id}', [RequisitionApiController::class, 'updateRequisition']);  
+Route::put('v1/update/{id}', [RequisitionApiController::class, 'update']);
 Route::delete('v1/delete-requisition/{id}', [RequisitionApiController::class, 'deleteRequisition']);
-// Route::get('v1/requisitions/{id}', [RequisitionApiController::class, 'show']);
+
+Route::get('v1/requisition/{id}', [RequisitionApiController::class, 'show']);
 
 Route::get('v1/requisitions-logs/{id}', [RequisitionApiController::class, 'requisitionLogs']);
 Route::get('v1/requisitions/{id}/pdf', [RequisitionApiController::class, 'generatePdf']);
+Route::post('v1/filter-requisitions', [RequisitionApiController::class, 'filter']);
+Route::post('/v1/download-requisitions-report', [RequisitionApiController::class, 'downloadRequisitionsReport']);
+Route::post('/v1/accounts', [RequisitionApiController::class, 'saveAccount']);
+Route::get('/v1/accounts', [RequisitionApiController::class, 'fetchAccounts']);
+
+
+
 
 
 

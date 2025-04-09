@@ -77,3 +77,5 @@ bash
     php artisan serve
 
 Visit http://localhost:8000 in your browser to access the HRM system.
+# hrm-system
+# hrm-system

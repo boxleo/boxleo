@@ -66,7 +66,7 @@ import Awards from './components/performance/Awards.vue'
 import AwardTypes from './components/performance/AwardTypes.vue'
 import Appraisals from './components/performance/Appraisals.vue'
 import Tickets from './components/tickets/Tickets.vue'
-import Complaints from './components/complaints/Complaints.vue'
+// import Complaints from './components/complaints/Complaints.vue'
 import Requisition from './components/requisitions/Requisition.vue'
 import Permissions from './components/permissions/Permissions.vue'
 import Roles from './components/roles/Roles.vue'
@@ -119,7 +119,7 @@ app.component('awards', Awards)
 app.component('award-types', AwardTypes)
 app.component('overtime', Overtime)
 app.component('tickets', Tickets)
-app.component('complaints', Complaints)
+// app.component('complaints', Complaints)
 app.component('appraisals', Appraisals)
 app.component('requisition',Requisition)
 app.component('permissions',Permissions)
