@@ -120,38 +120,50 @@ export default {
     <v-container-fluid>
         <v-row>
             <v-col cols="12" md="8">
-                <v-text-field v-model="search" label="Search" clearable @clear="clearSearch"
-                    prepend-inner-icon="mdi-magnify"></v-text-field>
-                <v-card class="mt-2 elevation-10">
-                    <v-data-table :headers="headers" item-key="id" :items="holidays" :search="search"
-                        :options="dataTableOptions" :pagination.sync="pagination"
-                        :rows-per-page-items="[10, 25, 50, 100]" responsive>
+                <v-text-field 
+                    v-model="search" 
+                    label="Search Holidays" 
+                    clearable 
+                    outlined 
+                    dense 
+                    @clear="clearSearch"
+                    prepend-inner-icon="mdi-magnify">
+                </v-text-field>
+                <v-card class="mt-4 elevation-12">
+                    <v-toolbar flat color="primary" dark>
+                        <v-toolbar-title>Holidays</v-toolbar-title>
+                        <v-spacer></v-spacer>
+                        <v-btn color="white" @click="addHolidayDialog = true" outlined>
+                            <v-icon size="22" left>mdi-plus</v-icon>Add Holiday
+                        </v-btn>
+                    </v-toolbar>
+                    <v-data-table 
+                        :headers="headers" 
+                        item-key="id" 
+                        :items="holidays" 
+                        :search="search"
+                        :options="dataTableOptions" 
+                        :pagination.sync="pagination"
+                        :rows-per-page-items="[10, 25, 50, 100]" 
+                        class="elevation-1">
                         <template v-slot:top>
-    <v-container fluid class="pa-2">
-        <v-row justify="end">
-            <v-btn color="primary" @click="addHolidayDialog = true" class="elevation-2">
-                <v-icon size="22" left>mdi-plus</v-icon> Add Holiday
-            </v-btn>
-        </v-row>
-    </v-container>
-    <v-divider></v-divider>
-</template>
-
+                            <v-divider></v-divider>
+                        </template>
                         <template v-slot:item="{ item, index }">
                             <tr>
                                 <td>{{ index + 1 }}</td>
                                 <td>{{ item.name }}</td>
                                 <td>{{ formatDate(item.date) }}</td>
                                 <td>
-                                    <v-icon @click="editHoliday(item)" color="info" class="mr-2"
-                                        style="cursor: pointer;">mdi-pen
-                                    </v-icon>
-                                    <v-icon @click="unmarkHoliday(item)" color="warning" class="mr-2"
-                                        style="cursor: pointer;">mdi-close-circle
-                                    </v-icon>
-                                    <v-icon @click="deleteHoliday(item)" color="error" class="mr-2"
-                                        style="cursor: pointer;">mdi-delete
-                                    </v-icon>
+                                    <v-btn icon small color="info" @click="editHoliday(item)">
+                                        <v-icon>mdi-pen</v-icon>
+                                    </v-btn>
+                                    <v-btn icon small color="warning" @click="unmarkHoliday(item)">
+                                        <v-icon>mdi-close-circle</v-icon>
+                                    </v-btn>
+                                    <v-btn icon small color="error" @click="deleteHoliday(item)">
+                                        <v-icon>mdi-delete</v-icon>
+                                    </v-btn>
                                 </td>
                             </tr>
                         </template>
@@ -162,19 +174,19 @@ export default {
             <v-col cols="12" md="4">
                 <v-row>
                     <v-col cols="12">
-                        <v-card class="elevation-10">
-                            <v-card-title>Upcoming Holidays</v-card-title>
+                        <v-card class="elevation-12">
+                            <v-card-title class="text-h6">Upcoming Holidays</v-card-title>
                             <v-divider></v-divider>
-                            <v-list>
+                            <v-list dense>
                                 <v-list-item-group>
                                     <v-list-item v-for="holiday in holidays" :key="holiday.id">
                                         <v-list-item-content>
                                             <v-row align="center">
                                                 <v-col cols="6">
-                                                    <v-list-item-title>{{ holiday.name }}</v-list-item-title>
+                                                    <v-list-item-title class="font-weight-bold">{{ holiday.name }}</v-list-item-title>
                                                 </v-col>
-                                                <v-col cols="6">
-                                                    <v-list-item-subtitle>{{ holiday.date }}</v-list-item-subtitle>
+                                                <v-col cols="6" class="text-right">
+                                                    <v-list-item-subtitle>{{ formatDate(holiday.date) }}</v-list-item-subtitle>
                                                 </v-col>
                                             </v-row>
                                         </v-list-item-content>
@@ -184,11 +196,15 @@ export default {
                         </v-card>
                     </v-col>
                     <v-col cols="12">
-                        <v-card class="calendar-card elevation-10">
-                            <v-card-title>Calendar</v-card-title>
+                        <v-card class="calendar-card elevation-12">
+                            <v-card-title class="text-h6">Calendar</v-card-title>
                             <v-divider></v-divider>
                             <div class="d-flex align-center justify-center">
-                                <VCalendar title-position="left" :attributes="formattedAttributes" />
+                                <VCalendar 
+                                    title-position="left" 
+                                    :attributes="formattedAttributes" 
+                                    class="mt-4">
+                                </VCalendar>
                             </div>
                         </v-card>
                     </v-col>
@@ -198,25 +214,40 @@ export default {
 
         <v-dialog v-model="addHolidayDialog" max-width="500px">
             <v-card>
-                <v-card-title>Add Holiday</v-card-title>
+                <v-card-title class="text-h6">Add New Holiday</v-card-title>
+                <v-divider></v-divider>
                 <v-card-text>
                     <v-form @submit.prevent="addHoliday">
-                        <v-text-field v-model="newHoliday.name" label="Holiday Name"></v-text-field>
-                        <v-text-field v-model="newHoliday.date" label="Date" type="date"></v-text-field>
-                        <v-select v-model="newHoliday.branches" item-title="name" :items="branches" label="Branches"
-                            clearable dense>
+                        <v-text-field 
+                            v-model="newHoliday.name" 
+                            label="Holiday Name" 
+                            outlined 
+                            dense>
+                        </v-text-field>
+                        <v-text-field 
+                            v-model="newHoliday.date" 
+                            label="Date" 
+                            type="date" 
+                            outlined 
+                            dense>
+                        </v-text-field>
+                        <v-select 
+                            v-model="newHoliday.branches" 
+                            item-title="name" 
+                            :items="branches" 
+                            label="Branches"
+                            clearable 
+                            outlined 
+                            dense>
                         </v-select>
-
                     </v-form>
                 </v-card-text>
                 <v-card-actions justify="space-between">
-                    <v-btn @click="addHolidayDialog = false" color="primary">close</v-btn>
-                    <v-btn @click="addHoliday" color="success">Save</v-btn>
+                    <v-btn @click="addHolidayDialog = false" color="error" outlined>Cancel</v-btn>
+                    <v-btn @click="addHoliday" color="success" outlined>Save</v-btn>
                 </v-card-actions>
-
             </v-card>
         </v-dialog>
-
     </v-container-fluid>
 </template>
 
