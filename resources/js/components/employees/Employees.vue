@@ -230,10 +230,10 @@
             </v-row>
             <v-row>
               <v-col cols="12" md="6">
-                <v-select variant="outlined" v-model="editedUser.department_id" :items="departments" label="Department"
+                <v-combobox variant="outlined" v-model="editedUser.department_id" :items="departments" label="Department" multiple
                   item-value="id" item-title="name" prepend-icon="mdi-office-building"
                   :rules="[v => !!v || 'Department is required']">
-                </v-select>
+                </v-combobox>
               </v-col>
               <v-col cols="12" md="6">
                 <v-select variant="outlined" v-model="editedUser.designation_id" :items="designations"
@@ -347,9 +347,10 @@
           </v-select>
           <v-select v-model="filters.office_id" :items="offices" item-value="id" item-title="name" label="Office" dense>
           </v-select>
-          <v-select v-model="filters.department_id" :items="departments" item-value="id" item-title="name"
+         
+          <v-autocomplete v-model="filters.department_id" :items="departments" item-value="id" item-title="name" mutiple
             label="Department" dense>
-          </v-select>
+          </v-autocomplete>
           <v-select v-model="filters.designation_id" :items="designations" item-value="id" item-title="name"
             label="Designation" dense>
           </v-select>

@@ -137,6 +137,18 @@ class User extends Authenticatable
   {
       return $this->belongsToMany(Department::class, 'hod_departments');
   }
+  // a user can  belong to many departements
+
+  public function userDepartments()
+  {
+      return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id')
+                  ->withTimestamps();
+  }
+  public function getFullNameAttribute()
+  {
+    return "{$this->firstname} {$this->lastname}";
+  }
+
 
   public function leaves()
   {
@@ -233,5 +245,11 @@ class User extends Authenticatable
        return $this->belongsToMany(Complaint::class, 'complaint_user')
                    ->wherePivot('role', 'follower');
    }
+
+
+  public function getNameAttribute()
+  {
+     return $this->firstname . ' ' . $this->lastname;
+  }
 
 }

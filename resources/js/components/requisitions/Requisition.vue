@@ -116,11 +116,22 @@
         </v-row>
 
         <!-- Data Table -->
+
+        <!-- inlude a tab for Current and ALL -->
         <v-card class="mt-2">
           <v-progress-linear v-if="loading" color="green" indeterminate></v-progress-linear>
 
 
-          <v-data-table :headers="headers" :items="requisitions" :search="search" item-key="id" responsive show-select
+          <v-tabs
+      v-model="tab"
+      align-tabs="start"
+      color="primary"
+    >
+      <v-tab :value="1">Current</v-tab>
+      <v-tab :value="2">All</v-tab>
+    </v-tabs>
+          
+          <v-data-table :headers="headers" :items="filteredRequisitions" :search="search" item-key="id" responsive show-select
             v-model:expanded="expandedItems" show-expand>
 
 
@@ -133,6 +144,7 @@
                 {{ item.special_instructions.substring(0, 50) }}...
                 <v-icon @click="toggleExpand(item)">mdi-chevron-down</v-icon>
               </span>
+             
             </template>
 
             <!-- Items Column with Expand Button -->
@@ -162,6 +174,11 @@
                           Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{
                           detail.total_cost }}
                         </v-list-item-subtitle>
+
+                        <v-list-item-subtitle>
+            
+                            <v-list-item-title>Description: {{ detail.description }}</v-list-item-title>
+                        </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>
                   </v-list>
@@ -189,6 +206,14 @@
 
             <template v-slot:item.actions="{ item }">
               <div class="action-icons">
+
+                <!-- make a comment  -->
+
+                <v-icon 
+                  @click="openCommentsDialog(item)" color="primary" style="margin-right: 8px;"
+                  title="Add Comments">
+                  mdi-message-text >
+                </v-icon>
 
                 <!-- edit requisition -->
                 <v-icon
@@ -447,7 +472,7 @@
 
                 <v-textarea v-model="specialInstructions" label="Mode of Payment" rows="3" outlined />
 
-                <v-select v-model="approverType" :items="['Finance Manager', 'CFO', 'HR']" label="Select Approver Type"
+                <v-select v-model="approverType" :items="['Finance Manager', 'CFO', 'HR','Welfare']" label="Select Approver Type"
                   outlined dense></v-select>
 
               </template>
@@ -482,7 +507,7 @@
 
 import { ref } from "vue";
 
-
+const tab = ref(null)
 
 export default {
   props: {
@@ -493,6 +518,8 @@ export default {
 
   data() {
     return {
+          tab: 1,
+
       expandedItems: [],
 
       // selectedItem: null,
@@ -580,11 +607,12 @@ export default {
         { title: "Application Date", value: "created_at" },
         { title: "Items", value: "items" },
         { title: "Requisition Total value", value: "items_sum_total_cost" },
+        // {title: "Description", value: "description" },
         { title: "Special instructions", value: "special_instructions" },
         { title: "Department", value: "user.department.name" },
         { title: "Requester", value: "user.firstname" },
         { title: "Status", value: "status" },
-        { title: "Comments", value: "comment" },
+        // { title: "Comments", value: "comment" },
         { title: "Type", value: "approver_type" },
         { title: "POP", value: "pop" },
         { title: "Actions", value: "actions", sortable: false },
@@ -601,6 +629,18 @@ export default {
     this.fetchDepartments();
     this.fetchAccounts();
   },
+
+  computed: {
+  filteredRequisitions() {
+    if (this.tab === 1) {
+      // Return only today's requisitions
+      const today = new Date().toISOString().slice(0, 10); // Format: YYYY-MM-DD
+      return this.requisitions.filter(req => req.created_at.slice(0, 10) === today);
+    }
+    return this.requisitions; // Show all
+  }
+}
+,
   methods: {
 
 
