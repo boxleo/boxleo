@@ -62,15 +62,21 @@
             "dont-discover": []
         }
     },
+   
+
     "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
-        }
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "platform": {
+        "php": "8.1.28"
     },
+    "allow-plugins": {
+        "pestphp/pest-plugin": true,
+        "php-http/discovery": true
+    }
+},
+
     "minimum-stability": "stable",
     "prefer-stable": true
 }
