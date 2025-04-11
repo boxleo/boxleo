@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
    
     protected function schedule(Schedule $schedule)
     {
-        Log::info("Schedule is running...");
+        // Log::info("Schedule is running...");
 
         $schedule->call(function () {
             Leave::where('to', '<', now())->update(['is_active' => false]);
