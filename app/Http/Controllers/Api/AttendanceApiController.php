@@ -403,8 +403,16 @@ class AttendanceApiController extends Controller
 
         $weekendDay = $unit->weekend_day ?? Carbon::SATURDAY;
 
+
+        Log::info('Weekend check debug', [
+            'configured_weekend_day' => $weekendDay,
+            'user_clock_in_day_of_week' => $userTime->dayOfWeek,
+            'parsed_weekend_day_of_week' => Carbon::parse($weekendDay)->dayOfWeek,
+        ]);
+
+
         // Handle weekend
-        if ($userTime->dayOfWeek == Carbon::parse($weekendDay)->dayOfWeek) {
+        if ($weekendDay) {
             $lateThreshold = $unit->weekend_threshold ?? '08:30';
         }
 
@@ -442,7 +450,7 @@ class AttendanceApiController extends Controller
 
     public function Usertimezone(Request $request): JsonResponse
     {
-        $user= Auth::user();
+        $user = Auth::user();
         // Find the user
         if (!$user || !$user->unit) {
             return response()->json(['error' => 'User or unit not found'], 404);

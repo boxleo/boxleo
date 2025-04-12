@@ -615,7 +615,7 @@ export default {
         // { title: "Comments", value: "comment" },
         { title: "Type", value: "approver_type" },
         { title: "POP", value: "pop" },
-        { title: "Actions", value: "actions", sortable: false },
+        { title: "Actions", value: "actions", sortable: true },
       ],
       loading: false,
     };
