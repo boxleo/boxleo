@@ -7,23 +7,30 @@
                         <v-col class="d-flex justify-end">
                                 <v-btn class="mr-4" color="primary" @click="createAnnouncement">Create Announcement</v-btn>
                         </v-col>
-                        <!-- <v-toolbar flat color="primary">
-                            <v-btn color="success" class="mr-4" @click="createAnnouncement">Create Announcement
-                                </v-btn>
-                            <v-select v-model="selectedFilter" :items="filters" label="-- select --"
-                                class="mr-4"></v-select>
-                            <v-spacer></v-spacer>
-                            <v-btn color="secondary" class="mr-4">Discard current criteria</v-btn>
-                            <v-text-field v-model="search" append-icon="mdi-magnify" label="Introduce your search"
-                                single-line hide-details></v-text-field>
-                        </v-toolbar> -->
+
+                    </template>
+
+                    <template v-slot:item.attachments="{ item }">
+                        <div v-if="item.attachments && item.attachments.length > 0">
+                            <div v-for="attachment in item.attachments" :key="attachment.id" class="mb-1">
+                                <a
+                                    :href="'/storage/' + attachment.file_path"
+                                    target="_blank"
+                                    :title="attachment.filename || 'Download attachment'"
+                                    class="text-decoration-none"
+                                >
+                                    <v-icon>mdi-cloud-download</v-icon>
+                                </a>
+                            </div>
+                        </div>
+                        <span v-else>Null</span>
                     </template>
 
                     <template v-slot:item.actions="{ item }">
-                        <v-icon small @click="editTicket(item)">mdi-star</v-icon>
-                        <v-icon small @click="viewAnnouncement(item.id)" title="View Announcement">mdi-eye</v-icon>
-                        <v-icon small @click="editAnnouncement(item.id)" title="Edit Announcement">mdi-pencil</v-icon>
-                        <v-icon small @click="deleteAnnouncement(item.id)"
+                        <!-- <v-icon small @click="editTicket(item)">mdi-star</v-icon> -->
+                        <v-icon small @click="viewAnnouncement(item)" title="View Announcement">mdi-eye</v-icon>
+                        <v-icon small @click="editAnnouncement(item)" title="Edit Announcement">mdi-pencil</v-icon>
+                        <v-icon small @click="deleteAnnouncement(item)"
                             title="Delete Announcement">mdi-delete</v-icon>
                     </template>
                 </v-data-table>
@@ -48,10 +55,10 @@
                                 <v-select v-model="editedAnnouncement.author_id" :items="authors"
                                     label="Author"></v-select>
                             </v-col> -->
-                            <v-col cols="12" sm="6">
+                            <!-- <v-col cols="12" sm="6">
                                 <v-text-field v-model="editedAnnouncement.publish_date" label="Publish Date"
                                     type="date"></v-text-field>
-                            </v-col>
+                            </v-col> -->
                             <v-col cols="12" sm="6">
                                 <v-text-field v-model="editedAnnouncement.expiration_date" label="Expiration Date"
                                     type="date"></v-text-field>
@@ -60,15 +67,22 @@
                                 <v-select v-model="editedAnnouncement.priority" :items="priorities"
                                     label="Priority"></v-select>
                             </v-col> -->
-                            <v-col cols="12" sm="6">
+                            <!-- <v-col cols="12" sm="6">
                                 <v-select v-model="editedAnnouncement.status" :items="statuses"
                                     label="Status"></v-select>
-                            </v-col>
-                            <v-col cols="12" sm="6">
+                            </v-col> -->
+                            <!-- <v-col cols="12" sm="6">
                                 <v-switch v-model="editedAnnouncement.is_active" label="Active"></v-switch>
-                            </v-col>
+                            </v-col> -->
+
                             <v-col cols="12">
-                                <v-file-input v-model="editedAnnouncement.attachment" label="Attachment"></v-file-input>
+                                <v-file-input
+                                    label="Attachment"
+                                    multiple
+                                    
+                                    v-model="attachments"
+                                    accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                                ></v-file-input>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -76,9 +90,32 @@
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn color="blue darken-1" @click="closeDialog">Cancel</v-btn>
-                    <v-btn color="blue darken-1" @click="saveAnnouncement">Save</v-btn>
+                    <v-btn color="blue darken-1" @click="saveAnnouncement">Save as draft</v-btn>
+                    <v-btn color="blue darken-1" @click="publishAnnouncement">Publish</v-btn>
                 </v-card-actions>
             </v-card>
+        </v-dialog>
+
+        <!-- View Announcement Dialog -->
+        <v-dialog v-model="showViewDialog" max-width="600px">
+        <v-card>
+            <v-card-title class="text-center font-weight-bold text-h5 mb-4">ANNOUNCEMENT</v-card-title>
+            <v-card-text v-if="viewedAnnouncement">
+            <div class="text-center">
+                <!-- <p><strong>{{ viewedAnnouncement.text }}</strong></p>
+                <p><strong>Subject:</strong> {{ viewedAnnouncement.subject }}</p>
+                <p>Description: {{ viewedAnnouncement.description }}</p>
+                <p>Status: {{ viewedAnnouncement.is_active ? 'Active' : 'Inactive' }}</p> -->
+                <p class="font-weight-bold text-h5 mb-4">{{ viewedAnnouncement.subject }}</p>
+                <p class="mb-4">{{ viewedAnnouncement.description }}</p>
+                <p>Status: {{ viewedAnnouncement.is_active ? 'Active' : 'Inactive' }}</p>
+            </div>
+            </v-card-text>
+            <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="showViewDialog = false">Close</v-btn>
+            </v-card-actions>
+        </v-card>
         </v-dialog>
     </v-container>
 </template>
@@ -96,10 +133,12 @@ export default {
             headers: [
                 { title: 'Subject', value: 'subject' },
                 { title: 'Description', value: 'description' },
-                { title: 'Author', value: 'author' },
+                // { title: 'Author', value: 'author.firstname' },
+                { title: 'Author', value: 'author_name' },
                 { title: 'Publish Date', value: 'publish_date' },
                 { title: 'Expiration Date', value: 'expiration_date' },
-                { title: 'Active', value: 'is_active' },
+                { title: 'Active Status', value: 'is_active' },
+                { title: 'Attachments', value: 'attachments' },
                 // { title: 'Priority', value: 'priority' },
                 { title: 'Status', value: 'status' },
                 { title: 'Actions', value: 'actions', sortable: false },
@@ -112,9 +151,9 @@ export default {
                 publish_date: '',
                 expiration_date: '',
                 is_active: false,
-                attachment: '',
+                // attachment: '',
                 // priority: '',
-                status: ''
+                // status: ''
             },
             defaultAnnouncement: {
                 subject: '',
@@ -123,13 +162,16 @@ export default {
                 publish_date: '',
                 expiration_date: '',
                 is_active: false,
-                attachment: '',
+                // attachment: '',
                 // priority: '',
-                status: ''
+                // status: ''
             },
             authors: [],
             // priorities: ['High', 'Medium', 'Low'],
-            statuses: ['Published', 'Draft', 'Expired']
+            statuses: ['Published', 'Draft', 'Expired'],
+            attachments: [],
+            showViewDialog: false,
+            viewedAnnouncement: null
         }
     },
     computed: {
@@ -137,48 +179,366 @@ export default {
             return this.editedIndex === -1 ? 'Create Announcement' : 'Edit Announcement';
         }
     },
+    mounted() {
+        this.fetchAnnouncements();
+        // this.fetchAuthors();
+    },
     methods: {
-        createAnnouncement() {
-            this.editedIndex = -1;
-            this.editedAnnouncement = Object.assign({}, this.defaultAnnouncement);
-            this.showDialog = true;
-        },
-        editAnnouncement(item) {
-            this.editedIndex = this.announcements.indexOf(item);
-            this.editedAnnouncement = Object.assign({}, item);
-            this.showDialog = true;
-        },
-        deleteAnnouncement(item) {
-            const index = this.announcements.indexOf(item);
-            confirm('Are you sure you want to delete this announcement?') && this.announcements.splice(index, 1);
-        },
-        closeDialog() {
-            this.showDialog = false;
-            this.editedAnnouncement = Object.assign({}, this.defaultAnnouncement);
-            this.editedIndex = -1;
-        },
-        saveAnnouncement() {
-            axios.post('/api/v1/announcements', this.editedAnnouncement)
+        fetchAnnouncements() {
+            axios.get('/api/v1/announcements')
                 .then(response => {
-                    if (this.editedIndex > -1) {
-                        Object.assign(this.announcements[this.editedIndex], response.data);
-                    } else {
-                        axios.put(`/api/v1/announcements/${response.data.id}`, response.data)
-                            .then(() => {
-                                Object.assign(this.announcements[this.editedIndex], response.data);
-                            })
-                            .catch(error => {
-                                console.log(error);
-                            });
-                    }
-                    this.closeDialog();
+                    this.announcements = response.data;
                 })
-                .catch(error => {
-                    console.log(error);
-                });
+                .catch(error => console.error(error));
+        },
+        // fetchAuthors() {
+        //     axios.get('/api/v1/authors')
+        //         .then(response => {
+        //             this.authors = response.data;
+        //         })
+        //         .catch(error => console.error(error));
+        // },
+        viewAnnouncement(item) {
+            //
+
+            this.viewedAnnouncement = Object.assign({}, item);
+
+            this.showViewDialog = true;
+
+        },
+
+
+    handleFileUpload(files) {
+    // Handle both single file or null input
+    if (!files) {
+        this.attachments = [];
+        return;
+    }
+
+    // Convert FileList to Array if needed
+    const fileArray = Array.isArray(files) ? files : [files];
+
+    // Validate file types and sizes
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    //const VALID_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+    const VALID_TYPES = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'
+    ];
+
+    // Process each file
+    const validFiles = fileArray.filter(file => {
+        // Size validation
+        if (file.size > MAX_SIZE) {
+            //
+            alert(`"${file.name}" exceeds the 5MB size limit`);
+
+            return false;
+        }
+
+        // Type validation
+        if (!VALID_TYPES.includes(file.type)) {
+            // this.$notify({
+            //     type: 'error',
+            //     title: 'Invalid file type',
+            //     text: `"${file.name}" is not an accepted file type`
+            // });
+
+            const ext = name.split('.').pop();
+            console
+            // alert(`"${name}" (.${ext}) is not an accepted file type`);
+            // alert(`"${file.name}" is not an accepted file type`);
+            
+            return false;
+        }
+
+        // Add preview URL for images
+        if (file.type.startsWith('image/')) {
+            file.preview = URL.createObjectURL(file);
+        }
+
+        return true;
+    });
+
+    // Update attachments with valid files
+    this.attachments = validFiles;
+
+    // Log the processed files
+    console.log('Selected files:', this.attachments);
+
+    if (this.attachments.length > 0) {
+        // this.$notify({
+        //     type: 'success',
+        //     title: 'Files added',
+        //     text: `${this.attachments.length} file(s) ready for upload`
+        // });
+        alert(`${this.attachments.length} file(s) ready for upload`);
+    }
+},
+
+
+    //     handleFileUpload(file) {
+    //         // For Vuetify's v-file-input, the event directly contains files
+    //         // this.attachments = files || [];
+    //         // console.log('Selected files:', this.attachments);
+
+
+    //              if(file)
+    //              {
+    //                 console.log('Selected file:', file);
+    //                 this.attachments = file;} else {
+    //  console.log('No file selected');
+    //                 }
+    //     },
+        removeAttachment(index) {
+            const newAttachments = [...this.attachments];
+            newAttachments.splice(index, 1);
+            this.attachments = newAttachments;
+        },
+        openAttachment(path) {
+        const fullPath = `/storage/${path}`; // adjust if you're using a different path
+        window.open(fullPath, '_blank');
+        },
+
+        watch: {
+            attachments(newFiles) {
+                this.handleFileUpload(newFiles);
+            }
+        },
+
+    // },
+    // watch: {
+    //     search(value) {
+    //         if (value) {
+    //             this.announcements = this.announcements.filter(announcement => {
+    //                 return Object.keys(announcement).some(key => {
+    //                     return String(announcement[key]).toLowerCase().includes(value.toLowerCase());
+    //                 });
+    //             });
+    //         } else {
+    //             this.fetchAnnouncements();
+    //         }
+    //     },
+    //     selectedFilter(value) {
+    //         if (value === 'Active') {
+    //             this.announcements = this.announcements.filter(a => a.is_active);
+    //         } else if (value === 'Expired') {
+    //             this.announcements = this.announcements.filter(a => !a.is_active);
+    //         } else {
+    //             this.fetchAnnouncements();
+    //         }
+    //     }
+    // },
+
+    createAnnouncement() {
+        this.editedIndex = -1;
+        this.editedAnnouncement = Object.assign({}, this.defaultAnnouncement);
+        this.attachments = [];
+        this.showDialog = true;
+    },
+    editAnnouncement(item) {
+        this.editedIndex = this.announcements.indexOf(item);
+        this.editedAnnouncement = Object.assign({}, item);
+        this.attachments = item.attachments || [];
+        this.showDialog = true;
+    },
+    deleteAnnouncement(item) {
+        const index = this.announcements.indexOf(item);
+        if (index === -1) {
+            console.error('Error: Announcement ID is missing');
+            return;
+        }
+        if (!confirm('Are you sure you want to delete this announcement?')) return;
+
+        axios.delete(`/api/v1/announcements/${item.id}`)
+            .then(() => {
+                this.announcements.splice(index, 1);
+                console.log('Announcement deleted successfully');
+            })
+            .catch(error => {
+                console.error('Error deleting announcement:', error);
+            });
+    },
+    closeDialog() {
+        this.showDialog = false;
+        this.editedAnnouncement = Object.assign({}, this.defaultAnnouncement);
+        this.editedIndex = -1;
+    },
+
+
+    // saveAnnouncement() {
+    //     // Create FormData object for file uploads
+    //     const formData = new FormData();
+
+    //     // Add all announcement fields
+    //     for (const key in this.editedAnnouncement) {
+    //         if (this.editedAnnouncement[key] !== null && this.editedAnnouncement[key] !== undefined) {
+    //             formData.append(key, this.editedAnnouncement[key]);
+    //         }
+    //     }
+
+    //     // Add action
+    //     formData.append('action', 'save_draft');
+
+    //     // Add attachments
+    //     if (this.attachments && this.attachments.length) {
+    //         for (let i = 0; i < this.attachments.length; i++) {
+    //             formData.append('attachments', this.attachments[i]);
+    //         }
+    //     }
+
+    //     if (this.editedIndex > -1) {
+    //         axios.post(`/api/v1/announcements/${this.editedAnnouncement.id}?_method=PUT`, formData, {
+    //             headers: {
+    //                 'Content-Type': 'multipart/form-data'
+    //             }
+    //         })
+    //         .then(response => {
+    //             Object.assign(this.announcements[this.editedIndex], response.data);
+    //             this.closeDialog();
+    //         })
+    //         .catch(error => {
+    //             console.error('Error updating announcement:', error.response?.data || error.message);
+    //         });
+    //     } else {
+    //         axios.post('/api/v1/announcements', formData, {
+    //             headers: {
+    //                 'Content-Type': 'multipart/form-data'
+    //             }
+    //         })
+    //         .then(response => {
+    //             this.announcements.push(response.data);
+    //             this.fetchAnnouncements();
+    //             this.closeDialog();
+    //         })
+    //         .catch(error => {
+    //             console.error('Error creating announcement:', error.response?.data || error.message);
+    //         });
+    //     }
+    // },
+
+
+
+    saveAnnouncement() {
+        const formData = new FormData();
+
+        // Add all announcement fields
+        for (const key in this.editedAnnouncement) {
+            if (this.editedAnnouncement[key] !== null && this.editedAnnouncement[key] !== undefined) {
+                formData.append(key, this.editedAnnouncement[key]);
+            }
+        }
+
+        // Add action
+        formData.append('action', 'save_draft');
+
+        // Add attachments
+        if (this.attachments && this.attachments.length) {
+            for (let i = 0; i < this.attachments.length; i++) {
+                formData.append('attachments[]', this.attachments[i]);
+            }
+        }
+
+        // Send to Laravel endpoint
+        const url = this.editedIndex > -1
+            ? `/api/v1/announcements/${this.editedAnnouncement.id}?_method=PUT`
+            : '/api/v1/announcements';
+
+        axios.post(url, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then(response => {
+            // Handle success
+            if (this.editedIndex > -1) {
+                Object.assign(this.announcements[this.editedIndex], response.data);
+            } else {
+                this.announcements.push(response.data);
+            }
+            this.fetchAnnouncements();
+            this.closeDialog();
+        })
+        .catch(error => {
+            console.error('Error saving announcement:', error.response?.data || error.message);
+        });
+    },
+
+    publishAnnouncement() {
+        // Create FormData object for file uploads
+        const formData = new FormData();
+
+        // Add all announcement fields
+        for (const key in this.editedAnnouncement) {
+            if (this.editedAnnouncement[key] !== null && this.editedAnnouncement[key] !== undefined) {
+                formData.append(key, this.editedAnnouncement[key]);
+            }
+        }
+
+        // Add action
+        formData.append('action', 'publish');
+
+        // Add attachments
+        if (this.attachments && this.attachments.length) {
+            for (let i = 0; i < this.attachments.length; i++) {
+                formData.append('attachments[]', this.attachments[i]);
+            }
+        }
+
+        if (this.editedIndex > -1) {
+            axios.post(`/api/v1/announcements/${this.editedAnnouncement.id}?_method=PUT`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            .then(response => {
+                Object.assign(this.announcements[this.editedIndex], response.data);
+                this.fetchAnnouncements();
+                this.closeDialog();
+
+                // axios.post(`/api/v1/announcements/${response.data.id}/notify`)
+                // .then(() => {
+                //     alert("Announcement published and emails sent!");
+                //     // or this.$notify if you're using notification lib
+                // })
+                // .catch(error => console.error('Error sending emails:', error));
+                
+
+                // Send emails after publishing
+                // axios.post(`/api/v1/announcements/${response.data.id}/send-emails`)
+                //    .then(() => {
+                //         // Show success notification
+                //         this.$notify({
+                //             type: 'success',
+                //             title: 'Success',
+                //             text: 'Announcement published and emails sent!'
+                //         });
+                //     })
+                //     .catch(error => console.error('Error sending emails:', error));
+            })
+            .catch(error => console.error('Error publishing announcement:', error));
+        } else {
+            axios.post('/api/v1/announcements', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            .then(response => {
+                this.announcements.push(response.data);
+                this.fetchAnnouncements();
+                this.closeDialog();
+            })
+            .catch(error => console.error('Error publishing announcement:', error));
         }
     }
+    }
 }
+
 </script>
 
 <style scoped>
