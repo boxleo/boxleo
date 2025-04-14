@@ -23,6 +23,9 @@ class OfficeApiController extends Controller
             'name' => 'required|string|max:255',
             'unit_id' => 'required|integer',
             'phone' => 'required|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         Office::create($request->all());
@@ -35,7 +38,11 @@ class OfficeApiController extends Controller
        
 
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         $office->update($validatedData);

@@ -15,6 +15,7 @@
         "laravel/ui": "^4.2",
         "maatwebsite/excel": "^3.1",
         "octopyid/laravel-impersonate": "^4",
+        "opcodesio/log-viewer": "^2.0",
         "pusher/pusher-push-notifications": "^2.0",
         "spatie/laravel-permission": "*",
         "spatie/laravel-settings": "^3.2",
@@ -62,15 +63,21 @@
             "dont-discover": []
         }
     },
+   
+
     "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
-        }
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "platform": {
+        "php": "8.1.28"
     },
+    "allow-plugins": {
+        "pestphp/pest-plugin": true,
+        "php-http/discovery": true
+    }
+},
+
     "minimum-stability": "stable",
     "prefer-stable": true
 }

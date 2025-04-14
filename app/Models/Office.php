@@ -12,7 +12,7 @@ class Office extends Model
     use SoftDeletes;
 
     protected $fillable =[
-        'name','unit_id','phone'
+        'name','unit_id','phone','latitude', 'longitude', 'address'
 
     ];
 

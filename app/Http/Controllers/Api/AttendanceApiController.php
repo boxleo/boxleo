@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\User;
 use Carbon\Carbon;
@@ -11,7 +12,7 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
-
+use Illuminate\Support\Facades\Auth;
 
 class AttendanceApiController extends Controller
 {
@@ -53,7 +54,7 @@ class AttendanceApiController extends Controller
         $attendances = Attendance::whereBetween('attendance_date', [$startDate, $endDate])->get();
         $leaves = Leave::where('status', 'Approved')
             ->where(fn($query) => $query->whereBetween('from', [$startDate, $endDate])
-                    ->orWhereBetween('to', [$startDate, $endDate]))
+                ->orWhereBetween('to', [$startDate, $endDate]))
             ->get();
 
         $attendanceData = [];
@@ -83,6 +84,8 @@ class AttendanceApiController extends Controller
     public function store(Request $request)
     {
         try {
+            Log::info('Store method called', ['request' => $request->all()]);
+
             $this->validateAttendanceRequest($request);
 
             $existingAttendance = Attendance::where('user_id', $request->user_id)
@@ -90,17 +93,53 @@ class AttendanceApiController extends Controller
                 ->first();
 
             if ($existingAttendance) {
+                Log::warning('Attendance already marked', [
+                    'user_id' => $request->user_id,
+                    'attendance_date' => $request->attendance_date,
+                ]);
                 return response()->json(['message' => 'Attendance is already marked!'], 400);
             }
 
-            $distanceFromPremise = $this->validateLocation($request->latitude, $request->longitude);
+            $user = User::find($request->user_id);
+            if (!$user) {
+                Log::error('User not found', ['user_id' => $request->user_id]);
+                return response()->json(['error' => 'User not found'], 404);
+            }
+
+            $office = $user->office;
+            if (!$office) {
+                Log::error('Office not found for user', ['user_id' => $request->user_id]);
+                return response()->json(['error' => 'Office not found'], 404);
+            }
+
+            Log::info('Validating location', [
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'office' => $office,
+            ]);
+
+            $distanceFromPremise = $this->validateLocation($request->latitude, $request->longitude, $office);
+
+            Log::info('Distance from premise calculated', ['distance' => $distanceFromPremise]);
 
             $notes = $distanceFromPremise ? "Distance from the premise: " . $distanceFromPremise : null;
+
+            Log::info('Processing attendance', [
+                'user_id' => $request->user_id,
+                'attendance_date' => $request->attendance_date,
+                'notes' => $notes,
+            ]);
+
             $this->processAttendance($request, $notes);
+
+            Log::info('Attendance record created successfully', [
+                'user_id' => $request->user_id,
+                'attendance_date' => $request->attendance_date,
+            ]);
 
             return response()->json(['message' => 'Record created!'], 200);
         } catch (\Exception $e) {
-            Log::error('Error in store method: ' . $e->getMessage());
+            Log::error('Error in store method', ['error' => $e->getMessage()]);
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -228,19 +267,38 @@ class AttendanceApiController extends Controller
         ]);
     }
 
-    private function validateLocation($userLatitude, $userLongitude)
+    // private function validateLocation($userLatitude, $userLongitude)
+    // {
+    //     $premiseLatitude = -1.3473844528198242;
+    //     $premiseLongitude = 36.901023864746094;
+
+    //     $distanceInKilometers = $this->haversineDistance($premiseLatitude, $premiseLongitude, $userLatitude, $userLongitude);
+
+    //     $formattedDistance = number_format($distanceInKilometers, 2) . ' m';
+
+    //     Log::info('Distance from premise:', ['distance' => $formattedDistance]);
+
+    //     return $formattedDistance;
+    // }
+
+
+
+    private function validateLocation($userLatitude, $userLongitude, $office)
     {
-        $premiseLatitude = -1.3473844528198242;
-        $premiseLongitude = 36.901023864746094;
+        $distanceInKilometers = $this->haversineDistance(
+            $office->latitude,
+            $office->longitude,
+            $userLatitude,
+            $userLongitude
+        );
 
-        $distanceInKilometers = $this->haversineDistance($premiseLatitude, $premiseLongitude, $userLatitude, $userLongitude);
-
-        $formattedDistance = number_format($distanceInKilometers, 2) . ' m';
+        $formattedDistance = number_format($distanceInKilometers, 2) . ' km';
 
         Log::info('Distance from premise:', ['distance' => $formattedDistance]);
 
         return $formattedDistance;
     }
+
 
     private function haversineDistance($lat1, $lon1, $lat2, $lon2)
     {
@@ -257,7 +315,7 @@ class AttendanceApiController extends Controller
         $dLon = $lon2 - $lon1;
 
         $a = sin($dLat / 2) * sin($dLat / 2) +
-        cos($lat1) * cos($lat2) * sin($dLon / 2) * sin($dLon / 2);
+            cos($lat1) * cos($lat2) * sin($dLon / 2) * sin($dLon / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         // Distance in kilometers
@@ -268,47 +326,143 @@ class AttendanceApiController extends Controller
 
     private function processAttendance(Request $request, $notes = null)
     {
+        Log::info('Processing attendance', [
+            'user_id' => $request->user_id,
+            'attendance_date' => $request->attendance_date,
+            'attendance_type' => $request->attendance_type,
+            'time' => $request->time,
+            'notes' => $notes,
+        ]);
+
         $existingAttendance = Attendance::firstOrNew([
             'user_id' => $request->user_id,
             'attendance_date' => $request->attendance_date,
         ]);
 
+        Log::info('Existing attendance record', ['attendance' => $existingAttendance]);
+
+        $user = Auth::user();
+        Log::info('Authenticated user', ['user' => $user]);
+
+        $unit = $user->unit;
+        if (!$unit) {
+            Log::error('User unit not found', ['user_id' => $request->user_id]);
+            throw new \Exception('User unit not found.');
+        }
+
+        Log::info('User unit retrieved', ['unit' => $unit]);
+
         if ($request->attendance_type === 'clock_in' && !$existingAttendance->clock_in_time) {
             $existingAttendance->clock_in_time = $request->time;
-            $existingAttendance->status = $this->isLate($request->time) ? 'Late' : 'In Time';
+            $existingAttendance->status = $this->isLate($request->time, $unit) ? 'Late' : 'In Time';
+            Log::info('Clock-in time set', [
+                'clock_in_time' => $request->time,
+                'status' => $existingAttendance->status,
+            ]);
         } elseif ($request->attendance_type === 'clock_out' && !$existingAttendance->clock_out_time) {
             $existingAttendance->clock_out_time = $request->time;
+            Log::info('Clock-out time set', ['clock_out_time' => $request->time]);
         }
 
         if ($notes) {
             $existingAttendance->notes = $notes;
+            Log::info('Notes added to attendance', ['notes' => $notes]);
         }
 
         $existingAttendance->is_present = true;
         $existingAttendance->save();
+
+        Log::info('Attendance record saved successfully', ['attendance' => $existingAttendance]);
     }
 
-    private function isLate($clockInTime)
+    // private function isLate($clockInTime)
+    // {
+    //     $lateThreshold = '08:00';
+    //     if (Carbon::parse($clockInTime)->dayOfWeek == Carbon::SATURDAY) {
+    //         $lateThreshold = '08:30';
+    //     }
+
+    //     // Check if today is a holiday in the Holiday table and set the threshold to 08:30
+    //     $isHoliday = Holiday::whereDate('date', Carbon::today())->exists();
+    //     Log::info('Checking if today is a holiday:', ['isHoliday' => $isHoliday]);
+    //     if ($isHoliday) {
+    //         $lateThreshold = '08:30';
+    //     }
+
+    //     return Carbon::parse($clockInTime)->greaterThan(Carbon::parse($lateThreshold));
+    // }
+
+
+
+    private function isLate($clockInTime, $unit)
     {
-        $lateThreshold = '08:00';
-        if (Carbon::parse($clockInTime)->dayOfWeek == Carbon::SATURDAY) {
-            $lateThreshold = '08:30';
+        $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+
+        // Default thresholds
+        $lateThreshold = $unit->weekday_threshold ?? '08:00';
+
+        $weekendDay = $unit->weekend_day ?? Carbon::SATURDAY;
+
+
+        Log::info('Weekend check debug', [
+            'configured_weekend_day' => $weekendDay,
+            'user_clock_in_day_of_week' => $userTime->dayOfWeek,
+            'parsed_weekend_day_of_week' => Carbon::parse($weekendDay)->dayOfWeek,
+        ]);
+
+
+        // Handle weekend
+        if ($weekendDay) {
+            $lateThreshold = $unit->weekend_threshold ?? '08:30';
         }
 
-        return Carbon::parse($clockInTime)->greaterThan(Carbon::parse($lateThreshold));
+        // Check holiday
+        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+        if ($isHoliday) {
+            $lateThreshold = $unit->weekend_threshold ?? '08:30';
+        }
+
+        // Convert threshold into user’s local time
+        $threshold = Carbon::parse($lateThreshold, $unit->timezone)->timezone('UTC');
+
+        Log::info('Evaluating lateness', [
+            'clock_in_time_utc' => $clockInTime,
+            'user_time' => $userTime,
+            'threshold_local' => $lateThreshold,
+            'threshold_utc' => $threshold->toDateTimeString(),
+        ]);
+
+        return Carbon::parse($clockInTime)->greaterThan($threshold);
     }
+
 
 
     public function fetchServerTime(): JsonResponse
-{
-    // Get the current server time
-    $serverTime = now()->toDateTimeString(); // Uses Laravel's `now()` helper
+    {
+        // Get the current server time
+        $serverTime = now()->toDateTimeString(); // Uses Laravel's `now()` helper
 
-    // Return the response as JSON
-    return response()->json([
-        'time' => $serverTime,
-    ]);
-}
+        // Return the response as JSON
+        return response()->json([
+            'time' => $serverTime,
+        ]);
+    }
 
-    
+    public function Usertimezone(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        // Find the user
+        if (!$user || !$user->unit) {
+            return response()->json(['error' => 'User or unit not found'], 404);
+        }
+
+        // Get the user's timezone
+        $timezone = $user->unit->timezone;
+
+        // Return the response as JSON
+        return response()->json([
+            'timezone' => $timezone,
+            'current_time' => now()->setTimezone($timezone)->toDateTimeString(),
+        ]);
+    }
 }

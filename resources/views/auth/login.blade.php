@@ -3,31 +3,31 @@
 @section('content')
 <div class="preloader">Loading...</div>
 
-<div class="login-container">
-    <div class="login-box">
-        <h1>Login</h1>
-        <img class="company-logo" src="{{asset('assets/img/logo.png')}}" alt="Boxleo Logo">
-        <form action="{{ route('login') }}" method="post">
-            @csrf
-            <div class="input-group">
-                <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required>
-
-                @error('email')
-                <p class="error-message">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="input-group">
-                <input type="password" name="password" placeholder="Password" required>
-
-                @error('password')
-                <p class="error-message">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="actions">
-                <label><input type="checkbox" name="remember"> Remember me</label>
-                <a href="{{ route('password.request') }}">Forgot Password?</a>
-            </div>
-            <button type="submit" class="login-btn">Login</button>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>Login</h1>
+            <img class="company-logo" src="{{asset('assets/img/logo.png')}}" alt="Boxleo Logo">
+            <form action="{{ route('login') }}" method="post">
+                @csrf
+                <div class="input-group">
+                    <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required>
+                   
+                    @error('email')
+                        <p class="error-message">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                  
+                    @error('password')
+                        <p class="error-message">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div class="actions">
+                    <label><input type="checkbox" name="remember"> Remember me</label>
+                    <a href="{{ route('password.request') }}">Forgot Password?</a>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
 
         </form>
     </div>

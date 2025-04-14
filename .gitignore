@@ -16,6 +16,8 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+public/build/manifest.json
+
 # /resources/views/auth/login.blade.php
 # /resources/views/emails/employee-welcome-note.blade.php
 # /resources/views/includes/sidebar.blade.php

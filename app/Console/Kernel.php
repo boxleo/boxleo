@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
    
     protected function schedule(Schedule $schedule)
     {
-        Log::info("Schedule is running...");
+        // Log::info("Schedule is running...");
 
         $schedule->call(function () {
             Leave::where('to', '<', now())->update(['is_active' => false]);
@@ -31,14 +31,14 @@ class Kernel extends ConsoleKernel
                 Log::info("leave:reminder command has executed.");
             });
 
-        $schedule->job(new \App\Jobs\AddMonthlyLeaveBalance)->monthlyOn(1, '00:00') // Runs on the 1st day of each month at midnight
+        // $schedule->job(new \App\Jobs\AddMonthlyLeaveBalance)->monthlyOn(1, '00:00') // Runs on the 1st day of each month at midnight
 
-            ->onSuccess(function () {
-                Log::info("AddMonthlyLeaveBalance job dispatched successfully.");
-            })
-            ->onFailure(function (\Throwable $exception) { // Explicitly define \Throwable
-                Log::error("Failed to dispatch job: " . $exception->getMessage());
-            });
+        //     ->onSuccess(function () {
+        //         Log::info("AddMonthlyLeaveBalance job dispatched successfully.");
+        //     })
+        //     ->onFailure(function (\Throwable $exception) { // Explicitly define \Throwable
+        //         Log::error("Failed to dispatch job: " . $exception->getMessage());
+        //     });
     }
 
 
