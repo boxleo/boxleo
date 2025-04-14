@@ -27,7 +27,6 @@
                     </template>
 
                     <template v-slot:item.actions="{ item }">
-                        <!-- <v-icon small @click="editTicket(item)">mdi-star</v-icon> -->
                         <v-icon small @click="viewAnnouncement(item)" title="View Announcement">mdi-eye</v-icon>
                         <v-icon small @click="editAnnouncement(item)" title="Edit Announcement">mdi-pencil</v-icon>
                         <v-icon small @click="deleteAnnouncement(item)"
@@ -51,35 +50,16 @@
                             <v-col cols="12">
                                 <v-textarea v-model="editedAnnouncement.description" label="Description"></v-textarea>
                             </v-col>
-                            <!-- <v-col cols="12" sm="6">
-                                <v-select v-model="editedAnnouncement.author_id" :items="authors"
-                                    label="Author"></v-select>
-                            </v-col> -->
-                            <!-- <v-col cols="12" sm="6">
-                                <v-text-field v-model="editedAnnouncement.publish_date" label="Publish Date"
-                                    type="date"></v-text-field>
-                            </v-col> -->
                             <v-col cols="12" sm="6">
                                 <v-text-field v-model="editedAnnouncement.expiration_date" label="Expiration Date"
                                     type="date"></v-text-field>
                             </v-col>
-                            <!-- <v-col cols="12" sm="6">
-                                <v-select v-model="editedAnnouncement.priority" :items="priorities"
-                                    label="Priority"></v-select>
-                            </v-col> -->
-                            <!-- <v-col cols="12" sm="6">
-                                <v-select v-model="editedAnnouncement.status" :items="statuses"
-                                    label="Status"></v-select>
-                            </v-col> -->
-                            <!-- <v-col cols="12" sm="6">
-                                <v-switch v-model="editedAnnouncement.is_active" label="Active"></v-switch>
-                            </v-col> -->
 
                             <v-col cols="12">
                                 <v-file-input
                                     label="Attachment"
                                     multiple
-                                    
+
                                     v-model="attachments"
                                     accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
                                 ></v-file-input>
@@ -102,10 +82,6 @@
             <v-card-title class="text-center font-weight-bold text-h5 mb-4">ANNOUNCEMENT</v-card-title>
             <v-card-text v-if="viewedAnnouncement">
             <div class="text-center">
-                <!-- <p><strong>{{ viewedAnnouncement.text }}</strong></p>
-                <p><strong>Subject:</strong> {{ viewedAnnouncement.subject }}</p>
-                <p>Description: {{ viewedAnnouncement.description }}</p>
-                <p>Status: {{ viewedAnnouncement.is_active ? 'Active' : 'Inactive' }}</p> -->
                 <p class="font-weight-bold text-h5 mb-4">{{ viewedAnnouncement.subject }}</p>
                 <p class="mb-4">{{ viewedAnnouncement.description }}</p>
                 <p>Status: {{ viewedAnnouncement.is_active ? 'Active' : 'Inactive' }}</p>
@@ -133,13 +109,11 @@ export default {
             headers: [
                 { title: 'Subject', value: 'subject' },
                 { title: 'Description', value: 'description' },
-                // { title: 'Author', value: 'author.firstname' },
                 { title: 'Author', value: 'author_name' },
                 { title: 'Publish Date', value: 'publish_date' },
                 { title: 'Expiration Date', value: 'expiration_date' },
                 { title: 'Active Status', value: 'is_active' },
                 { title: 'Attachments', value: 'attachments' },
-                // { title: 'Priority', value: 'priority' },
                 { title: 'Status', value: 'status' },
                 { title: 'Actions', value: 'actions', sortable: false },
             ],
@@ -151,9 +125,6 @@ export default {
                 publish_date: '',
                 expiration_date: '',
                 is_active: false,
-                // attachment: '',
-                // priority: '',
-                // status: ''
             },
             defaultAnnouncement: {
                 subject: '',
@@ -162,12 +133,8 @@ export default {
                 publish_date: '',
                 expiration_date: '',
                 is_active: false,
-                // attachment: '',
-                // priority: '',
-                // status: ''
             },
             authors: [],
-            // priorities: ['High', 'Medium', 'Low'],
             statuses: ['Published', 'Draft', 'Expired'],
             attachments: [],
             showViewDialog: false,
@@ -191,13 +158,6 @@ export default {
                 })
                 .catch(error => console.error(error));
         },
-        // fetchAuthors() {
-        //     axios.get('/api/v1/authors')
-        //         .then(response => {
-        //             this.authors = response.data;
-        //         })
-        //         .catch(error => console.error(error));
-        // },
         viewAnnouncement(item) {
             //
 
@@ -243,17 +203,10 @@ export default {
 
         // Type validation
         if (!VALID_TYPES.includes(file.type)) {
-            // this.$notify({
-            //     type: 'error',
-            //     title: 'Invalid file type',
-            //     text: `"${file.name}" is not an accepted file type`
-            // });
 
             const ext = name.split('.').pop();
-            console
-            // alert(`"${name}" (.${ext}) is not an accepted file type`);
-            // alert(`"${file.name}" is not an accepted file type`);
-            
+            console.log(`File extension: ${ext}`);
+
             return false;
         }
 
@@ -272,29 +225,10 @@ export default {
     console.log('Selected files:', this.attachments);
 
     if (this.attachments.length > 0) {
-        // this.$notify({
-        //     type: 'success',
-        //     title: 'Files added',
-        //     text: `${this.attachments.length} file(s) ready for upload`
-        // });
         alert(`${this.attachments.length} file(s) ready for upload`);
     }
 },
 
-
-    //     handleFileUpload(file) {
-    //         // For Vuetify's v-file-input, the event directly contains files
-    //         // this.attachments = files || [];
-    //         // console.log('Selected files:', this.attachments);
-
-
-    //              if(file)
-    //              {
-    //                 console.log('Selected file:', file);
-    //                 this.attachments = file;} else {
-    //  console.log('No file selected');
-    //                 }
-    //     },
         removeAttachment(index) {
             const newAttachments = [...this.attachments];
             newAttachments.splice(index, 1);
@@ -310,30 +244,6 @@ export default {
                 this.handleFileUpload(newFiles);
             }
         },
-
-    // },
-    // watch: {
-    //     search(value) {
-    //         if (value) {
-    //             this.announcements = this.announcements.filter(announcement => {
-    //                 return Object.keys(announcement).some(key => {
-    //                     return String(announcement[key]).toLowerCase().includes(value.toLowerCase());
-    //                 });
-    //             });
-    //         } else {
-    //             this.fetchAnnouncements();
-    //         }
-    //     },
-    //     selectedFilter(value) {
-    //         if (value === 'Active') {
-    //             this.announcements = this.announcements.filter(a => a.is_active);
-    //         } else if (value === 'Expired') {
-    //             this.announcements = this.announcements.filter(a => !a.is_active);
-    //         } else {
-    //             this.fetchAnnouncements();
-    //         }
-    //     }
-    // },
 
     createAnnouncement() {
         this.editedIndex = -1;
@@ -369,60 +279,6 @@ export default {
         this.editedAnnouncement = Object.assign({}, this.defaultAnnouncement);
         this.editedIndex = -1;
     },
-
-
-    // saveAnnouncement() {
-    //     // Create FormData object for file uploads
-    //     const formData = new FormData();
-
-    //     // Add all announcement fields
-    //     for (const key in this.editedAnnouncement) {
-    //         if (this.editedAnnouncement[key] !== null && this.editedAnnouncement[key] !== undefined) {
-    //             formData.append(key, this.editedAnnouncement[key]);
-    //         }
-    //     }
-
-    //     // Add action
-    //     formData.append('action', 'save_draft');
-
-    //     // Add attachments
-    //     if (this.attachments && this.attachments.length) {
-    //         for (let i = 0; i < this.attachments.length; i++) {
-    //             formData.append('attachments', this.attachments[i]);
-    //         }
-    //     }
-
-    //     if (this.editedIndex > -1) {
-    //         axios.post(`/api/v1/announcements/${this.editedAnnouncement.id}?_method=PUT`, formData, {
-    //             headers: {
-    //                 'Content-Type': 'multipart/form-data'
-    //             }
-    //         })
-    //         .then(response => {
-    //             Object.assign(this.announcements[this.editedIndex], response.data);
-    //             this.closeDialog();
-    //         })
-    //         .catch(error => {
-    //             console.error('Error updating announcement:', error.response?.data || error.message);
-    //         });
-    //     } else {
-    //         axios.post('/api/v1/announcements', formData, {
-    //             headers: {
-    //                 'Content-Type': 'multipart/form-data'
-    //             }
-    //         })
-    //         .then(response => {
-    //             this.announcements.push(response.data);
-    //             this.fetchAnnouncements();
-    //             this.closeDialog();
-    //         })
-    //         .catch(error => {
-    //             console.error('Error creating announcement:', error.response?.data || error.message);
-    //         });
-    //     }
-    // },
-
-
 
     saveAnnouncement() {
         const formData = new FormData();
@@ -501,25 +357,6 @@ export default {
                 this.fetchAnnouncements();
                 this.closeDialog();
 
-                // axios.post(`/api/v1/announcements/${response.data.id}/notify`)
-                // .then(() => {
-                //     alert("Announcement published and emails sent!");
-                //     // or this.$notify if you're using notification lib
-                // })
-                // .catch(error => console.error('Error sending emails:', error));
-                
-
-                // Send emails after publishing
-                // axios.post(`/api/v1/announcements/${response.data.id}/send-emails`)
-                //    .then(() => {
-                //         // Show success notification
-                //         this.$notify({
-                //             type: 'success',
-                //             title: 'Success',
-                //             text: 'Announcement published and emails sent!'
-                //         });
-                //     })
-                //     .catch(error => console.error('Error sending emails:', error));
             })
             .catch(error => console.error('Error publishing announcement:', error));
         } else {
