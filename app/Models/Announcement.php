@@ -13,10 +13,29 @@ class Announcement extends Model
         'subject', 'description', 'author', 'publish_date', 'expiration_date',
         'is_active', 'attachment', 'priority', 'status',
     ];
+    protected $casts = [
+        'is_active' => 'boolean',
+        // 'publish_date' => 'datetime',
+        // 'expiration_date' => 'datetime',
+    ];
 
-    public function author()
+    // 
+    // The real relationship (renamed to avoid conflict)
+    // public function authorUser()
+    // {
+    //     return $this->belongsTo(User::class, 'author', 'id');
+    // }
+
+    // // Virtual attribute to keep using `$announcement->author`
+    // public function getAuthorAttribute()
+    // {
+    //     return $this->authorUser;
+    // }
+
+
+    public function attachments()
     {
-        return $this->belongsTo(User::class, 'author');
+        return $this->hasMany(AnnouncementAttachment::class);
     }
 
 }

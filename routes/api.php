@@ -98,6 +98,8 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
   Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
   Route::delete('v1/announcements/{announcement}', [AnnouncementApiController::class, 'destroy']);
+  Route::post('v1/announcements/{id}/notify', [AnnouncementApiController::class, 'sendNotifications']);
+  Route::get('/v1/attachments/{id}/download', [AnnouncementApiController::class, 'downloadAttachment']);
 
   //attendance
   Route::get('v1/attendances', [AttendanceApiController::class, 'index']);

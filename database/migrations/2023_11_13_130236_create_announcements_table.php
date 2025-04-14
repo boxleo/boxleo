@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->unsignedBigInteger('author');
 
-            $table->date('publish_date');
+            $table->date('publish_date')->nullable();
 
             $table->date('expiration_date')->nullable(); // Date when the announcement expires
 
