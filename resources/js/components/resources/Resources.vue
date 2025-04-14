@@ -37,13 +37,14 @@
                     </v-chip>
                     
                     <v-chip @click="filterSimcards" class="ma-2" color="lime darken-3" outlined elevation="4" prepend-icon="mdi-sim">
-                        <strong class="white--text">Sim_Cards:</strong> <span class="white--text">{{ assets.simcards }}</span>
+                        <strong class="white--text">Sim Cards:</strong> <span class="white--text">{{ assets.simcards }}</span>
                     </v-chip>
 
                     <v-chip @click="filterCamera" class="ma-2" color="indigo darken-3" outlined elevation="4" prepend-icon="mdi-camera">
                         <strong class="white--text">Cameras:</strong> <span class="white--text">{{ assets.camera }}</span>
                     </v-chip>
 
+<<<<<<< Updated upstream
                     <v-chip @click="filterOfficeChair" class="ma-2" color="grey darken-3" outlined elevation="4" prepend-icon="mdi-chair-office">
                         <strong class="white--text">Office Chairs:</strong> <span class="white--text">{{ assets.officechair }}</span>
                     </v-chip>
@@ -70,6 +71,34 @@
 
                     <v-chip @click="filterSideTable" class="ma-2" color="grey darken-3" outlined elevation="4" prepend-icon="mdi-table-chair">
                         <strong class="white--text">Side Tables:</strong> <span class="white--text">{{ assets.sidetable }}</span>
+=======
+                    <v-chip @click="filterOfficechair" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">Office chair:</strong> <span class="white--text">{{ assets.officechair }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterOfficedesk" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">Office desk:</strong> <span class="white--text">{{ assets.officedesk }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterTable" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">Table:</strong> <span class="white--text">{{ assets.table }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterfilecabinet" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">File cabinate:</strong> <span class="white--text">{{ assets.filecabinet }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterdocumentholder" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">Document holder:</strong> <span class="white--text">{{ assets.documentholder }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filterguestseat" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">Guest seat:</strong> <span class="white--text">{{ assets.guestseat }}</span>
+                    </v-chip>
+
+                    <v-chip @click="filtersidetable" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
+                        <strong class="white--text">Side table:</strong> <span class="white--text">{{ assets.sidetable }}</span>
+>>>>>>> Stashed changes
                     </v-chip>
 
                     <v-chip @click="filterOther" class="ma-2" color="grey darken-1" outlined elevation="4" prepend-icon="mdi-help-circle">
@@ -232,7 +261,11 @@
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-select v-model="formData.name"
+<<<<<<< Updated upstream
                                         :items="['Laptop', 'Headset', 'Desktop', 'Phone', 'Charger', 'Mouse','Sim Card','Printer','Camera','Office chair','Office desk','Tables','File cabinet','Document holder','Guest seat','Side table','Other']"
+=======
+                                        :items="['Laptop', 'Headset', 'Desktop', 'Phone', 'Charger', 'Mouse','Scanner','Sim Card','Printer','Camera','Office chair','Office desk','Table','File cabinet','Document holder','Guest seat','Side table','Other']"
+>>>>>>> Stashed changes
                                         label="Name" variant="outlined">
                                     </v-select>
                                 </v-col>
@@ -246,7 +279,11 @@
                                         variant="outlined">
                                     </v-text-field>
                                 </v-col>
+<<<<<<< Updated upstream
                                
+=======
+                              
+>>>>>>> Stashed changes
                                 <v-col cols="12">
                                     <v-textarea v-model="formData.description" label="Description/Specification"
                                         placeholder="HP HP Pavilion Laptop 15-eg1xxx" variant="outlined">
@@ -259,8 +296,7 @@
                                         placeholder="Ksh 100,000" variant="outlined">
                                     </v-text-field>
                                 </v-col>
-
-
+                            
                                 <v-col cols="12" sm="6">
                                     <v-text-field v-model="formData.purchase_date" label="Purchase Date" type="date"
                                         variant="outlined">
@@ -285,6 +321,12 @@
                                         placeholder="8GB RAM,11th Gen Intel® Core™ i7-1195G7 @ 2.90GHz × 8"
                                         label="Comment (Optional)" variant="outlined">
                                     </v-textarea>
+                                </v-col>
+
+
+                                <v-col cols="12">
+                                <v-file-input v-model="formData.attachments" label="Attach Image in pdf (Optional)"
+                                    accept=".pdf, .doc, .docx, .png" outlined clearable></v-file-input>
                                 </v-col>
                             </v-row>
                         </v-container>
@@ -449,7 +491,10 @@ export default {
                 guestseat: 0,
                 sidetable: 0,
                 other: 0,
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
             },
 
             formData: {
@@ -464,6 +509,7 @@ export default {
                 issued_by: null,
                 purchase_cost: null,
                 purchase_date: null,
+                attachments: null,
             },
             editMode: false,
             editedResourceId: null,
@@ -681,6 +727,7 @@ this.search = '';
                 scanners: this.resources.filter(resource => resource.name === 'Scanner').length,
                 simcards: this.resources.filter(resource => resource.name === 'Sim_Card').length,
                 camera: this.resources.filter(resource => resource.name === 'Camera').length,
+<<<<<<< Updated upstream
                 officechair: this.resources.filter(resource => resource.name === 'Office_Chair').length,
                 officedesk: this.resources.filter(resource => resource.name === 'Office_Desk').length,
                 table: this.resources.filter(resource => resource.name === 'Table').length,
@@ -688,6 +735,15 @@ this.search = '';
                 documentholder: this.resources.filter(resource => resource.name === 'Document_Holder').length,
                 guestseat: this.resources.filter(resource => resource.name === 'Guest_Seat').length,
                 sidetable: this.resources.filter(resource => resource.name === 'Side_Table').length,
+=======
+                officechair: this.resources.filter(resource => resource.name === 'Office chair').length,
+                officedesk: this.resources.filter(resource => resource.name === 'Office desk').length,
+                table: this.resources.filter(resource => resource.name === 'Table').length,
+                filecabinet: this.resources.filter(resource => resource.name === 'File cabinet').length,
+                documentholder: this.resources.filter(resource => resource.name === 'Document holder').length,
+                guestseat: this.resources.filter(resource => resource.name === 'Guest seat').length,
+                sidetable: this.resources.filter(resource => resource.name === 'Side table').length,
+>>>>>>> Stashed changes
                 other: this.resources.filter(resource => resource.name === 'Other').length,
             };
         },
@@ -728,15 +784,24 @@ this.search = '';
         filterCamera() {
             this.filterResources('Camera');
         },
+<<<<<<< Updated upstream
         filterOfficeChair() {
             this.filterResources('Office Chair');
         },
         filterOfficeDesk() {
             this.filterResources('Office Desk');
+=======
+        filterOfficechair() {
+            this.filterResources('Office chair');
+        },
+        filterOfficedesk() {
+            this.filterResources('Office desk');
+>>>>>>> Stashed changes
         },
         filterTable() {
             this.filterResources('Table');
         },
+<<<<<<< Updated upstream
         filterFileCabinet() {
             this.filterResources('File Cabinet');
         },
@@ -748,6 +813,19 @@ this.search = '';
         },
         filterSideTable() {
             this.filterResources('Side Table');
+=======
+        filterfilecabinet() {
+            this.filterResources('File cabinet');
+        },
+        filterdocumentholder() {
+            this.filterResources('Document holder');
+        },
+        filterguestseat() {
+            this.filterResources('Guest seat');
+        },
+        filtersidetable() {
+            this.filterResources('Side table');
+>>>>>>> Stashed changes
         },
         filterOther() {
             this.filterResources('Other');
