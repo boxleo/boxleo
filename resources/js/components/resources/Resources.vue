@@ -686,7 +686,6 @@ this.search = '';
                 scanners: this.resources.filter(resource => resource.name === 'Scanner').length,
                 simcards: this.resources.filter(resource => resource.name === 'Sim_Card').length,
                 camera: this.resources.filter(resource => resource.name === 'Camera').length,
-<<<<<<< Updated upstream
                 officechair: this.resources.filter(resource => resource.name === 'Office_Chair').length,
                 officedesk: this.resources.filter(resource => resource.name === 'Office_Desk').length,
                 table: this.resources.filter(resource => resource.name === 'Table').length,
@@ -694,15 +693,6 @@ this.search = '';
                 documentholder: this.resources.filter(resource => resource.name === 'Document_Holder').length,
                 guestseat: this.resources.filter(resource => resource.name === 'Guest_Seat').length,
                 sidetable: this.resources.filter(resource => resource.name === 'Side_Table').length,
-=======
-                officechair: this.resources.filter(resource => resource.name === 'Office chair').length,
-                officedesk: this.resources.filter(resource => resource.name === 'Office desk').length,
-                table: this.resources.filter(resource => resource.name === 'Table').length,
-                filecabinet: this.resources.filter(resource => resource.name === 'File cabinet').length,
-                documentholder: this.resources.filter(resource => resource.name === 'Document holder').length,
-                guestseat: this.resources.filter(resource => resource.name === 'Guest seat').length,
-                sidetable: this.resources.filter(resource => resource.name === 'Side table').length,
->>>>>>> Stashed changes
                 other: this.resources.filter(resource => resource.name === 'Other').length,
             };
         },
