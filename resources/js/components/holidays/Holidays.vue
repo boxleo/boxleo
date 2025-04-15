@@ -130,12 +130,13 @@ export default {
                     prepend-inner-icon="mdi-magnify">
                 </v-text-field>
                 <v-card class="mt-4 elevation-12">
+                    <v-btn color="white" @click="addHolidayDialog = true" outlined>
+                            <v-icon size="22" left>mdi-plus</v-icon>Add Holiday
+                        </v-btn>
                     <v-toolbar flat color="primary" dark>
                         <v-toolbar-title>Holidays</v-toolbar-title>
                         <v-spacer></v-spacer>
-                        <v-btn color="white" @click="addHolidayDialog = true" outlined>
-                            <v-icon size="22" left>mdi-plus</v-icon>Add Holiday
-                        </v-btn>
+                       
                     </v-toolbar>
                     <v-data-table 
                         :headers="headers" 
