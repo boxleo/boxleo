@@ -387,7 +387,11 @@ class AttendanceApiController extends Controller
 
     // Determine day of week (0 = Sunday, 6 = Saturday)
     $userDayOfWeek = $userTime->dayOfWeek;
-    $parsedWeekendDay = Carbon::parse($weekendDay)->dayOfWeek;
+    
+    // $parsedWeekendDay = Carbon::parse($weekendDay)->dayOfWeek;
+
+        $parsedWeekendDay = $weekendDay;
+
 
     // Logging weekend vs clock-in day
     Log::info('Weekend check debug', [
