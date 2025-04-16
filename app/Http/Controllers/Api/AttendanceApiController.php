@@ -379,63 +379,64 @@ class AttendanceApiController extends Controller
 
 
 
-private function isLate($clockInTime, $unit) {
-    // Validate input
-    if (!$unit) {
-        Log::error('Invalid unit provided to isLate function');
-        return false;
-    }
-    
-    // Convert clock-in time to unit's timezone
-    $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
-    
-    // Set default thresholds
-    $defaultLateThreshold = $unit->late_threshold ?? '08:00';
-    $weekendThreshold = $unit->weekend_threshold ?? '08:30';
-    
-    // Get day of week (0 = Sunday, 6 = Saturday)
-    $userDayOfWeek = $userTime->dayOfWeek;
-    
-    // Parse weekend day configuration - handle both integer and string inputs
-    $weekendDays = [];
-    if (isset($unit->weekend_day)) {
-        if (is_array($unit->weekend_day)) {
-            $weekendDays = $unit->weekend_day;
-        } else {
-            $weekendDays = [$unit->weekend_day];
+    private function isLate($clockInTime, $unit)
+    {
+        // Validate input
+        if (!$unit) {
+            Log::error('Invalid unit provided to isLate function');
+            return false;
         }
-    } else {
-        // Default to Saturday only
-        $weekendDays = [Carbon::SATURDAY];
+
+        // Convert clock-in time to unit's timezone
+        $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+
+        // Set default thresholds
+        $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+        $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+
+        // Get day of week (0 = Sunday, 6 = Saturday)
+        $userDayOfWeek = $userTime->dayOfWeek;
+
+        // Parse weekend day configuration - handle both integer and string inputs
+        $weekendDays = [];
+        if (isset($unit->weekend_day)) {
+            if (is_array($unit->weekend_day)) {
+                $weekendDays = $unit->weekend_day;
+            } else {
+                $weekendDays = [$unit->weekend_day];
+            }
+        } else {
+            // Default to Saturday only
+            $weekendDays = [Carbon::SATURDAY];
+        }
+
+        // Check if it's a weekend
+        $isWeekend = in_array($userDayOfWeek, $weekendDays);
+
+        // Check if it's a holiday
+        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+        // Decide which threshold to use
+        $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
+
+        // Create a Carbon instance for the threshold time on the same day
+        $thresholdTime = Carbon::parse(
+            $userTime->toDateString() . ' ' . $lateThreshold,
+            $unit->timezone
+        )->setTimezone('UTC');
+
+        Log::info('Evaluating lateness', [
+            'clock_in_time_utc' => $clockInTime,
+            'user_time' => $userTime->toDateTimeString(),
+            'is_weekend' => $isWeekend,
+            'is_holiday' => $isHoliday,
+            'threshold_local' => $lateThreshold,
+            'threshold_utc' => $thresholdTime->toDateTimeString(),
+        ]);
+
+        // Determine if the user is late
+        return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
     }
-    
-    // Check if it's a weekend
-    $isWeekend = in_array($userDayOfWeek, $weekendDays);
-    
-    // Check if it's a holiday
-    $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
-    
-    // Decide which threshold to use
-    $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
-    
-    // Create a Carbon instance for the threshold time on the same day
-    $thresholdTime = Carbon::parse(
-        $userTime->toDateString() . ' ' . $lateThreshold, 
-        $unit->timezone
-    )->setTimezone('UTC');
-    
-    Log::info('Evaluating lateness', [
-        'clock_in_time_utc' => $clockInTime,
-        'user_time' => $userTime->toDateTimeString(),
-        'is_weekend' => $isWeekend,
-        'is_holiday' => $isHoliday,
-        'threshold_local' => $lateThreshold,
-        'threshold_utc' => $thresholdTime->toDateTimeString(),
-    ]);
-    
-    // Determine if the user is late
-    return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
-}
 
 
 

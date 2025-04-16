@@ -26,6 +26,7 @@ use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PolicyController;
+use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequisitionController;
 use App\Http\Controllers\ResourceController;
@@ -120,7 +121,23 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/permissions', [PermissionController::class, 'index']);
 
- 
+
+    // recruitment 
+
+    // complete RecruitmentController 
+
+    Route::get('/recruitment/dashboard', [RecruitmentController::class, 'dashboard']);
+    Route::get('/recruitment/jobs', [RecruitmentController::class, 'jobs']);
+    Route::get('/recruitment/jobs/create', [RecruitmentController::class, 'createJob']);
+    Route::get('/recruitment/applications', [RecruitmentController::class, 'applications']);
+    // /recruitment/candidates
+    Route::get('/recruitment/applicants', [RecruitmentController::class, 'applicants']);
+
+    // Optional: Applicant actions
+    // Route::post('/applicant/{id}/move', [RecruitmentController::class, 'moveToEmployee'])->name('applicant.move');
+    // Route::post('/applicant/{id}/reject', [RecruitmentController::class, 'reject'])->name('applicant.reject');
+
+
 });
 
 // Employee routes
@@ -138,7 +155,6 @@ Route::middleware(['role:employee'])->group(function () {
     Route::get('/employee-notifications', [NotificationController::class, 'employeeNofications']);
     Route::get('/employee-settings', [SettingsController::class, 'employeeSettings']);
     Route::get('/employee-timeline', [TimelineController::class, 'employeeTimeline']);
-
 });
 
 // shared auth routes
@@ -164,10 +180,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/impersonate/{id}', function ($id) {
         $user = auth()->user();
         $target = User::findOrFail($id);
-        
+
         if ($user->canImpersonate($target)) {
             $user->impersonate($target);
-            return redirect('/dashboard'); 
+            return redirect('/dashboard');
         }
 
         return abort(403);
@@ -175,10 +191,8 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('/impersonate/leave', function () {
         auth()->user()->leaveImpersonation();
-        return redirect('/dashboard'); 
+        return redirect('/dashboard');
     })->name('impersonate.leave');
-
-
 });
 
 // block register route

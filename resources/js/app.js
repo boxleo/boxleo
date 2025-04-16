@@ -127,4 +127,34 @@ app.component('roles',Roles)
 app.component('performance-evaluation',PerformanceEvaluation)
 
 
+// Recruitment Dashboard
+import RecruitmentDashboard from './components/recruitment/Dashboard.vue';
+app.component('dashboard', RecruitmentDashboard);
+
+// Jobs
+import JobList from './components/recruitment/Jobs/JobList.vue';
+// import CreateJob from './components/recruitment/Jobs/CreateJob.vue';
+app.component('job-list', JobList);
+// app.component('create-job', CreateJob);
+
+// Applications
+import ApplicationList from './components/recruitment/Applications/ApplicationList.vue';
+app.component('application-list', ApplicationList);
+
+// Applicants
+import ApplicantList from './components/recruitment/Applicants/ApplicantList.vue';
+// import Shortlist from './components/recruitment/Applicants/Shortlist.vue';
+app.component('applicant-list', ApplicantList);
+// app.component('shortlist', Shortlist);
+
+// Onboarding
+// import OnboardingList from './components/recruitment/Onboarding/OnboardingList.vue';
+// app.component('onboarding-list', OnboardingList);
+
+// Dashboard Card Partial (optional if you register locally instead)
+// import DashboardCard from './components/recruitment/partials/DashboardCard.vue';
+// This is usually registered locally inside Dashboard.vue
+
+
+
 app.mount('#app')
