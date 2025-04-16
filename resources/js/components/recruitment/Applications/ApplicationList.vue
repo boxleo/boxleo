@@ -1,5 +1,7 @@
 <template>
-  <v-card class="mx-auto my-4" elevation="3" max-width="1200">
+    <v-container fluid>
+
+  <!-- <v-card class="mx-auto my-4" elevation="3" max-width="1200"> -->
     <v-card-title class="text-h5 bg-primary text-white d-flex align-center">
       <v-icon icon="mdi-briefcase-account" class="mr-2" size="large"></v-icon>
       Job Applications Dashboard
@@ -348,7 +350,9 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-card>
+  <!-- </v-card> -->
+   </v-container>
+   
 </template>
 
 <script setup>
