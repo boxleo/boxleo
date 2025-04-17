@@ -139,11 +139,11 @@ class User extends Authenticatable
   }
   // a user can  belong to many departements
 
-  public function userDepartments()
-  {
-      return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id')
-                  ->withTimestamps();
-  }
+  // public function userDepartments()
+  // {
+  //     return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id')
+  //                 ->withTimestamps();
+  // }
   public function getFullNameAttribute()
   {
     return "{$this->firstname} {$this->lastname}";

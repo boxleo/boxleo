@@ -508,6 +508,7 @@ export default {
         communication: 0,
         total_score: 0,
         percentage: 0,
+        leadership: 0
       },
       addEvaluationDialog: false,
       deleteDialog: false,
@@ -528,6 +529,7 @@ export default {
         communication: 0,
         total_score: 0,
         percentage: 0,
+        leadership: 0
       },
       selectedEvaluationId: null,
     };
@@ -553,7 +555,8 @@ export default {
         'productivity',
         'discipline',
         'quality_of_work',
-        'communication'
+        'communication',
+        'leadership'
       ];
 
       let total = 0;
@@ -588,6 +591,7 @@ export default {
         discipline: 0,
         quality_of_work: 0,
         communication: 0,
+        leadership: 0,
         total_score: 0,
         percentage: 0,
         };
@@ -712,6 +716,7 @@ fetchTeam() {
         discipline: evaluation.discipline,
         quality_of_work: evaluation.quality_of_work,
         communication: evaluation.communication,
+        leadership: evaluation.leadership,
         total_score: evaluation.total_score,
         percentage: evaluation.percentage,
       };

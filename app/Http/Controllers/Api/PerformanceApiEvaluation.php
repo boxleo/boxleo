@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\PerformanceEvaluation;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -155,4 +157,70 @@ class PerformanceApiEvaluation extends Controller
         Log::info('Performance evaluations fetched successfully', ['count' => $evaluations->count()]);
         return response()->json(['evaluations' => $evaluations]);
     }
+
+
+
+public function attendance($userId, $year, $month)
+{
+    // 1. Get first and last day of the month
+    $startOfMonth = Carbon::createFromDate($year, $month)->startOfMonth();
+    $endOfMonth = Carbon::createFromDate($year, $month)->endOfMonth();
+
+    // 2. Count total weekdays (Mon-Fri) in the month (working days) please note we work on Saturday too.
+    $workingDays = CarbonPeriod::create($startOfMonth, $endOfMonth)
+        ->filter(function (Carbon $date) {
+            return $date->isWeekday();
+        })
+        ->count();
+
+    // 3. Count days the user was present in that period
+    $presentDays =  Attendance::where('user_id', $userId)
+        ->whereBetween('attendance_date', [$startOfMonth, $endOfMonth])
+        ->where('is_present', 1)
+        ->count();
+
+    // 4. Calculate attendance percentage
+    $attendancePercentage = $workingDays > 0
+        ? round(($presentDays / $workingDays) * 100, 2)
+        : 0;
+
+    return [
+        'user_id' => $userId,
+        'month' => $month,
+        'year' => $year,
+        'working_days' => $workingDays,
+        'present_days' => $presentDays,
+        'attendance_percentage' => $attendancePercentage,
+    ];
+}
+
+
+
+//     public function attendance(){
+
+//         // this function 
+
+//         //  this function calulates average percentage of attendance in a month of user 
+
+
+
+
+// // id	bigint(20) unsigned	NO	PRI	NULL	auto_increment	
+// // attendance_date	date	NO		NULL		
+// // user_id	bigint(20) unsigned	NO	MUL	NULL		
+// // clock_in_time	varchar(255)	NO		NULL		
+// // clock_out_time	varchar(255)	YES		NULL		
+// // hours_worked	int(11)	NO		9		
+// // status	varchar(255)	NO		NULL		
+// // is_present	tinyint(1)	NO		0		
+// // notes	text	YES		NULL		
+// // overtime_hours	decimal(8,2)	YES		NULL		
+// // created_at	timestamp	YES		NULL		
+// // updated_at	timestamp	YES		NULL		
+// // deleted_at	timestamp	YES		NULL		
+// // ip_address	varchar(255)	YES		NULL		
+
+
+
+//     }
 }

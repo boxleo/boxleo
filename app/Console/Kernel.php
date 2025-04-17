@@ -31,14 +31,25 @@ class Kernel extends ConsoleKernel
                 Log::info("leave:reminder command has executed.");
             });
 
-        // $schedule->job(new \App\Jobs\AddMonthlyLeaveBalance)->monthlyOn(1, '00:00') // Runs on the 1st day of each month at midnight
+            $schedule->job(new AddMonthlyLeaveBalance)
+            ->dailyAt('00:00')
+            ->when(function () {
+                return now()->endOfMonth()->isToday();
+            })
+            ->onSuccess(function () {
+                Log::info("✅ AddMonthlyLeaveBalance job dispatched successfully on " . now()->toDateTimeString());
+            })
+            ->onFailure(function (\Throwable $exception) {
+                Log::error("❌ Failed to dispatch AddMonthlyLeaveBalance job on " . now()->toDateTimeString() . ": " . $exception->getMessage());
+            });
 
-        //     ->onSuccess(function () {
-        //         Log::info("AddMonthlyLeaveBalance job dispatched successfully.");
-        //     })
-        //     ->onFailure(function (\Throwable $exception) { // Explicitly define \Throwable
-        //         Log::error("Failed to dispatch job: " . $exception->getMessage());
-        //     });
+
+            // $schedule->job(new \App\Jobs\DailyAttendanceJob)->everyTwoMinutes();
+
+            $schedule->job(new \App\Jobs\DailyAttendanceJob)->dailyAt('23:59');
+
+
+
     }
 
 
