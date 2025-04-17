@@ -268,17 +268,18 @@
 
 
                                 <v-col cols="12" sm="6">
-                                    <v-select :items="users" item-title="fullName" item-value="id" search-input
-                                        v-model="formData.issued_to" label="Assign to Employee">
-                                    </v-select>
-
+                                    <v-combobox :items="users" item-title="fullName" item-value="id" search-input
+                                        v-model="formData.issued_to" label="Assign to Employee" variant="outlined">
+                                    </v-combobox>
                                 </v-col>
+
                                 <v-col cols="12" sm="6">
                                     <v-select v-model="formData.condition"
                                         :items="['New', 'In Use', 'Under Repair', 'Disposed', 'Fault']"
                                         label="Condition" variant="outlined">
                                     </v-select>
                                 </v-col>
+                                
                                 <v-col cols="12">
                                     <v-textarea v-model="formData.comment"
                                         placeholder="8GB RAM,11th Gen Intel® Core™ i7-1195G7 @ 2.90GHz × 8"
