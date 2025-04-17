@@ -20,6 +20,7 @@
                 <v-col cols="12">
                   <v-label>Department:</v-label>
                   <v-select v-model="filters.department_id" item-value="id" item-title="name" :items="departments"
+                  multiple
                     clearable dense>
                   </v-select>
                 </v-col>
@@ -311,26 +312,21 @@
               <v-row>
 
 
-                  <v-col cols="12" >
-                  <v-select v-model="newEvaluation.department_id" :items="departments" item-title="name" item-value="id"
-                    label="Department" clearable dense>
-                  </v-select>
-                </v-col>
-                <v-col cols="12">
-                  <v-autocomplete v-model="newEvaluation.user_id" :items="employees" item-title="fullName"
-                    item-value="id" label="Employee" clearable dense>
-                  </v-autocomplete>
-                </v-col>
-                <!-- <v-col cols="12" sm="6">
-                  <v-autocomplete v-model="newEvaluation.evaluator_id" :items="evaluators" item-title="fullName"
-                    item-value="id" label="Evaluator" clearable dense>
-                  </v-autocomplete>
-                </v-col> -->
-              
-                <!-- <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.evaluation_date" label="Evaluation Date" type="date" dense>
-                  </v-text-field>
-                </v-col> -->
+
+
+                <v-col cols="12" sm="6">
+  <v-autocomplete
+    v-model="newEvaluation.user_id"
+    :items="team"
+    item-title="fullname"
+    item-value="id"
+    label="Employee"
+    clearable
+    dense
+  />
+</v-col>
+
+             
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="newEvaluation.attendance" label="Attendance" dense></v-text-field>
                 </v-col>
@@ -364,12 +360,18 @@
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="newEvaluation.communication" label="Communication" dense></v-text-field>
                 </v-col>
+
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" dense></v-text-field>
+                </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="newEvaluation.total_score" label="Total Score" dense disabled></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="newEvaluation.percentage" label="Percentage" dense disabled></v-text-field>
                 </v-col>
+
+              
               </v-row>
             </v-form>
           </v-card-text>
@@ -427,7 +429,6 @@
                 </div>
               </v-timeline-item>
             </v-timeline>
-            <!-- Additional evaluation details can be added here -->
           </v-card-text>
         </v-card>
       </v-dialog>
@@ -461,8 +462,10 @@ export default {
         { title: 'Discipline', value: 'discipline' },
         { title: 'Quality of Work', value: 'quality_of_work' },
         { title: 'Communication', value: 'communication' },
+        { title: 'Leadership', value: 'leadership' },
         { title: 'Total Score', value: 'total_score' },
         { title: 'Percentage', value: 'percentage' },
+        // leadership
         { title: 'Evaluation Date', value: 'created_at' },
 
         { title: 'Actions', value: 'actions', sortable: false },
@@ -476,6 +479,8 @@ export default {
       employees: [],
       evaluators: [],
       departments: [],
+      team: [],
+      user:'',
       averageTotalScore: 0,
       averagePercentage: 0,
       averageAttendance: 0,
@@ -529,11 +534,8 @@ export default {
   },
   created() {
     this.fetchEvaluations();
-    this.fetchEmployees();
-    this.fetchEvaluators();
     this.fetchDepartments();
-    // this.filters.user_id = this.user.id;
-    // this.  .user_id = this.user.id;
+    this.fetchTeam();
     console.log("User:", this.user);
     console.log("Roles:", this.roles);
     console.log("Permissions:", this.permissions);
@@ -629,29 +631,34 @@ export default {
     this.loading = false;
   }
 },
-    async fetchEmployees() {
-      try {
-        const response = await axios.get('/api/v1/users');
-        this.employees = response.data.users.filter(user => !user.super_admin)
-          .map(user => ({
-            id: user.id,
-            fullName: `${user.firstname} ${user.lastname}`,
-          }));
-      } catch (error) {
-        console.error('Error fetching employees:', error);
-      }
-    },
-    async fetchEvaluators() {
-      try {
-        const response = await axios.get('/api/v1/users');
-        this.evaluators = response.data.evaluators.map(evaluator => ({
-          id: evaluator.id,
-          fullName: `${evaluator.firstname} ${evaluator.lastname}`,
-        }));
-      } catch (error) {
-        console.error('Error fetching evaluators:', error);
-      }
-    },
+
+
+
+fetchTeam() {
+  const apiUrl = `api/v1/team`;
+
+  axios.get(apiUrl)
+    .then(response => {
+      this.user = response.data.user;
+
+      this.users = response.data.users.map(user => ({
+        ...user,
+        fullname: `${user.firstname} ${user.lastname}`,
+      }));
+
+      this.team = response.data.team.map(user => ({
+        ...user,
+        fullname: `${user.firstname} ${user.lastname}`,
+      }));
+
+      console.log("Team members based on role:", this.team);
+    })
+    .catch(error => {
+      console.error('Error fetching team:', error);
+    });
+}
+,
+
     async fetchDepartments() {
       try {
         const response = await axios.get('/api/v1/departments');
@@ -666,7 +673,7 @@ export default {
         department_id: this.filters.department_id,
         evaluation_date: this.filters.evaluation_date,
         user_id: this.filters.user_id,
-        evaluator_id: this.filters.evaluator_id,
+        // evaluator_id: this.filters.evaluator_id,
       };
       axios.get('/api/v1/users', { params })
         .then(response => {

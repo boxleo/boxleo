@@ -15,6 +15,54 @@ use Illuminate\Support\Str;
 class UserApiController extends Controller
 {
 
+
+
+
+  public function getTeam()
+{
+    // Log::info('Fetching team information for the authenticated user');
+    $authUser = auth()->user();
+    // Log::info('Authenticated user retrieved', ['user_id' => $authUser->id]);
+
+    $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
+    // Log::info('All users with related departments retrieved', ['total_users' => $allUsers->count()]);
+
+    $response = [
+        'user' => $authUser,
+        'users' => $allUsers,
+        'team' => [],
+    ];
+
+    if ($authUser->is_hod ) {
+        // Log::info('User is a Head of Department', ['user_id' => $authUser->id]);
+        $hodDeptIds = $authUser->hodDepartments->pluck('id');
+        // Log::info('User HOD department IDs', ['hod_dept_ids' => $hodDeptIds]);
+
+        $team = User::whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+            $q->whereIn('department_id', $hodDeptIds);
+        })->get();
+
+        $response['team'] = $team;
+        Log::info('Team members under HOD retrieved', ['team_count' => $team->count()]);
+    } elseif ($authUser->designation_id === 1) {
+        // Log::info('User is a Manager', ['user_id' => $authUser->id]);
+        $managerDeptIds = $authUser->managerDepartments->pluck('id');
+        // Log::info('User manager department IDs', ['manager_dept_ids' => $managerDeptIds]);
+
+        $team = User::whereIn('department_id', $managerDeptIds)
+                    ->where('unit_id', $authUser->unit_id)
+                    ->where('designation_id', '!=', 1)
+                    ->get();
+
+        $response['team'] = $team;
+        // Log::info('Team members under Manager retrieved', ['team_count' => $team->count()]);
+    }
+
+    // Log::info('Team information response prepared for the user', ['user_id' => $authUser->id]);
+
+    return response()->json($response);
+}
+
   // public function index(Request $request)
   // {
   //   $departmentId = $request->query('department_id');

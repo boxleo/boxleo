@@ -39,6 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::put('v1/users/{userId}/switch-role', [UserApiController::class, 'switchRole']);
   Route::put('v1/users/update/{user}', [UserApiController::class, 'update']);
   Route::get('v1/telesale-agents', [UserApiController::class, 'telesaleAgents']);
+  Route::get('v1/team', [UserApiController::class, 'getTeam']);
+
+
 
   //dashboard
   Route::get('v1/dashboard', [DashboardApiController::class, 'index']);
