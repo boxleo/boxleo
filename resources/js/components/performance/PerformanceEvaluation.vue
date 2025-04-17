@@ -328,47 +328,47 @@
 
              
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.attendance" label="Attendance" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.attendance" label="Attendance" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted"
+                  <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted" type="number"
                     dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.knowledge_of_work" label="Knowledge of Work"
+                  <v-text-field v-model="newEvaluation.knowledge_of_work" label="Knowledge of Work" type="number"
                     dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.team_work" label="Team Work" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.team_work" label="Team Work" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility"
+                  <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility" type="number"
                     dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.productivity" label="Productivity" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.productivity" label="Productivity" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.discipline" label="Discipline" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.discipline" label="Discipline" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.communication" label="Communication" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.communication" label="Communication" type="number" dense></v-text-field>
                 </v-col>
 
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.total_score" label="Total Score" dense disabled></v-text-field>
+                  <v-text-field v-model="newEvaluation.total_score" label="Total Score" type="number" dense disabled></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.percentage" label="Percentage" dense disabled></v-text-field>
+                  <v-text-field v-model="newEvaluation.percentage" label="Percentage" type="number" dense disabled></v-text-field>
                 </v-col>
 
               
@@ -496,19 +496,19 @@ export default {
         evaluator_id: null,
         department_id: null,
         evaluation_date: null,
-        attendance: 0,
-        problems_solved: 0,
-        reports_submitted: 0,
-        knowledge_of_work: 0,
-        team_work: 0,
-        reliability_visibility: 0,
-        productivity: 0,
-        discipline: 0,
-        quality_of_work: 0,
-        communication: 0,
-        total_score: 0,
-        percentage: 0,
-        leadership: 0
+        attendance: "",
+        problems_solved: "",
+        reports_submitted: "",
+        knowledge_of_work: "",
+        team_work: "",
+        reliability_visibility: "",
+        productivity: "",
+        discipline: "",
+        quality_of_work: "",
+        communication: "",
+        total_score: "",
+        percentage: "",
+        leadership: ""
       },
       addEvaluationDialog: false,
       deleteDialog: false,
@@ -517,19 +517,19 @@ export default {
         evaluation_date: '',
         employeeName: '',
         evaluatorName: '',
-        attendance: 0,
-        problems_solved: 0,
-        reports_submitted: 0,
-        knowledge_of_work: 0,
-        team_work: 0,
-        reliability_visibility: 0,
-        productivity: 0,
-        discipline: 0,
-        quality_of_work: 0,
-        communication: 0,
-        total_score: 0,
-        percentage: 0,
-        leadership: 0
+        attendance: "",
+        problems_solved: "",
+        reports_submitted: "",
+        knowledge_of_work: "",
+        team_work: "",
+        reliability_visibility: "",
+        productivity: "",
+        discipline: "",
+        quality_of_work: "",
+        communication: "",
+        total_score: "",
+        percentage: "",
+        leadership: ""
       },
       selectedEvaluationId: null,
     };
@@ -581,19 +581,19 @@ export default {
         evaluator_id: null,
         department_id: null,
         evaluation_date: null,
-        attendance: 0,
-        problems_solved: 0,
-        reports_submitted: 0,
-        knowledge_of_work: 0,
-        team_work: 0,
-        reliability_visibility: 0,
-        productivity: 0,
-        discipline: 0,
-        quality_of_work: 0,
-        communication: 0,
-        leadership: 0,
-        total_score: 0,
-        percentage: 0,
+        attendance: "",
+        problems_solved: "",
+        reports_submitted: "",
+        knowledge_of_work: "",
+        team_work: "",
+        reliability_visibility: "",
+        productivity: "",
+        discipline: "",
+        quality_of_work: "",
+        communication: "",
+        leadership: "",
+        total_score: "",
+        percentage: "",
         };
         this.$refs.evaluationForm.reset();
       })
