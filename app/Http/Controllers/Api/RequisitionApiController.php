@@ -793,6 +793,7 @@ class RequisitionApiController extends Controller
         if ($requisition->approver_type === "HR") {
             $nextRole = [
                 'Manager Approved' => 'is_finance_manager',
+                'Finance Manager Approved'=>'is_hr',
                 'HR Approved' => 'is_coo',
                 'COO Approved' => 'is_cfo',
                 'Approved' => 'is_cfo',
