@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TicketApiController;
 use App\Http\Controllers\Api\RoleApiController;
@@ -64,7 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('v1/roles', [RoleApiController::class, 'index']);
   // Route::post('v1/roles', [RoleApiController::class, 'store']);
   // storePermission
-  Route::post('/v1/permissions' ,[PermissionApiController::class, 'storePermission']);
+  Route::post('/v1/permissions', [PermissionApiController::class, 'storePermission']);
   Route::delete('v1/permissions/{permissionId}', [PermissionApiController::class, 'destroyPermission']);
 
   //tasks
@@ -96,7 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::delete('v1/disciplinaries/{disciplinary}', [DisciplinaryApiController::class, 'destroy']);
 
   //announcements
-//   AnnouncementApiController
+  //   AnnouncementApiController
   Route::get('v1/announcements', [AnnouncementApiController::class, 'index']);
   Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
   Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
@@ -134,6 +135,12 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('v1/team-leaves', [LeaveApiController::class, 'teamLeaves']);
   Route::put('v1/leaves/{leave}', [LeaveApiController::class, 'update']);
   Route::delete('v1/leaves/{leave}', [LeaveApiController::class, 'destroy']);
+  //  /api/v1/leaves/bulk-approve and /api/v1/leaves/bulk-cancel
+  // Route::put('v1/leaves/bulk-approve', [LeaveApiController::class, 'bulkApprove']);
+  // Route::put('v1/leaves/bulk-cancel', [LeaveApiController::class, 'bulkCancel']);
+
+  Route::put('v1/leaves-bulk-approve', [LeaveApiController::class, 'bulkApprove'])->name('leaves.bulk.approve');
+  Route::put('v1/leaves-bulk-cancel', [LeaveApiController::class, 'bulkCancel'])->name('leaves.bulk.cancel');
 
   Route::get('v1/holidays', [HolidayApiController::class, 'index']);
   Route::post('v1/holidays', [HolidayApiController::class, 'store']);
@@ -207,7 +214,6 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('v1/award-types', [AwardTypeApiController::class, 'store']);
   Route::put('v1/award-types/{awardType}', [AwardTypeApiController::class, 'update']);
   Route::delete('v1/award-types/{awardType}', [AwardTypeApiController::class, 'destroy']);
-
 });
 
 Route::post('/v1/test-sms', [LeaveApiController::class, 'testSms']);
@@ -251,10 +257,3 @@ Route::get('v1/performance-evaluations', [PerformanceApiEvaluation::class, 'inde
 Route::post('v1/performance-evaluations', [PerformanceApiEvaluation::class, 'store']);
 Route::put('v1/performance-evaluations/{id}', [PerformanceApiEvaluation::class, 'update']);
 Route::delete('v1/performance-evaluations/{id}', [PerformanceApiEvaluation::class, 'destroy']);
-
-
-
-
-
-
-

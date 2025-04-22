@@ -92,8 +92,27 @@
         </v-row>
         <v-card class="mt-2">
           <v-progress-linear v-if="loading" color="green" indeterminate></v-progress-linear>
+
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-btn color="success" @click="bulkApproveLeaves" :disabled="selected.length === 0">
+                <v-icon left>mdi-thumb-up-outline</v-icon> Approve Selected
+              </v-btn>
+              <!-- <v-btn color="warning" @click="bulkCancelLeaves" :disabled="selected.length === 0" class="ml-2">
+                <v-icon left>mdi-close-circle</v-icon> Cancel Selected
+              </v-btn> -->
+            </v-col>
+            <!-- <v-col cols="12" md="6">
+                  <v-text-field v-model="search" label="Search" variant="outlined" clearable @clear="clearSearch"
+                    @input="performSearch" prepend-inner-icon="mdi-magnify">
+                  </v-text-field>
+                </v-col> -->
+          </v-row>
           <v-data-table v-model="selected" :headers="headers" item-key="id" :items="pendingLeaves" :search="search"
             responsive show-select>
+
+
             <template v-slot:item.comment="{ item }">
 
               <span v-if="item.comment">
@@ -332,6 +351,8 @@ export default {
       headers: [
         { title: 'Employee', value: 'user.name' },
         { title: 'Leave Type', value: 'leave_type.name' },
+        { title: 'Derpartment', value: 'user.department.name' },
+        { title: 'Country', value: 'user.unit.name' },
         { title: 'Application Date', value: 'created_at' },
         { title: 'Duration (Days)', value: 'days' },
         { title: 'From', value: 'from' },
@@ -353,7 +374,90 @@ export default {
 
 
   methods: {
-    truncateText(text) {
+
+    bulkApproveLeaves() {
+      if (this.selected.length === 0) {
+        this.$toastr.error('No leaves selected for approval.');
+        return;
+      }
+
+      const apiUrl = `api/v1/leaves-bulk-approve`;
+      const requestData = {
+        leaveIds: this.selected,
+        userId: this.userId
+      };
+
+      this.loading = true;
+
+      axios.put(apiUrl, requestData)
+        .then(response => {
+          const results = response.data.results;
+
+          if (results.success.length > 0) {
+            this.$toastr.success(`${results.success.length} leaves approved successfully!`);
+          }
+
+          if (results.failed.length > 0) {
+            this.$toastr.warning(`${results.failed.length} leaves could not be approved.`);
+            console.log('Failed approvals:', results.failed);
+          }
+
+          this.fetchLeaves();
+          this.selected = [];
+        })
+        .catch(error => {
+          this.$toastr.error('Error approving selected leaves.');
+          console.error('Bulk Approve Error:', error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+
+    bulkCancelLeaves() {
+      if (this.selected.length === 0) {
+        this.$toastr.error('No leaves selected for cancellation.');
+        return;
+      }
+
+      // Optional: You might want to show a modal to get cancellation reason
+
+      this.cancelLeaveModal =true;
+      const cancellationReason = this.cancellationReason || 'Administrative cancellation';
+
+      const apiUrl = `api/v1/leaves-bulk-cancel`;
+      const requestData = {
+        leaveIds: this.selected,
+        userId: this.userId,
+        comment: cancellationReason
+      };
+
+      this.loading = true;
+
+      axios.put(apiUrl, requestData)
+        .then(response => {
+          const results = response.data.results;
+
+          if (results.success.length > 0) {
+            this.$toastr.success(`${results.success.length} leaves cancelled successfully!`);
+          }
+
+          if (results.failed.length > 0) {
+            this.$toastr.warning(`${results.failed.length} leaves could not be cancelled.`);
+            console.log('Failed cancellations:', results.failed);
+          }
+
+          this.fetchLeaves();
+          this.selected = [];
+        })
+        .catch(error => {
+          this.$toastr.error('Error cancelling selected leaves.');
+          console.error('Bulk Cancel Error:', error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    }, truncateText(text) {
       if (text) {
         const maxLength = 20;
         if (text.length > maxLength) {
