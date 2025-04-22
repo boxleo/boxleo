@@ -103,9 +103,50 @@ class AnnouncementApiController extends Controller
 
         Log::info('Announcement created successfully', ['announcement_id' => $announcement->id]);
 
+        // if ($status === 'published') {
+        //     // $this->notifyAllUsers($announcement);
+        //     Notification::send(User::all(), new AnnouncementPublishedNotification($announcement));
+        // }
         if ($status === 'published') {
-            // $this->notifyAllUsers($announcement);
-            Notification::send(User::all(), new AnnouncementPublishedNotification($announcement));
+            $unitId = Auth::user()->unit_id;
+
+            // Check if departments were selected
+            if ($request->has('department_ids') && !empty($request->input('department_ids'))) {
+                $departmentIds = $request->input('department_ids');
+
+                // Get users who belong to selected departments AND have the same unit_id
+                $users = User::whereHas('department', function($query) use ($departmentIds) {
+                    $query->whereIn('department_id', $departmentIds);
+                })
+                ->where('is_enabled', true)
+                ->where('unit_id', $unitId)
+                ->get();
+
+                Log::info('Sending notifications to users in selected departments and same unit', [
+                    'unit_id' => $unitId,
+                    'department_ids' => $departmentIds,
+                    'user_count' => $users->count()
+                ]);
+
+                Notification::send($users, new AnnouncementPublishedNotification($announcement));
+            } else {
+                // No departments specified, so only filter by unit_id
+                $users = User::where('is_enabled', true)
+                            ->where('unit_id', $unitId)
+                            ->get();
+
+                Notification::send($users, new AnnouncementPublishedNotification($announcement));
+            }
+        }
+
+        if ($request->has('department_ids')) {
+            $departmentIds = $request->input('department_ids');
+            // Assuming you have a many-to-many relationship set up
+            $announcement->departments()->sync($departmentIds);
+            Log::info('Departments associated with announcement', [
+                'announcement_id' => $announcement->id,
+                'department_ids' => $departmentIds
+            ]);
         }
 
         return response()->json([
@@ -166,18 +207,50 @@ class AnnouncementApiController extends Controller
 
         $announcement->save();
 
-        if ($status === 'published') {
-            // $announcement = Announcement::with('author')->find($announcement->id);
-            // $announcement -> load('authorUser');
-            // $this->notifyAllUsers($announcement);
+        // if ($status === 'published') {
+        //     // $announcement = Announcement::with('author')->find($announcement->id);
+        //     // $announcement -> load('authorUser');
+        //     // $this->notifyAllUsers($announcement);
 
+        //     $unitId = Auth::user()->unit_id;
+
+        //     $users = User::where('is_enabled', true)
+        //                 ->where('unit_id', $unitId)
+        //                 ->get();
+
+        //     Notification::send($users, new AnnouncementPublishedNotification($announcement));
+        // }
+
+        if ($status === 'published') {
             $unitId = Auth::user()->unit_id;
 
-            $users = User::where('is_enabled', true)
-                        ->where('unit_id', $unitId)
-                        ->get();
+            // Check if departments were selected
+            if ($request->has('department_ids') && !empty($request->input('department_ids'))) {
+                $departmentIds = $request->input('department_ids');
 
-            Notification::send($users, new AnnouncementPublishedNotification($announcement));
+                // Get users who belong to selected departments AND have the same unit_id
+                $users = User::whereHas('department', function($query) use ($departmentIds) {
+                    $query->whereIn('department_id', $departmentIds);
+                })
+                ->where('is_enabled', true)
+                ->where('unit_id', $unitId)
+                ->get();
+
+                Log::info('Sending notifications to users in selected departments and same unit', [
+                    'unit_id' => $unitId,
+                    'department_ids' => $departmentIds,
+                    'user_count' => $users->count()
+                ]);
+
+                Notification::send($users, new AnnouncementPublishedNotification($announcement));
+            } else {
+                // No departments specified, so only filter by unit_id
+                $users = User::where('is_enabled', true)
+                            ->where('unit_id', $unitId)
+                            ->get();
+
+                Notification::send($users, new AnnouncementPublishedNotification($announcement));
+            }
         }
 
         // Handle attachments (if any)
@@ -195,7 +268,11 @@ class AnnouncementApiController extends Controller
                 ]);
             }
         }
-
+        // Update department associations
+    if ($request->has('department_ids')) {
+        $departmentIds = $request->input('department_ids');
+        $announcement->departments()->sync($departmentIds);
+    }
 
         return response()->json($announcement, 200);
     }
@@ -311,9 +388,9 @@ class AnnouncementApiController extends Controller
         // Log::info('Published notification sent', ['announcement_id' => $announcement->id]);
     // }
 
-    public function sendNotifications(Announcement $announcement)
-    {
-        $this->notifyAllUsers($announcement);
-        return response()->json(['message' => 'Notifications sent successfully']);
-    }
+    // public function sendNotifications(Announcement $announcement)
+    // {
+    //     $this->notifyAllUsers($announcement);
+    //     return response()->json(['message' => 'Notifications sent successfully']);
+    // }
 }

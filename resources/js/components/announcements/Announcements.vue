@@ -26,6 +26,10 @@
                         <span v-else>Null</span>
                     </template>
 
+                    <template v-slot:item.departments="{ item }">
+                        <span v-if="item.departments.length">{{ item.departments.join(', ') }}</span>
+                    </template>
+
                     <template v-slot:item.actions="{ item }">
                         <v-icon small @click="viewAnnouncement(item)" title="View Announcement">mdi-eye</v-icon>
                         <v-icon small @click="editAnnouncement(item)" title="Edit Announcement">mdi-pencil</v-icon>
@@ -50,6 +54,20 @@
                             <v-col cols="12">
                                 <v-textarea v-model="editedAnnouncement.description" label="Description"></v-textarea>
                             </v-col>
+
+                            <v-col cols="12">
+                            <v-autocomplete
+                                v-model="formData.department_ids"
+                                :items="departments || []"
+                                label="Department"
+                                variant="outlined"
+                                multiple
+                                item-title="name"
+                                item-value="id"
+                                clearable
+                            />
+                            </v-col>
+
                             <v-col cols="12" sm="6">
                                 <v-text-field v-model="editedAnnouncement.expiration_date" label="Expiration Date"
                                     type="date"></v-text-field>
@@ -125,6 +143,7 @@ export default {
                 publish_date: '',
                 expiration_date: '',
                 is_active: false,
+                // departments: [],
             },
             defaultAnnouncement: {
                 subject: '',
@@ -133,12 +152,17 @@ export default {
                 publish_date: '',
                 expiration_date: '',
                 is_active: false,
+                // departments: [],
             },
             authors: [],
             statuses: ['Published', 'Draft', 'Expired'],
             attachments: [],
             showViewDialog: false,
-            viewedAnnouncement: null
+            viewedAnnouncement: null,
+            formData: {
+            department_ids: [],
+            },
+            departments: [],
         }
     },
     computed: {
@@ -148,6 +172,8 @@ export default {
     },
     mounted() {
         this.fetchAnnouncements();
+        // Fetch departments if needed
+        this.fetchDepartments();
         // this.fetchAuthors();
     },
     methods: {
@@ -165,6 +191,28 @@ export default {
 
             this.showViewDialog = true;
 
+        },
+        /**
+         * Fetches all departments and stores them in the "departments" data
+         * property.
+         */
+        fetchDepartments() {
+            return axios.get('/api/v1/departments')
+                .then(response => {
+                    console.log('Departments:', response.data);
+                    if (response.data && response.data.departments && Array.isArray(response.data.departments)) {
+                        this.departments = response.data.departments;
+                        console.log('Departments loaded:', this.departments.length);
+                    } else {
+                        console.warn('Unexpected data format:', response.data);
+                        this.departments = [];
+                    }
+                    return this.departments;
+                })
+                .catch(error => {
+                    console.error('Failed to fetch departments', error)
+                    this.departments = [];
+                    return this.departments;});
         },
 
 
@@ -249,8 +297,22 @@ export default {
         this.editedIndex = -1;
         this.editedAnnouncement = Object.assign({}, this.defaultAnnouncement);
         this.attachments = [];
-        this.showDialog = true;
-    },
+        //this.showDialog = true;
+        this.formData = {
+        department_ids: [],
+        // Add other form fields here
+        };
+
+        // Fetch departments first, then show dialog
+        this.fetchDepartments()
+            .then(() => {
+                this.showDialog = true;
+            })
+            .catch(() => {
+                // Show dialog anyway, but with empty departments
+                this.showDialog = true;
+            });
+        },
     editAnnouncement(item) {
         this.editedIndex = this.announcements.indexOf(item);
         this.editedAnnouncement = Object.assign({}, item);
