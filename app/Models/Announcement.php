@@ -19,7 +19,7 @@ class Announcement extends Model
         // 'expiration_date' => 'datetime',
     ];
 
-    // 
+    //
     // The real relationship (renamed to avoid conflict)
     // public function authorUser()
     // {
@@ -36,6 +36,11 @@ class Announcement extends Model
     public function attachments()
     {
         return $this->hasMany(AnnouncementAttachment::class);
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'announcement_department');
     }
 
 }
