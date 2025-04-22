@@ -14,138 +14,33 @@ class PerformanceApiEvaluation extends Controller
 {
     //
     // store monthly performance evaluation
-    // public function store(Request $request)
-    // {
-    //     $validatedData = $request->validate([
-    //         'user_id' => 'required|integer',
-    //         // 'evaluator_id' => 'required|integer',
-    //         // 'department_id' => 'required|integer',
-    //         // 'evaluation_date' => 'required|date',
-    //         'attendance' => 'required|integer',
-    //         'problems_solved' => 'required|integer',
-    //         'reports_submitted' => 'required|integer',
-    //         'knowledge_of_work' => 'required|integer',
-    //         'team_work' => 'required|integer',
-    //         'reliability_visibility' => 'required|integer',
-    //         'productivity' => 'required|integer',
-    //         'discipline' => 'required|integer',
-    //         'quality_of_work' => 'required|integer',
-    //         'communication' => 'required|integer',
-    //         'leadership' => 'required|integer',
-    //         'total_score' => 'required|integer',
-    //         'percentage' => 'required|numeric',
-    //     ]);
-
-    //     // Assuming you have a model named PerformanceEvaluation
-    //     $performance = new PerformanceEvaluation($validatedData);
-    //     $performance->save();
-
-    //     return response()->json(['message' => 'Performance evaluation stored successfully'], 201);
-    // }
-
-
-    /**
- * Store a new performance evaluation
- */
-public function store(Request $request)
-{
-    try {
-        // Get authenticated user
-        $currentUser = $request->user();
-        if (!$currentUser) {
-            return response()->json([
-                'message' => 'Authentication required to submit performance evaluations'
-            ], 401);
-        }
-        
-        // Prepare data with default values if needed
-        $data = $request->all();
-        
-        // Ensure evaluator_id is set
-        if (!isset($data['evaluator_id']) || $data['evaluator_id'] === '') {
-            $data['evaluator_id'] = $currentUser->id;
-        }
-        
-        // Ensure evaluation_date is set
-        if (!isset($data['evaluation_date']) || $data['evaluation_date'] === '') {
-            $data['evaluation_date'] = date('Y-m-d');
-        }
-        
-        // Ensure department_id is set by getting from evaluated user
-        if ((!isset($data['department_id']) || $data['department_id'] === '') && isset($data['user_id'])) {
-            $evaluatedUser = \App\Models\User::find($data['user_id']);
-            if ($evaluatedUser && $evaluatedUser->department_id) {
-                $data['department_id'] = $evaluatedUser->department_id;
-            }
-        }
-        
-        // Now validate the data
-        $validator = \Illuminate\Support\Facades\Validator::make($data, [
-            'user_id' => 'required|integer|exists:users,id',
-            'evaluator_id' => 'required|integer|exists:users,id',
-            'department_id' => 'required|integer|exists:departments,id',
-            'evaluation_date' => 'required|date',
-            'attendance' => 'required|integer|min:0|max:100',
-            'problems_solved' => 'required|integer|min:0|max:100',
-            'reports_submitted' => 'required|integer|min:0|max:100',
-            'knowledge_of_work' => 'required|integer|min:0|max:100',
-            'team_work' => 'required|integer|min:0|max:100',
-            'reliability_visibility' => 'required|integer|min:0|max:100',
-            'productivity' => 'required|integer|min:0|max:100',
-            'discipline' => 'required|integer|min:0|max:100',
-            'quality_of_work' => 'required|integer|min:0|max:100',
-            'communication' => 'required|integer|min:0|max:100',
-            'total_score' => 'required|integer|min:0|max:1000',
-            'percentage' => 'required|numeric|min:0|max:100',
-        ]);
-        
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-        
-        $validatedData = $validator->validated();
-
-        // Check for duplicate evaluation
-        $existingEvaluation = \App\Models\PerformanceEvaluation::where([
-            'user_id' => $validatedData['user_id'],
-            'evaluation_date' => $validatedData['evaluation_date'],
-        ])->first();
-
-        if ($existingEvaluation) {
-            return response()->json([
-                'message' => 'An evaluation for this user on this date already exists',
-                'existing_evaluation_id' => $existingEvaluation->id
-            ], 422);
-        }
-
-        // Create the evaluation
-        $performance = \App\Models\PerformanceEvaluation::create($validatedData);
-
-        \Illuminate\Support\Facades\Log::info('Performance evaluation created successfully', [
-            'evaluation_id' => $performance->id,
-            'user_id' => $performance->user_id
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'user_id' => 'required|integer',
+            // 'evaluator_id' => 'required|integer',
+            // 'department_id' => 'required|integer',
+            // 'evaluation_date' => 'required|date',
+            'attendance' => 'required|integer',
+            'problems_solved' => 'required|integer',
+            'reports_submitted' => 'required|integer',
+            'knowledge_of_work' => 'required|integer',
+            'team_work' => 'required|integer',
+            'reliability_visibility' => 'required|integer',
+            'productivity' => 'required|integer',
+            'discipline' => 'required|integer',
+            'quality_of_work' => 'required|integer',
+            'communication' => 'required|integer',
+            'total_score' => 'required|integer',
+            'percentage' => 'required|numeric',
         ]);
 
-        return response()->json([
-            'message' => 'Performance evaluation stored successfully',
-            'evaluation' => $performance
-        ], 201);
-    
-    } catch (\Exception $e) {
-        \Illuminate\Support\Facades\Log::error('Failed to store performance evaluation', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'message' => 'Failed to store performance evaluation',
-            'error' => $e->getMessage()
-        ], 500);
+        // Assuming you have a model named PerformanceEvaluation
+        $performance = new PerformanceEvaluation($validatedData);
+        $performance->save();
+
+        return response()->json(['message' => 'Performance evaluation stored successfully'], 201);
     }
-}
 
     // update monthly performance evaluation
     public function update(Request $request, $id)
@@ -254,7 +149,7 @@ public function store(Request $request)
                 break;
 
             default:
-                // Default case: authenticated user who is not manager, HR, or HOD
+                // Default case: authenticated user who is not manager, HR, or HODq
                 $evaluations = PerformanceEvaluation::where('user_id', $user->id)->with('user')->get();
                 break;
         }
