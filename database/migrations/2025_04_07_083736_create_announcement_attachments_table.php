@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('file_type');
             $table->integer('file_size')->comment('in bytes');
             $table->timestamps();
+            $table->softDeletes();
+
 
       
         });

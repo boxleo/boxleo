@@ -18,6 +18,8 @@ return new class extends Migration
             $table->text('supervisor_assistance')->nullable();
             $table->text('activities')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

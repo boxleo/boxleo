@@ -21,6 +21,9 @@ return new class extends Migration
             $table->decimal('paye', 10, 2)->default(0.00);
             $table->decimal('housing_levy', 10, 2)->default(0.00);
             $table->timestamps();
+            $table->softDeletes();
+
+            
         });
     }
 

@@ -20,6 +20,8 @@ return new class extends Migration
             $table->text('improvement_areas')->nullable();
             $table->unsignedTinyInteger('overall_rating')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
            
         });
     }

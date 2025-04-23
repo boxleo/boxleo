@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('label');
             $table->decimal('amount', 10, 2);
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

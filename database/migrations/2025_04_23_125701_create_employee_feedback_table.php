@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('appraisal_id')->constrained('appraisals')->onDelete('cascade');
             $table->text('feedback')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

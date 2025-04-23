@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('supervisor_name');
             $table->date('review_date');
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 
