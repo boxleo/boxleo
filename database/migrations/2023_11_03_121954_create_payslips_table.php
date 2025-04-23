@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('payslips', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            // 	Core salary only
             $table->decimal('basic_pay', 10, 2);
             $table->date('pay_date')->nullable();
             $table->string('payment_mode')->nullable();

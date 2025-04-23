@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('announcement_attachments', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('announcement_id');
+            $table->foreignId('announcement_id')->constrained('announcements')->onDelete('cascade');
             $table->string('filename');
             $table->string('original_filename');
             $table->string('file_path');
@@ -21,10 +21,7 @@ return new class extends Migration
             $table->integer('file_size')->comment('in bytes');
             $table->timestamps();
 
-            $table->foreign('announcement_id')
-                  ->references('id')
-                  ->on('announcements')
-                  ->onDelete('cascade');
+      
         });
     }
 

@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('appraisals', function (Blueprint $table) {
+        Schema::create('other_deductions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('supervisor_name');
-            $table->date('review_date');
+            $table->foreignId('payslip_id')->constrained()->onDelete('cascade');
+            $table->string('label');
+            $table->decimal('amount', 10, 2);
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('appraisals');
+        Schema::dropIfExists('other_deductions');
     }
 };

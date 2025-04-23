@@ -16,5 +16,22 @@ class Payslip extends Model
         "Earnings",
         "deductions",
         "net_pay",
-    ] ;
+    ];
+
+
+
+    public function earnings()
+    {
+        return $this->hasMany(Earning::class);
+    }
+
+    public function statutoryDeductions()
+    {
+        return $this->hasOne(StatutoryDeduction::class);
+    }
+
+    public function otherDeductions()
+    {
+        return $this->hasMany(OtherDeduction::class);
+    }
 }
