@@ -21,7 +21,6 @@
         <span v-else>—</span> <!-- Display a dash if there are no HODs -->
       </template>
 
-
       <!-- Manager column -->
       <template v-slot:[`item.managers_display`]="{ item }">
         <span v-if="item.managers_display">{{ item.managers_display }} </span>
@@ -53,11 +52,7 @@
 
     </v-data-table>
 
-
-    <!-- Add, Edit, and Confirm Delete Dialogs -->
-
-
-
+    <!-- Add Department Dialog -->
     <v-dialog v-model="addDepartmentDialog" max-width="400px" persistent>
       <v-card>
         <v-card-title class="headline">
@@ -75,27 +70,35 @@
 
             <v-row>
               <v-col>
-                <select v-model="manager_id" class="select form-control">
-                  <option value=''>Select Manager</option>
-                  <option v-for="manager in managers" :key="manager.id" :value="manager.id">
-                    {{ manager.firstname }} {{ manager.lastname }}
-                  </option>
-                </select>
+                <v-combobox
+                  v-model="selectedManager"
+                  :items="managersComboItems"
+                  item-title="fullname"
+                  item-value="id"
+                  label="Select Manager"
+                  placeholder="Start typing to search"
+                  clearable
+                  return-object
+                  @update:model-value="manager_id = selectedManager ? selectedManager.id : ''"
+                ></v-combobox>
               </v-col>
             </v-row>
 
             <v-row>
               <v-col>
-                <select v-model="employee_id" class="select form-control">
-                  <option value=''>Select HOD</option>
-                  <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-                    {{ employee.firstname }} {{ employee.lastname }}
-                  </option>
-                </select>
+                <v-combobox
+                  v-model="selectedHOD"
+                  :items="employeesComboItems"
+                  item-title="fullname"
+                  item-value="id"
+                  label="Select HOD"
+                  placeholder="Start typing to search"
+                  clearable
+                  return-object
+                  @update:model-value="employee_id = selectedHOD ? selectedHOD.id : ''"
+                ></v-combobox>
               </v-col>
             </v-row>
-
-
           </v-form>
         </v-card-text>
         <v-card-actions class="justify-end">
@@ -111,9 +114,7 @@
       </v-card>
     </v-dialog>
 
-
-
-    <!-- edit Department -->
+    <!-- Edit Department Dialog -->
     <v-dialog v-model="editDepartmentDialog" max-width="400px" persistent>
       <v-card>
         <v-card-title class="headline">
@@ -124,25 +125,35 @@
           <v-form ref="editDepartmentForm" @submit.prevent="updateDepartment">
             <v-text-field v-model="editDepartment.name" label="Department Name" required></v-text-field>
 
-        <v-row>
-          <v-col> <!-- Add this --> 
-            <select v-model="employee_id" class="select form-control">
-              <option value=''>Select Employee</option>
-              <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-              {{ employee.firstname }} {{ employee.lastname }}
-              </option>
-            </select>
-            </v-col>
+            <v-row>
+              <v-col>
+                <v-combobox
+                  v-model="selectedHOD"
+                  :items="employeesComboItems"
+                  item-title="fullname"
+                  item-value="id"
+                  label="Select HOD"
+                  placeholder="Start typing to search"
+                  clearable
+                  return-object
+                  @update:model-value="employee_id = selectedHOD ? selectedHOD.id : ''"
+                ></v-combobox>
+              </v-col>
             </v-row>
 
             <v-row>
               <v-col>
-                <select v-model="manager_id" class="select form-control">
-                  <option value=''>Select Manager</option>
-                  <option v-for="manager in managers" :key="manager.id" :value="manager.id">
-                    {{ manager.firstname }} {{ manager.lastname }}
-                  </option>
-                </select>
+                <v-combobox
+                  v-model="selectedManager"
+                  :items="managersComboItems"
+                  item-title="fullname"
+                  item-value="id"
+                  label="Select Manager"
+                  placeholder="Start typing to search"
+                  clearable
+                  return-object
+                  @update:model-value="manager_id = selectedManager ? selectedManager.id : ''"
+                ></v-combobox>
               </v-col>
             </v-row>
           </v-form>
@@ -160,6 +171,7 @@
       </v-card>
     </v-dialog>
 
+    <!-- Confirm Delete Dialog -->
     <v-dialog v-model="confirmDeleteDialog" max-width="400px" persistent>
       <v-card>
         <v-card-title class="headline">
@@ -192,57 +204,69 @@ export default {
         { title: "Employees", value: "employeeCount", align: "center" },
         { title: "Manager", value: "managers_display", align: "center" },
         { title: "HOD", value: "hods_display", align: "center" },
-
         { title: "Actions", value: "actions", sortable: false },
       ],
       base_url: "/",
       newDepartment: {
         name: "",
+        selectedManager:"",
+        selectedHOD:"",
       },
       editDepartment: {
         id: 0,
         name: "",
       },
       managers: [],
+      employees: [],
       manager_id: '',
+      employee_id: '',
       departments: [],
-      employees: [], // Fix for missing employees variable
-      employee_id: '', // Add this
-
+      selectedManager: null,
+      selectedHOD: null,
+      
       addDepartmentDialog: false,
       editDepartmentDialog: false,
       confirmDeleteDialog: false,
       selectedDepartmentId: null,
     };
   },
+  computed: {
+    managersComboItems() {
+      return this.managers.map(manager => ({
+        id: manager.id,
+        fullname: `${manager.firstname} ${manager.lastname}`
+      }));
+    },
+    employeesComboItems() {
+      return this.employees.map(employee => ({
+        id: employee.id,
+        fullname: `${employee.firstname} ${employee.lastname}`
+      }));
+    }
+  },
   created() {
     this.fetchDepartments();
     this.fetchEmployees();
     this.fetchUsers();
-
   },
   methods: {
-
     fetchEmployees() {
       axios
         .get(this.base_url + "api/v1/users")
         .then((response) => {
           this.employees = response.data.users;
-          console.log("Fetched employees:",   this.employees);
+          console.log("Fetched employees:", this.employees);
         })
         .catch((error) => {
           console.error("Error fetching employees:", error);
         });
     },
 
-
     fetchUsers() {
       const apiUrl = this.base_url + `api/v1/users`;
       axios.get(apiUrl)
         .then(response => {
-          // this.user = response.data.users.find(user => user.id === parseInt(this.userId));
           this.user = response.data.users;
-
           console.log("The User Object is: ", this.user);
 
           this.users = response.data.users.map(user => ({
@@ -275,15 +299,15 @@ export default {
           console.error("Error fetching departments:", error);
         });
     },
+    
     addDepartment() {
       const apiUrl = `${this.base_url}api/v1/departments`;
       axios
         .post(apiUrl, {
-          name: this.newDepartment.name
-          , hod_id: this.employee_id || null, // Ensure null if no HOD is selected
-        }
-
-        )
+          name: this.newDepartment.name,
+          hod_id: this.employee_id || null,
+          manager_id: this.manager_id || null
+        })
         .then(() => {
           this.fetchDepartments();
           this.$toastr.success("Department added successfully!");
@@ -295,16 +319,29 @@ export default {
         });
     },
 
-
     openEditDepartmentDialog(department) {
       this.editDepartmentDialog = true;
       this.editDepartment = { ...department };
 
-      // Set the first HOD's ID if available
-      this.employee_id = department.hods.length > 0 ? department.hods[0].id : '';
-    }
-    ,
+      // Set the selected HOD and manager if available
+      if (department.hods && department.hods.length > 0) {
+        const hodId = department.hods[0].id;
+        this.employee_id = hodId;
+        this.selectedHOD = this.employeesComboItems.find(emp => emp.id === hodId) || null;
+      } else {
+        this.employee_id = '';
+        this.selectedHOD = null;
+      }
 
+      if (department.managers && department.managers.length > 0) {
+        const managerId = department.managers[0].id;
+        this.manager_id = managerId;
+        this.selectedManager = this.managersComboItems.find(mgr => mgr.id === managerId) || null;
+      } else {
+        this.manager_id = '';
+        this.selectedManager = null;
+      }
+    },
 
     updateDepartment() {
       const apiUrl = `${this.base_url}api/v1/departments/${this.editDepartment.id}`;
@@ -312,25 +349,25 @@ export default {
       axios
         .put(apiUrl, {
           name: this.editDepartment.name,
-          hod_id: this.employee_id || null, // Ensure null if no HOD is selected
+          hod_id: this.employee_id || null,
           manager_id: this.manager_id || null,
         })
         .then(() => {
           this.fetchDepartments();
-          this.$toastr.success("Department and HOD updated successfully!");
+          this.$toastr.success("Department updated successfully!");
           this.closeEditDepartmentDialog();
         })
         .catch((error) => {
           this.$toastr.error("Error updating department. Please try again.");
           console.error("Error updating department:", error);
         });
-    }
-
-    ,
+    },
+    
     confirmDeleteDepartment(departmentId) {
       this.selectedDepartmentId = departmentId;
       this.confirmDeleteDialog = true;
     },
+    
     deleteDepartment() {
       const apiUrl = `${this.base_url}api/v1/departments/${this.selectedDepartmentId}`;
       axios
@@ -345,14 +382,25 @@ export default {
           console.error("Error deleting department:", error);
         });
     },
+    
     closeAddDepartmentDialog() {
       this.addDepartmentDialog = false;
       this.newDepartment.name = "";
+      this.selectedManager = null;
+      this.selectedHOD = null;
+      this.manager_id = '';
+      this.employee_id = '';
     },
+    
     closeEditDepartmentDialog() {
       this.editDepartmentDialog = false;
       this.editDepartment = { id: 0, name: "" };
+      this.selectedManager = null;
+      this.selectedHOD = null;
+      this.manager_id = '';
+      this.employee_id = '';
     },
+    
     closeConfirmDeleteDialog() {
       this.confirmDeleteDialog = false;
       this.selectedDepartmentId = null;
