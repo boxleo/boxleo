@@ -42,5 +42,11 @@ class Announcement extends Model
     {
         return $this->belongsToMany(Department::class, 'announcement_department');
     }
+    
+    // In Announcement.php model
+    public function units()
+    {
+        return $this->belongsToMany(Unit::class, 'announcement_unit');
+    }
 
 }

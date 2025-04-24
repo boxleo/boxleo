@@ -42,4 +42,9 @@ class Unit extends Model
   {
     return date('H:i', strtotime($this->getAttribute($time)));
   }
+
+    public function announcements()
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_unit');
+    }
 }

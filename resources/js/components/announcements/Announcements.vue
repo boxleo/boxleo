@@ -57,6 +57,19 @@
 
                             <v-col cols="12">
                             <v-autocomplete
+                                v-model="formData.unit_ids"
+                                :items="units"
+                                label="Unit"
+                                variant="outlined"
+                                multiple
+                                item-title="name"
+                                item-value="id"
+                                clearable
+                            />
+                            </v-col>
+
+                            <v-col cols="12">
+                            <v-autocomplete
                                 v-model="formData.department_ids"
                                 :items="departments || []"
                                 label="Department"
@@ -161,8 +174,10 @@ export default {
             viewedAnnouncement: null,
             formData: {
             department_ids: [],
+            unit_ids: [],
             },
             departments: [],
+            units: [],
         }
     },
     computed: {
@@ -172,9 +187,8 @@ export default {
     },
     mounted() {
         this.fetchAnnouncements();
-        // Fetch departments if needed
         this.fetchDepartments();
-        // this.fetchAuthors();
+        this.fetchUnits();
     },
     methods: {
         fetchAnnouncements() {
@@ -213,6 +227,24 @@ export default {
                     console.error('Failed to fetch departments', error)
                     this.departments = [];
                     return this.departments;});
+        },
+        fetchUnits() {
+            return axios.get('/api/v1/branches')
+                .then(response => {
+                    console.log('Units:', response.data);
+                    if (response.data && response.data.branches && Array.isArray(response.data.branches)) {
+                        this.units = response.data.branches;
+                        console.log('Units loaded:', this.units.length);
+                    } else {
+                        console.warn('Unexpected data format:', response.data);
+                        this.units = [];
+                    }
+                    return this.units;
+                })
+                .catch(error => {
+                    console.error('Failed to fetch units', error)
+                    this.units = [];
+                    return this.units;});
         },
 
 
@@ -300,22 +332,38 @@ export default {
         //this.showDialog = true;
         this.formData = {
         department_ids: [],
-        // Add other form fields here
+        unit_ids: [],
         };
 
         // Fetch departments first, then show dialog
-        this.fetchDepartments()
+        // this.fetchDepartments()
+        //     .then(() => {
+        //         this.showDialog = true;
+        //     })
+        //     .catch(() => {
+        //         // Show dialog anyway, but with empty departments
+        //         this.showDialog = true;
+        //     });
+        Promise.all([this.fetchDepartments(), this.fetchUnits()])
             .then(() => {
                 this.showDialog = true;
-            })
-            .catch(() => {
-                // Show dialog anyway, but with empty departments
-                this.showDialog = true;
-            });
+        });
         },
     editAnnouncement(item) {
+        console.log('Editing announcement:', item);
+        console.log('Departments:', item.departments);
+        console.log('Units:', item.units);
+
         this.editedIndex = this.announcements.indexOf(item);
         this.editedAnnouncement = Object.assign({}, item);
+        // this.formData.department_ids = item.departments?.map(dep => dep.id) || []
+        // this.formData.unit_ids = item.units?.map(unit => unit.id) || []
+
+        this.formData = {
+            department_ids: item.departments ? item.departments.map(dept => dept.id) : [],
+            unit_ids: item.units ? item.units.map(unit => unit.id) : []
+        };
+
         this.attachments = item.attachments || [];
         this.showDialog = true;
     },
@@ -354,6 +402,19 @@ export default {
 
         // Add action
         formData.append('action', 'save_draft');
+
+         // Add department_ids and unit_ids
+        if (this.formData.department_ids && this.formData.department_ids.length) {
+            this.formData.department_ids.forEach(id => {
+                formData.append('department_ids[]', id);
+            });
+        }
+
+        if (this.formData.unit_ids && this.formData.unit_ids.length) {
+            this.formData.unit_ids.forEach(id => {
+                formData.append('unit_ids[]', id);
+            });
+        }
 
         // Add attachments
         if (this.attachments && this.attachments.length) {
@@ -400,6 +461,19 @@ export default {
 
         // Add action
         formData.append('action', 'publish');
+
+         // Add department_ids and unit_ids
+        if (this.formData.department_ids && this.formData.department_ids.length) {
+            this.formData.department_ids.forEach(id => {
+                formData.append('department_ids[]', id);
+            });
+        }
+
+        if (this.formData.unit_ids && this.formData.unit_ids.length) {
+            this.formData.unit_ids.forEach(id => {
+                formData.append('unit_ids[]', id);
+            });
+        }
 
         // Add attachments
         if (this.attachments && this.attachments.length) {

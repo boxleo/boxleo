@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Notification;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
-// use App\Mail\AnnouncementNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -22,8 +21,7 @@ class AnnouncementApiController extends Controller
      */
     public function index()
     {
-        // $announcements = Announcement::with('author', 'attachments')->get();
-        $announcements = Announcement::with('attachments')->get();
+        $announcements = Announcement::with('attachments', 'departments', 'units')->get();
          // Attach the author's firstname (lookup by the author column)
         $announcements->transform(function ($announcement) {
             $announcement->author_name = User::find($announcement->author)?->firstname;
@@ -103,40 +101,67 @@ class AnnouncementApiController extends Controller
 
         Log::info('Announcement created successfully', ['announcement_id' => $announcement->id]);
 
-        // if ($status === 'published') {
-        //     // $this->notifyAllUsers($announcement);
-        //     Notification::send(User::all(), new AnnouncementPublishedNotification($announcement));
-        // }
-        if ($status === 'published') {
-            $unitId = Auth::user()->unit_id;
 
-            // Check if departments were selected
+        // if ($status === 'published') {
+        //     $unitId = Auth::user()->unit_id;
+
+        //     // Check if departments were selected
+        //     if ($request->has('department_ids') && !empty($request->input('department_ids'))) {
+        //         $departmentIds = $request->input('department_ids');
+
+        //         // Get users who belong to selected departments AND have the same unit_id
+        //         $users = User::whereHas('department', function($query) use ($departmentIds) {
+        //             $query->whereIn('department_id', $departmentIds);
+        //         })
+        //         ->where('is_enabled', true)
+        //         ->where('unit_id', $unitId)
+        //         ->get();
+
+        //         Log::info('Sending notifications to users in selected departments and same unit', [
+        //             'unit_id' => $unitId,
+        //             'department_ids' => $departmentIds,
+        //             'user_count' => $users->count()
+        //         ]);
+
+        //         Notification::send($users, new AnnouncementPublishedNotification($announcement));
+        //     } else {
+        //         // No departments specified, so only filter by unit_id
+        //         $users = User::where('is_enabled', true)
+        //                     ->where('unit_id', $unitId)
+        //                     ->get();
+
+        //         Notification::send($users, new AnnouncementPublishedNotification($announcement));
+        //     }
+        // }
+
+        if ($status === 'published') {
+            $authorUnitId = Auth::user()->unit_id;
+            
+            // Get users based on selected departments and units
+            // $query = User::where('is_enabled', true);
+            $query = User::where('is_enabled', true)
+                         ->where('email', '!=', 'brian.omondi@boxleocourier.com');
+            
+            // If specific units are selected
+            if ($request->has('unit_ids') && !empty($request->input('unit_ids'))) {
+                $unitIds = $request->input('unit_ids');
+                $query->whereIn('unit_id', $unitIds);
+            } else {
+                // Default to author's unit only
+                $query->where('unit_id', $authorUnitId);
+            }
+            
+            // If specific departments are selected
             if ($request->has('department_ids') && !empty($request->input('department_ids'))) {
                 $departmentIds = $request->input('department_ids');
-
-                // Get users who belong to selected departments AND have the same unit_id
-                $users = User::whereHas('department', function($query) use ($departmentIds) {
-                    $query->whereIn('department_id', $departmentIds);
-                })
-                ->where('is_enabled', true)
-                ->where('unit_id', $unitId)
-                ->get();
-
-                Log::info('Sending notifications to users in selected departments and same unit', [
-                    'unit_id' => $unitId,
-                    'department_ids' => $departmentIds,
-                    'user_count' => $users->count()
-                ]);
-
-                Notification::send($users, new AnnouncementPublishedNotification($announcement));
-            } else {
-                // No departments specified, so only filter by unit_id
-                $users = User::where('is_enabled', true)
-                            ->where('unit_id', $unitId)
-                            ->get();
-
-                Notification::send($users, new AnnouncementPublishedNotification($announcement));
+                $query->whereHas('department', function($q) use ($departmentIds) {
+                    $q->whereIn('department_id', $departmentIds);
+                });
             }
+            
+            $users = $query->get();
+            
+            Notification::send($users, new AnnouncementPublishedNotification($announcement));
         }
 
         if ($request->has('department_ids')) {
@@ -147,6 +172,11 @@ class AnnouncementApiController extends Controller
                 'announcement_id' => $announcement->id,
                 'department_ids' => $departmentIds
             ]);
+        }
+
+        if ($request->has('unit_ids')) {
+            $unitIds = $request->input('unit_ids');
+            $announcement->units()->sync($unitIds);
         }
 
         return response()->json([
@@ -180,7 +210,6 @@ class AnnouncementApiController extends Controller
 
         $status = $request->input('action') === 'publish' ? 'published' : 'draft';
 
-        // $announcement->update($request->except(['status', 'action', 'publish_date', 'author']));
 
         $data = $request->except(['status', 'action', 'publish_date', 'author']);
 
@@ -206,20 +235,6 @@ class AnnouncementApiController extends Controller
         }
 
         $announcement->save();
-
-        // if ($status === 'published') {
-        //     // $announcement = Announcement::with('author')->find($announcement->id);
-        //     // $announcement -> load('authorUser');
-        //     // $this->notifyAllUsers($announcement);
-
-        //     $unitId = Auth::user()->unit_id;
-
-        //     $users = User::where('is_enabled', true)
-        //                 ->where('unit_id', $unitId)
-        //                 ->get();
-
-        //     Notification::send($users, new AnnouncementPublishedNotification($announcement));
-        // }
 
         if ($status === 'published') {
             $unitId = Auth::user()->unit_id;
@@ -274,6 +289,11 @@ class AnnouncementApiController extends Controller
         $announcement->departments()->sync($departmentIds);
     }
 
+    if ($request->has('unit_ids')) {
+        $unitIds = $request->input('unit_ids');
+        $announcement->units()->sync($unitIds);
+    }
+
         return response()->json($announcement, 200);
     }
 
@@ -293,26 +313,6 @@ class AnnouncementApiController extends Controller
 
     }
 
-    // public function sendEmails(string $id)
-    // {
-    //     $announcement = Announcement::findOrFail($id);
-
-    //     // Don't send emails for drafts
-    //     if ($announcement->status !== 'published') {
-    //         return response()->json(['message' => 'Cannot send emails for draft announcements'], 400);
-    //     }
-
-    //     // Get all active users
-    //     $users = User::where('is_enabled', true)->get();
-
-    //     // Dispatch emails to queue for better performance
-    //     foreach ($users as $user) {
-    //         Mail::to($user->email)->queue(new AnnouncementNotification($announcement));
-    //     }
-
-    //     return response()->json(['message' => 'Emails queued for sending']);
-    // }
-
     public function downloadAttachment($id)
     {
         $attachment = AnnouncementAttachment::findOrFail($id);
@@ -325,72 +325,4 @@ class AnnouncementApiController extends Controller
         return response()->download($path, $attachment->original_filename);
     }
 
-    // protected function notifyAllUsers(Announcement $announcement)
-    // {
-    //     if (! $announcement->relationLoaded('authorUser')) {
-    //         $announcement->load('authorUser');
-    //     }
-
-    //     // $authorId = $announcement->author()->first();
-
-    //     // Find the author user
-    //     // $author = User::find($authorId);
-    //     // $author = $announcement->author()->first();
-    //     $author = $announcement->author;
-
-    //     if (! $author) {
-    //         Log::warning('Could not send notifications - author not found', [
-    //             'announcement_id' => $announcement->id,
-    //             'author_column'   => $announcement->getAttribute('author'),
-    //         ]);
-    //         return;
-    //     }
-
-    //     // Now you can safely read unit_id
-    //     // $unitId = $author->unit_id;
-    //     $unitId = Auth::user()->unit_id;
-
-    //     $users = User::where('is_enabled', true)
-    //                  ->where('unit_id', $unitId)
-    //                  ->get();
-
-    //     foreach ($users as $user) {
-    //         $user->notify(new AnnouncementPublishedNotification($announcement));
-    //     }
-
-    //     Log::info('Published notification sent', ['announcement_id' => $announcement->id]);
-
-
-
-        // if ($author) {
-        //     $unitId = $announcement->author->unit_id;
-        //     $users = User::where('is_enabled', true)
-        //                 ->where('unit_id', $author->unit_id)
-        //                 ->get();
-        //     foreach ($users as $user) {
-        //         $user->notify(new AnnouncementPublishedNotification($announcement));
-        //     }
-        //     Log::info('Published notification sent', ['announcement_id' => $announcement->id]);
-        // } else {
-        //     Log::warning('Could not send notifications - author not found', ['announcement_id' => $announcement->id]);
-        // }
-
-
-        // if (!$announcement->relationLoaded('author')) {
-        //     $announcement->load('author');
-        // }
-
-        // $users = User::where('is_enabled', true)->where('unit_id', $announcement->author->unit_id)
-        // ->get();
-        // foreach ($users as $user) {
-        //     $user->notify(new AnnouncementPublishedNotification($announcement));
-        // }
-        // Log::info('Published notification sent', ['announcement_id' => $announcement->id]);
-    // }
-
-    // public function sendNotifications(Announcement $announcement)
-    // {
-    //     $this->notifyAllUsers($announcement);
-    //     return response()->json(['message' => 'Notifications sent successfully']);
-    // }
 }
