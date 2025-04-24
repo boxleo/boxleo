@@ -301,7 +301,8 @@ class LeaveApiController extends Controller
       return response()->json(['error' => 'User not found'], 404);
     }
 
-    $departmentId = $user->department_id;
+    // $departmentId = $user->department_id;
+    $departmentId = $user->managerDepartments->pluck('id');
     $unitId = $user->unit_id;
 
     $leaves = Leave::with(['user', 'leave_type'])
