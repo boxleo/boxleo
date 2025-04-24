@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('announcement_department', function (Blueprint $table) {
+        Schema::create('other_deductions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('payslip_id')->constrained()->onDelete('cascade');
+            $table->string('label');
+            $table->decimal('amount', 10, 2);
             $table->timestamps();
-            $table->foreignId('announcement_id')->constrained()->onDelete('cascade');
-            $table->foreignId('department_id')->constrained()->onDelete('cascade');
             $table->softDeletes();
 
         });
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('announcement_department');
+        Schema::dropIfExists('other_deductions');
     }
 };

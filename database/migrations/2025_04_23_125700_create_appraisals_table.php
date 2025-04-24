@@ -11,18 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payslips', function (Blueprint $table) {
+        Schema::create('appraisals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            // 	Core salary only
-            $table->decimal('basic_pay', 10, 2);
-            $table->date('pay_date')->nullable();
-            $table->string('payment_mode')->nullable();
-            $table->string('bank')->nullable();
-            $table->string('bank_branch')->nullable();
-            $table->string('bank_account')->nullable();
+            $table->string('supervisor_name');
+            $table->date('review_date');
             $table->timestamps();
             $table->softDeletes();
+
         });
     }
 
@@ -31,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payslips');
+        Schema::dropIfExists('appraisals');
     }
 };

@@ -11,13 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('announcement_department', function (Blueprint $table) {
+        Schema::create('evaluation_summaries', function (Blueprint $table) {
+
+
             $table->id();
+            $table->foreignId('appraisal_id')->constrained('appraisals')->onDelete('cascade');
+            $table->text('objectives_met')->nullable();
+            $table->text('improvement_areas')->nullable();
+            $table->unsignedTinyInteger('overall_rating')->nullable();
             $table->timestamps();
-            $table->foreignId('announcement_id')->constrained()->onDelete('cascade');
-            $table->foreignId('department_id')->constrained()->onDelete('cascade');
             $table->softDeletes();
 
+           
         });
     }
 
@@ -26,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('announcement_department');
+        Schema::dropIfExists('evaluation_summaries');
     }
 };

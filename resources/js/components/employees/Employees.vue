@@ -230,7 +230,7 @@
             </v-row>
             <v-row>
               <v-col cols="12" md="6">
-                <v-combobox variant="outlined" v-model="editedUser.department_id" :items="departments" label="Department" multiple
+                <v-combobox variant="outlined" v-model="editedUser.department_id" :items="departments" label="Department"
                   item-value="id" item-title="name" prepend-icon="mdi-office-building"
                   :rules="[v => !!v || 'Department is required']">
                 </v-combobox>

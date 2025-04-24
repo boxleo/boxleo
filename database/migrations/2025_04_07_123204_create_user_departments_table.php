@@ -15,6 +15,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['user_id', 'department_id']); // Optional: to prevent duplicates
+            $table->softDeletes();
+
         });
     }
 

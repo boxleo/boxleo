@@ -6,23 +6,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class RequisitionItem extends Model
+class OtherDeduction extends Model
 {
     use HasFactory, SoftDeletes;
 
 
 
     protected $fillable = [
-        'requisition_id',
-        'name',
-        'description',
-        'quantity',
-        'unit_cost',
-        'total_cost',
+        'payslip_id',
+        'title',
+        'amount',
     ];
 
-    public function requisition()
+    public function payslip()
     {
-        return $this->belongsTo(Requisition::class);
+        return $this->belongsTo(Payslip::class);
     }
 }

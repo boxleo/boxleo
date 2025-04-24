@@ -10,7 +10,7 @@ class Department extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name',
+        'name','hod_id','manager_id'
     ];
 
     public function users()

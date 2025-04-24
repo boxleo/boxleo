@@ -71,7 +71,7 @@
               <v-icon class="mr-1">mdi-refresh</v-icon>
               All Requisitions: {{ stats.totalRequisitions }}
             </v-btn> -->
-            <v-btn v-if="stats.pending > 0" @click="filterPending" color="orange" outlined class="mx-1">
+            <!-- <v-btn v-if="stats.pending > 0" @click="filterPending" color="orange" outlined class="mx-1">
               <v-icon>mdi-clock</v-icon>
               Pending: {{ stats.pending }}
             </v-btn>
@@ -82,7 +82,7 @@
             <v-btn v-if="stats.rejected > 0" @click="filterRejected" color="red" outlined class="mx-1">
               <v-icon>mdi-cancel</v-icon>
               Rejected: {{ stats.rejected }}
-            </v-btn>
+            </v-btn> -->
             <v-btn @click="openRequestModal" color="primary" outlined class="mx-1">
               <v-icon>mdi-plus</v-icon>
               New Request
@@ -122,17 +122,13 @@
           <v-progress-linear v-if="loading" color="green" indeterminate></v-progress-linear>
 
 
-          <v-tabs
-      v-model="tab"
-      align-tabs="start"
-      color="primary"
-    >
-      <v-tab :value="1">Current</v-tab>
-      <v-tab :value="2">All</v-tab>
-    </v-tabs>
-          
-          <v-data-table :headers="headers" :items="filteredRequisitions" :search="search" item-key="id" responsive show-select
-            v-model:expanded="expandedItems" show-expand>
+          <v-tabs v-model="tab" align-tabs="start" color="primary">
+            <v-tab :value="1">Current</v-tab>
+            <v-tab :value="2">All</v-tab>
+          </v-tabs>
+
+          <v-data-table :headers="headers" :items="filteredRequisitions" :search="search" item-key="id" responsive
+            show-select v-model:expanded="expandedItems" show-expand>
 
 
             <!-- Special Instructions Column -->
@@ -144,7 +140,7 @@
                 {{ item.special_instructions.substring(0, 50) }}...
                 <v-icon @click="toggleExpand(item)">mdi-chevron-down</v-icon>
               </span>
-             
+
             </template>
 
             <!-- Items Column with Expand Button -->
@@ -172,12 +168,12 @@
                         <v-list-item-title>{{ detail.name }}</v-list-item-title>
                         <v-list-item-subtitle>
                           Quantity: {{ detail.quantity }}, Unit Cost: {{ detail.unit_cost }}, Total: {{
-                          detail.total_cost }}
+                            detail.total_cost }}
                         </v-list-item-subtitle>
 
                         <v-list-item-subtitle>
-            
-                            <v-list-item-title>Description: {{ detail.description }}</v-list-item-title>
+
+                          <v-list-item-title>Description: {{ detail.description }}</v-list-item-title>
                         </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>
@@ -190,12 +186,12 @@
 
             <template v-slot:item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" dark @click="openStatusDialog(item)">{{ item.status
-              }}</v-chip>
+                }}</v-chip>
             </template>
 
             <template v-slot:item.pop="{ item }">
               <v-chip color="primary" @click="openPopDialog(item)">{{ item.pop
-              }}
+                }}
 
               </v-chip>
             </template>
@@ -209,8 +205,7 @@
 
                 <!-- make a comment  -->
 
-                <v-icon 
-                  @click="openCommentsDialog(item)" color="primary" style="margin-right: 8px;"
+                <v-icon @click="openCommentsDialog(item)" color="primary" style="margin-right: 8px;"
                   title="Add Comments">
                   mdi-message-text >
                 </v-icon>
@@ -472,8 +467,8 @@
 
                 <v-textarea v-model="specialInstructions" label="Mode of Payment" rows="3" outlined />
 
-                <v-select v-model="approverType" :items="['Finance Manager', 'CFO', 'HR','Welfare']" label="Select Approver Type"
-                  outlined dense></v-select>
+                <v-select v-model="approverType" :items="['Finance Manager', 'CFO', 'HR', 'Welfare']"
+                  label="Select Approver Type" outlined dense></v-select>
 
               </template>
 
@@ -518,7 +513,7 @@ export default {
 
   data() {
     return {
-          tab: 1,
+      tab: 1,
 
       expandedItems: [],
 
@@ -589,7 +584,7 @@ export default {
         { name: 'HR' }
       ],
 
-   
+
       requisitionItems: [
         {
           name: "",
@@ -614,7 +609,10 @@ export default {
         { title: "Status", value: "status" },
         // { title: "Comments", value: "comment" },
         { title: "Type", value: "approver_type" },
-        { title: "POP", value: "pop" },
+        {
+          title: "POP", value: "pop"
+
+        },
         { title: "Actions", value: "actions", sortable: true },
       ],
       loading: false,
@@ -631,16 +629,37 @@ export default {
   },
 
   computed: {
+
+
   filteredRequisitions() {
-    if (this.tab === 1) {
-      // Return only today's requisitions
-      const today = new Date().toISOString().slice(0, 10); // Format: YYYY-MM-DD
-      return this.requisitions.filter(req => req.created_at.slice(0, 10) === today);
+    // First apply tab-based filtering (current vs all)
+    let result = this.tab === 1 
+      ? this.requisitions.filter(req => {
+          const today = new Date().toISOString().slice(0, 10); // Format: YYYY-MM-DD
+          return req.created_at.slice(0, 10) === today;
+        })
+      : this.requisitions; // Show all when tab is 2
+    
+    // Then apply role-based filtering if needed
+    if (this.user) {
+      if (this.user.is_cfo) {
+        result = result.filter(req => req.status === 'COO Approved');
+      } else if (this.user.is_coo) {
+        result = result.filter(req => req.status === 'HR Approved');
+      } else if (this.user.is_hr) {
+        result = result.filter(req => 
+          req.status === 'Manager Approved' || 
+          req.status === 'Finance Manager Approved'
+        );
+      }
+      // Finance Manager sees all requisitions, so no additional filtering needed
+      // Regular users also see all requisitions that pass the tab filter
     }
-    return this.requisitions; // Show all
+    
+    return result;
   }
-}
-,
+},
+  
   methods: {
 
 
@@ -670,29 +689,29 @@ export default {
     ,
 
     getStatusColor(status) {
-  switch (status) {
-    case 'Pending':
-      return '#2196F3'; // Blue
-    case 'Approved':
-      return '#FF9800'; // Orange
-    case 'Manager Approved':
-      return '#8BC34A'; // Light Green
-    case 'Closed':
-      return '#F44336'; // Red
-    case 'HR Approved':
-      return '#9C27B0'; // Purple
-    case 'Finance Manager Approved':
-      return '#3F51B5'; // Indigo
-    case 'Cancelled':
-      return '#F44336'; // Red (same as Closed for consistency)
-    case 'COO Approved':
-      return '#9E9E9E'; // Grey
-    case 'Paid':
-      return '#4CAF50'; // Green
-    default:
-      return '#B0BEC5'; // Light Grey for unknown status
-  }
-},
+      switch (status) {
+        case 'Pending':
+          return '#2196F3'; // Blue
+        case 'Approved':
+          return '#FF9800'; // Orange
+        case 'Manager Approved':
+          return '#8BC34A'; // Light Green
+        case 'Closed':
+          return '#F44336'; // Red
+        case 'HR Approved':
+          return '#9C27B0'; // Purple
+        case 'Finance Manager Approved':
+          return '#3F51B5'; // Indigo
+        case 'Cancelled':
+          return '#F44336'; // Red (same as Closed for consistency)
+        case 'COO Approved':
+          return '#9E9E9E'; // Grey
+        case 'Paid':
+          return '#4CAF50'; // Green
+        default:
+          return '#B0BEC5'; // Light Grey for unknown status
+      }
+    },
     fetchAccounts() {
       axios
         .get(`/api/v1/accounts`)
@@ -703,7 +722,6 @@ export default {
           console.error("Error fetching accounts:", error);
         });
     },
-
 
     saveAccount() {
 
@@ -1021,6 +1039,74 @@ export default {
         this.loading = false;
       }
     },
+
+
+
+    // async fetchRequisitions() {
+    //   this.loading = true;
+    //   try {
+    //     const response = await axios.get("/api/v1/requisitions");
+    //     this.requisitions = response.data.requisitions;
+
+    //     if (this.user) {
+    //       console.log("User is logged in:", this.user);
+
+    //       // Filter requisitions based on user role
+    //       if (this.user.is_cfo) {
+    //         console.log("User is CFO");
+    //         // CFO should see requisitions with status "COO Approved"
+    //         this.filteredRequisitions = this.requisitions.filter(req =>
+    //           req.status === 'COO Approved'
+    //         );
+    //         console.log("Requisitions for CFO:", this.filteredRequisitions);
+    //       }
+    //       else if (this.user.is_coo) {
+    //         console.log("User is COO");
+    //         // COO should see requisitions with status "HR Approved"
+    //         this.filteredRequisitions = this.requisitions.filter(req =>
+    //           req.status === 'HR Approved'
+    //         );
+    //         console.log("Requisitions for COO:", this.filteredRequisitions);
+    //       }
+    //       else if (this.user.is_hr) {
+    //         console.log("User is HR");
+    //         // HR should see Manager Approved and Finance Manager Approved
+    //         this.filteredRequisitions = this.requisitions.filter(req =>
+    //           req.status === 'Manager Approved' ||
+    //           req.status === 'Finance Manager Approved'
+    //         );
+    //         console.log("Requisitions for HR:", this.filteredRequisitions);
+    //       }
+    //       else if (this.user.is_finance_manager) {
+    //         console.log("User is Finance Manager");
+    //         // Finance Manager should see all requisitions
+    //         this.filteredRequisitions = this.requisitions;
+    //         console.log("All requisitions for Finance Manager:", this.filteredRequisitions);
+    //       }
+    //       else {
+    //         console.log("User has no special role");
+    //         // For users with no special roles, show pending requisitions
+    //         this.filteredRequisitions = this.requisitions;
+    //         console.log("Pending requisitions for regular user:", this.filteredRequisitions);
+    //       }
+    //     } else {
+    //       console.log("No user logged in");
+    //       this.filteredRequisitions = [];
+    //     }
+
+    //     ;
+
+    //     return this.filteredRequisitions;
+    //   } catch (error) {
+    //     console.error("Error fetching requisitions:", error);
+    //     this.filteredRequisitions = [];
+    //     return [];
+    //   } finally {
+    //     this.loading = false;
+    //   }
+    // },
+
+
     nextStep() {
       if (this.step < 3) this.step++;
     },

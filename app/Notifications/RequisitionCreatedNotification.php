@@ -44,7 +44,9 @@ class RequisitionCreatedNotification extends Notification
             ->subject('New Requisition Created')
             ->line('A new requisition has been created and is pending your approval.')
             ->line('Status: ' . $this->requisition->status)
-            ->action('View Requisition', url('/requisitions'))
+            // ->action('View Requisition', url('/requisitions'))
+            ->action('View Requisition', url('/api/v1/requisitions/' . $this->requisition->id . '/pdf'))
+
 
 
             ->line('Thank you for using our application!');

@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\HodDepartment;
 use App\Models\ManagerDepartment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DepartmentApiController extends Controller
 {
@@ -69,22 +70,77 @@ class DepartmentApiController extends Controller
     }
 
 
+    // public function store(Request $request)
+    // {
+    //     Log::info('Store Department Request Received', ['request' => $request->all()]);
+
+    //     $this->validate(
+    //         $request,
+    //         [
+    //             'name' => 'required|max:100',
+    //             'hod_id' => 'required|exists:users,id',
+    //             'manager_id' => 'required|exists:users,id',
+    //         ]
+    //     );
+
+    //     try {
+    //         $department = Department::create($request->all());
+    //         Log::info('Department Created Successfully', ['department' => $department]);
+
+    //         return response()->json(['Success' => 'Department Created Successfully']);
+    //     } catch (\Exception $e) {
+    //         Log::error('Error Creating Department', ['error' => $e->getMessage()]);
+    //         return response()->json(['Error' => 'Failed to Create Department'], 500);
+    //     }
+    // }
+
+
+
+    
+    
     public function store(Request $request)
     {
-
+        Log::info('Store Department Request Received', ['request' => $request->all()]);
+    
         $this->validate(
             $request,
             [
                 'name' => 'required|max:100',
-                'hod_id' => 'required|exists:users,id'
+                'hod_id' => 'nullable|exists:users,id', // Changed to nullable to match frontend
+                'manager_id' => 'nullable|exists:users,id', // Changed to nullable to match frontend
             ]
-
-
         );
-
-        Department::create($request->all());
-
-        return response()->json(['Success' => 'Department Created Successifully']);
+    
+        try {
+            // Create the department first
+            $department = Department::create([
+                'name' => $request->input('name'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            // If HOD ID is provided, create HOD department relationship
+            if ($request->filled('hod_id')) {
+                HodDepartment::create([
+                    'user_id' => $request->input('hod_id'),
+                    'department_id' => $department->id,
+                ]);
+            }
+            
+            // If Manager ID is provided, create Manager department relationship
+            if ($request->filled('manager_id')) {
+                ManagerDepartment::create([
+                    'user_id' => $request->input('manager_id'),
+                    'department_id' => $department->id,
+                ]);
+            }
+    
+            Log::info('Department Created Successfully', ['department' => $department]);
+            return response()->json(['Success' => 'Department Created Successfully']);
+        } catch (\Exception $e) {
+            Log::error('Error Creating Department', ['error' => $e->getMessage()]);
+            return response()->json(['Error' => 'Failed to Create Department: ' . $e->getMessage()], 500);
+        }
     }
 
 

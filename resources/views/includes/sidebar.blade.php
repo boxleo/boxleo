@@ -134,6 +134,25 @@
                 </li>
 
 
+
+                <!-- payroll -->
+                <li class="submenu">
+                    <a href="javascript:void(0);" data-toggle="collapse" data-target="#payroll">
+                        <i class="la la-money"></i>
+                        <span>Payroll</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul id="payroll" class="collapse">
+                        <li><a href="/payroll">Payroll Dashboard</a></li>
+                        <!-- <li><a href="/payroll/earnings">Earnings</a></li>
+                        <li><a href="/payroll/deductions">Deductions</a></li>
+                        <li><a href="/payroll/payslips">Payslips</a></li> -->
+                        <li><a href="/payroll/settings">Payroll Settings</a></li>
+                    </ul>
+                </li>
+
+
+
                 <li>
                     <a href="/announcements"><i class="la la-bell"></i> <span>Announcements</span></a>
                 </li>
