@@ -307,7 +307,7 @@ class LeaveApiController extends Controller
 
     $leaves = Leave::with(['user', 'leave_type'])
       ->whereHas('user', function ($query) use ($departmentId, $unitId) {
-        $query->where('department_id', $departmentId)
+        $query->whereIn('department_id', $departmentId)
           ->where('unit_id', $unitId);
       })
       ->orderByRaw("CASE WHEN status = 'pending' THEN 1 ELSE 2 END") // Prioritize 'pending' status
