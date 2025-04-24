@@ -387,8 +387,6 @@ public function update(Request $request, User $user)
         'unit_id' => 'required|exists:units,id',
         'office_id' => 'required|exists:offices,id',
         'department_id' => 'required|exists:departments,id',
-        // 'department_id' => 'required|exists:department_id',
-
         'designation_id' => 'required|exists:designations,id',
         'role' => 'required|string|in:admin,employee',
         'gender' => 'required|string|in:Male,Female',
