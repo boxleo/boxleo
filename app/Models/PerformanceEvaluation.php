@@ -27,7 +27,8 @@ class PerformanceEvaluation extends Model
         'quality_of_work',
         'communication',
         'total_score',
-        'percentage'
+        'percentage',
+        'leadership'
     ];
 
 

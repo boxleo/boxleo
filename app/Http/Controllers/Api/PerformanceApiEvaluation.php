@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\Department;
 use App\Models\PerformanceEvaluation;
 use App\Models\User;
 use Carbon\Carbon;
@@ -196,31 +197,102 @@ public function attendance($userId, $year, $month)
 
 
 
-//     public function attendance(){
+/**
+ * Filter performance evaluations based on criteria
+ * 
+ * @param Request $request
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function filterEvaluations(Request $request)
+{
+    Log::info('Filtering performance evaluations', ['request' => $request->all()]);
 
-//         // this function 
+    // Start with a base query
+    $query = PerformanceEvaluation::with(['user.department', 'evaluator'])
+        ->whereNull('deleted_at');
+    
+    // Apply department filter (supports multiple departments)
+    if ($request->has('department_id') && $request->department_id) {
+        Log::info('Applying department filter', ['department_id' => $request->department_id]);
+        $userIds = User::whereIn('department_id', (array) $request->department_id)->pluck('id');
+        $query->whereIn('user_id', $userIds);
+    }
+    // Apply evaluation date filter
+    if ($request->has('evaluation_date') && $request->evaluation_date) {
+        Log::info('Applying evaluation date filter', ['evaluation_date' => $request->evaluation_date]);
+        $query->whereDate('evaluation_date', $request->evaluation_date);
+    }
+    
+    // Apply user filter
+    if ($request->has('user_id') && $request->user_id) {
+        Log::info('Applying user filter', ['user_id' => $request->user_id]);
+        $query->where('user_id', $request->user_id);
+    }
+    
+    // Apply evaluator filter
+    if ($request->has('evaluator_id') && $request->evaluator_id) {
+        Log::info('Applying evaluator filter', ['evaluator_id' => $request->evaluator_id]);
+        $query->where('evaluator_id', $request->evaluator_id);
+    }
+    
+    // Get filtered evaluations
+    $evaluations = $query->get();
+    Log::info('Filtered evaluations retrieved', ['count' => $evaluations->count()]);
+    
 
-//         //  this function calulates average percentage of attendance in a month of user 
+    return response()->json(['evaluations' => $evaluations]);
+
+  
+}
+
+/**
+ * Get employees for the filter dropdown
+ * 
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function getFilterOptions()
+{
+    Log::info('Fetching filter options for employees, evaluators, and departments');
+
+    // Get list of all employees
+    $employees = User::select('id', 'firstname', 'lastname')
+        ->whereNull('deleted_at')
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'fullName' => $user->firstname . ' ' . $user->lastname
+            ];
+        });
+    Log::info('Employees fetched', ['count' => $employees->count()]);
+
+    // Get list of all evaluators
+    $evaluators = User::select('id', 'firstname', 'lastname')
+        ->whereHas('evaluatorPerformances')
+        ->whereNull('deleted_at')
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'fullName' => $user->firstname . ' ' . $user->lastname
+            ];
+        });
+    Log::info('Evaluators fetched', ['count' => $evaluators->count()]);
+
+    // Get departments
+    $departments = Department::select('id', 'name')
+        ->whereNull('deleted_at')
+        ->get();
+    Log::info('Departments fetched', ['count' => $departments->count()]);
+
+    return response()->json([
+        'status' => 'success',
+        'employees' => $employees,
+        'evaluators' => $evaluators,
+        'departments' => $departments
+    ]);
+}
 
 
 
-
-// // id	bigint(20) unsigned	NO	PRI	NULL	auto_increment	
-// // attendance_date	date	NO		NULL		
-// // user_id	bigint(20) unsigned	NO	MUL	NULL		
-// // clock_in_time	varchar(255)	NO		NULL		
-// // clock_out_time	varchar(255)	YES		NULL		
-// // hours_worked	int(11)	NO		9		
-// // status	varchar(255)	NO		NULL		
-// // is_present	tinyint(1)	NO		0		
-// // notes	text	YES		NULL		
-// // overtime_hours	decimal(8,2)	YES		NULL		
-// // created_at	timestamp	YES		NULL		
-// // updated_at	timestamp	YES		NULL		
-// // deleted_at	timestamp	YES		NULL		
-// // ip_address	varchar(255)	YES		NULL		
-
-
-
-//     }
 }
