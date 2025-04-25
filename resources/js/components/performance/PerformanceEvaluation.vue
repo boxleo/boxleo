@@ -657,6 +657,33 @@ export default {
     });
 }
 ,
+downloadFullReport() {
+  this.loading = true;
+
+  axios.post('/api/v1/performance-reports/export', {
+    evaluations: this.evaluations
+  }, {
+    responseType: 'blob' // Needed for file download
+  })
+    .then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'full_performance_report.xlsx'); // Adjust filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    })
+    .catch(error => {
+      console.error('Error downloading full report:', error);
+      this.$toastr.error('Failed to download full report.');
+    })
+    .finally(() => {
+      this.loading = false;
+    });
+},
+
+
     getRankColor(rank) {
       if (rank === 1) return 'gold';
       if (rank === 2) return 'silver';
@@ -861,6 +888,7 @@ export default {
         leadership: evaluation.leadership,
         total_score: evaluation.total_score,
         percentage: evaluation.percentage,
+        
       };
       this.viewEvaluationModal = true;
     },

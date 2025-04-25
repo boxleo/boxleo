@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('performance_evaluations', function (Blueprint $table) {
-            //
+        //
             $table->dropColumn('leadership');
 
         });

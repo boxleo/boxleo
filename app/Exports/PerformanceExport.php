@@ -49,6 +49,7 @@ class PerformanceExport implements FromCollection, WithHeadings, WithMapping, Wi
             'Discipline',
             'Quality of Work',
             'Communication',
+            'Leadership',
             'Total Score',
             'Percentage (%)',
             'Evaluated On'
@@ -88,6 +89,7 @@ class PerformanceExport implements FromCollection, WithHeadings, WithMapping, Wi
         $evaluation['discipline'] ?? 'N/A',
         $evaluation['quality_of_work'] ?? 'N/A',
         $evaluation['communication'] ?? 'N/A',
+        $evaluation['leadership'] ?? 'N/A',
         $evaluation['total_score'] ?? 'N/A',
         $evaluation['percentage'] ?? 'N/A',
         $evaluation['created_at'] ? Carbon::parse($evaluation['created_at'])->format('Y-m-d H:i:s') : 'N/A',
