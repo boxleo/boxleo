@@ -246,6 +246,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="/announcements"><i class="la la-bell"></i>
+                        <span>Announcements</span>
+                    </a>
+                </li>
+                <li>
                     <a href="/employee-timeline"><i class="la la-book"></i> <span>Timeline & Updates</span></a>
                 </li>
             </ul>

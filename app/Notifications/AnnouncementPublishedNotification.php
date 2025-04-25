@@ -50,7 +50,7 @@ class AnnouncementPublishedNotification extends Notification
             ->greeting('Hello ' . $notifiable->firstname . ',')
             ->line('A new announcement has been published.')
             ->line('Subject: ' . $this->announcement->subject)
-            ->line('Description: ' . \Str::limit($this->announcement->description, 100))
+            ->line('Description: ' . $this->announcement->description)
             ->action('View Announcement', url('/announcements/' ))
             ->line('Thank you for staying informed.');
     }

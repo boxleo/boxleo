@@ -136,12 +136,12 @@ class AnnouncementApiController extends Controller
 
         if ($status === 'published') {
             $authorUnitId = Auth::user()->unit_id;
-            
+
             // Get users based on selected departments and units
             // $query = User::where('is_enabled', true);
             $query = User::where('is_enabled', true)
                          ->where('email', '!=', 'brian.omondi@boxleocourier.com');
-            
+
             // If specific units are selected
             if ($request->has('unit_ids') && !empty($request->input('unit_ids'))) {
                 $unitIds = $request->input('unit_ids');
@@ -150,7 +150,7 @@ class AnnouncementApiController extends Controller
                 // Default to author's unit only
                 $query->where('unit_id', $authorUnitId);
             }
-            
+
             // If specific departments are selected
             if ($request->has('department_ids') && !empty($request->input('department_ids'))) {
                 $departmentIds = $request->input('department_ids');
@@ -158,9 +158,9 @@ class AnnouncementApiController extends Controller
                     $q->whereIn('department_id', $departmentIds);
                 });
             }
-            
+
             $users = $query->get();
-            
+
             Notification::send($users, new AnnouncementPublishedNotification($announcement));
         }
 
@@ -236,36 +236,72 @@ class AnnouncementApiController extends Controller
 
         $announcement->save();
 
-        if ($status === 'published') {
-            $unitId = Auth::user()->unit_id;
+        // if ($status === 'published') {
+        //     $unitId = Auth::user()->unit_id;
 
-            // Check if departments were selected
+        //     // Check if departments were selected
+        //     if ($request->has('department_ids') && !empty($request->input('department_ids'))) {
+        //         $departmentIds = $request->input('department_ids');
+
+        //         // Get users who belong to selected departments AND have the same unit_id
+        //         $users = User::whereHas('department', function($query) use ($departmentIds) {
+        //             $query->whereIn('department_id', $departmentIds);
+        //         })
+        //         ->where('is_enabled', true)
+        //         ->where('unit_id', $unitId)
+        //         ->get();
+
+        //         Log::info('Sending notifications to users in selected departments and same unit', [
+        //             'unit_id' => $unitId,
+        //             'department_ids' => $departmentIds,
+        //             'user_count' => $users->count()
+        //         ]);
+
+        //         Notification::send($users, new AnnouncementPublishedNotification($announcement));
+        //     } else {
+        //         // No departments specified, so only filter by unit_id
+        //         $users = User::where('is_enabled', true)
+        //                     ->where('unit_id', $unitId)
+        //                     ->get();
+
+        //         Notification::send($users, new AnnouncementPublishedNotification($announcement));
+        //     }
+        // }
+
+        if ($status === 'published') {
+            $authorUnitId = Auth::user()->unit_id;
+
+            // Get users based on selected departments and units
+            $query = User::where('is_enabled', true)
+                        ->where('email', '!=', 'brian.omondi@boxleocourier.com');
+
+            // If specific units are selected
+            if ($request->has('unit_ids') && !empty($request->input('unit_ids'))) {
+                $unitIds = $request->input('unit_ids');
+                $query->whereIn('unit_id', $unitIds);
+            } else {
+                // Default to author's unit only
+                $query->where('unit_id', $authorUnitId);
+            }
+
+            // If specific departments are selected
             if ($request->has('department_ids') && !empty($request->input('department_ids'))) {
                 $departmentIds = $request->input('department_ids');
-
-                // Get users who belong to selected departments AND have the same unit_id
-                $users = User::whereHas('department', function($query) use ($departmentIds) {
-                    $query->whereIn('department_id', $departmentIds);
-                })
-                ->where('is_enabled', true)
-                ->where('unit_id', $unitId)
-                ->get();
-
-                Log::info('Sending notifications to users in selected departments and same unit', [
-                    'unit_id' => $unitId,
-                    'department_ids' => $departmentIds,
-                    'user_count' => $users->count()
-                ]);
-
-                Notification::send($users, new AnnouncementPublishedNotification($announcement));
-            } else {
-                // No departments specified, so only filter by unit_id
-                $users = User::where('is_enabled', true)
-                            ->where('unit_id', $unitId)
-                            ->get();
-
-                Notification::send($users, new AnnouncementPublishedNotification($announcement));
+                $query->whereHas('department', function($q) use ($departmentIds) {
+                    $q->whereIn('department_id', $departmentIds);
+                });
             }
+
+            $users = $query->get();
+
+            Log::info('Sending notifications to filtered users', [
+                'author_unit_id' => $authorUnitId,
+                'user_count' => $users->count(),
+                'has_department_filters' => $request->has('department_ids'),
+                'has_unit_filters' => $request->has('unit_ids')
+            ]);
+
+            Notification::send($users, new AnnouncementPublishedNotification($announcement));
         }
 
         // Handle attachments (if any)

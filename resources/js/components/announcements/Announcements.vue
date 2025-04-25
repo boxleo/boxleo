@@ -5,7 +5,7 @@
                 <v-data-table :headers="headers" :items="announcements" item-key="id" class="elevation-1" show-select>
                     <template v-slot:top>
                         <v-col class="d-flex justify-end">
-                                <v-btn class="mr-4" color="primary" @click="createAnnouncement">Create Announcement</v-btn>
+                                <v-btn v-if="permissions.includes('create announcement')" class="mr-4" color="primary" @click="createAnnouncement">Create Announcement</v-btn>
                         </v-col>
 
                     </template>
@@ -32,8 +32,8 @@
 
                     <template v-slot:item.actions="{ item }">
                         <v-icon small @click="viewAnnouncement(item)" title="View Announcement">mdi-eye</v-icon>
-                        <v-icon small @click="editAnnouncement(item)" title="Edit Announcement">mdi-pencil</v-icon>
-                        <v-icon small @click="deleteAnnouncement(item)"
+                        <v-icon v-if="permissions.includes('edit announcement')" small @click="editAnnouncement(item)" title="Edit Announcement">mdi-pencil</v-icon>
+                        <v-icon v-if="permissions.includes('delete announcement')" small @click="deleteAnnouncement(item)"
                             title="Delete Announcement">mdi-delete</v-icon>
                     </template>
                 </v-data-table>
@@ -129,6 +129,12 @@
 
 <script>
 export default {
+    props: {
+    user: Object,
+    roles: Array,
+    permissions: Array
+  },
+  
     data() {
         return {
             showDialog: false,
@@ -183,12 +189,15 @@ export default {
     computed: {
         formTitle() {
             return this.editedIndex === -1 ? 'Create Announcement' : 'Edit Announcement';
-        }
+        },
     },
     mounted() {
         this.fetchAnnouncements();
         this.fetchDepartments();
         this.fetchUnits();
+        console.log('User:', this.user);
+        console.log('Roles:', this.roles);
+        console.log('Permissions:', this.permissions);
     },
     methods: {
         fetchAnnouncements() {
