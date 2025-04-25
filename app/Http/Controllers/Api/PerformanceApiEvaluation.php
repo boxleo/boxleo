@@ -34,6 +34,7 @@ class PerformanceApiEvaluation extends Controller
             'communication' => 'required|integer',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
+            'leadership' => 'required|numeric',
         ]);
 
         // Assuming you have a model named PerformanceEvaluation
@@ -63,6 +64,8 @@ class PerformanceApiEvaluation extends Controller
             'communication' => 'required|integer',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
+            'leadership' => 'required|numeric',
+
         ]);
 
         // Assuming you have a model named EmployeePerformance

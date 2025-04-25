@@ -51,7 +51,7 @@ class UserApiController extends Controller
 
         $team = User::whereIn('department_id', $managerDeptIds)
                     ->where('unit_id', $authUser->unit_id)
-                    ->where('designation_id', '!=', 1)
+                    // ->where('designation_id', '!=', 1)
                     ->get();
 
         $response['team'] = $team;
