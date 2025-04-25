@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\DisciplinaryApiController;
 use App\Http\Controllers\Api\PerformanceApiEvaluation;
 use App\Http\Controllers\Api\RequisitionApiController;
+use App\Http\Controllers\PerformanceApiReportController;
 
 Route::middleware('auth:sanctum')->group(function () {
   //users
@@ -250,10 +251,15 @@ Route::get('/v1/accounts', [RequisitionApiController::class, 'fetchAccounts']);
 
 
 
-
-
 // performance evalution
 Route::get('v1/performance-evaluations', [PerformanceApiEvaluation::class, 'index']);
 Route::post('v1/performance-evaluations', [PerformanceApiEvaluation::class, 'store']);
 Route::put('v1/performance-evaluations/{id}', [PerformanceApiEvaluation::class, 'update']);
 Route::delete('v1/performance-evaluations/{id}', [PerformanceApiEvaluation::class, 'destroy']);
+Route::get('v1/performance-evaluations/filter', [PerformanceApiEvaluation::class, 'filterEvaluations']);
+Route::get('v1/performance-evaluations/filter-options', [PerformanceApiEvaluation::class, 'getFilterOptions']);
+
+
+// Performance report routes
+Route::post('v1/performance-reports/export', [PerformanceApiReportController::class, 'exportPerformanceEvaluations']);
+Route::post('v1/performance-reports/ranked-employees', [PerformanceApiReportController::class, 'exportRankedEmployees']);

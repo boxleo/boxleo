@@ -641,20 +641,20 @@ export default {
       : this.requisitions; // Show all when tab is 2
     
     // Then apply role-based filtering if needed
-    if (this.user) {
-      if (this.user.is_cfo) {
-        result = result.filter(req => req.status === 'COO Approved');
-      } else if (this.user.is_coo) {
-        result = result.filter(req => req.status === 'HR Approved');
-      } else if (this.user.is_hr) {
-        result = result.filter(req => 
-          req.status === 'Manager Approved' || 
-          req.status === 'Finance Manager Approved'
-        );
-      }
-      // Finance Manager sees all requisitions, so no additional filtering needed
-      // Regular users also see all requisitions that pass the tab filter
-    }
+    // if (this.user) {
+    //   if (this.user.is_cfo) {
+    //     result = result.filter(req => req.status === 'COO Approved');
+    //   } else if (this.user.is_coo) {
+    //     result = result.filter(req => req.status === 'HR Approved');
+    //   } else if (this.user.is_hr) {
+    //     result = result.filter(req => 
+    //       req.status === 'Manager Approved' || 
+    //       req.status === 'Finance Manager Approved'
+    //     );
+    //   }
+    //   // Finance Manager sees all requisitions, so no additional filtering needed
+    //   // Regular users also see all requisitions that pass the tab filter
+    // }
     
     return result;
   }

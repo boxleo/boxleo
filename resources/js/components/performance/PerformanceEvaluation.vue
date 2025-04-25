@@ -20,8 +20,7 @@
                 <v-col cols="12">
                   <v-label>Department:</v-label>
                   <v-select v-model="filters.department_id" item-value="id" item-title="name" :items="departments"
-                  multiple
-                    clearable dense>
+                    multiple clearable dense>
                   </v-select>
                 </v-col>
               </v-list-item>
@@ -29,26 +28,34 @@
               <v-list-item>
                 <v-col cols="12">
                   <v-label>Evaluation Date:</v-label>
-                  <v-text-field v-model="filters.evaluation_date" type="date">
-                  </v-text-field>
+                  <v-row>
+                    <v-col cols="6">
+                      <v-text-field v-model="filters.evaluation_date_start" label="Start Date" type="date"
+                        dense></v-text-field>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-text-field v-model="filters.evaluation_date_end" label="End Date" type="date"
+                        dense></v-text-field>
+                    </v-col>
+                  </v-row>
                 </v-col>
               </v-list-item>
               <!-- Filter by Employee -->
               <v-list-item>
                 <v-col cols="12">
                   <v-label>Employee:</v-label>
-                  <v-autocomplete v-model="filters.user_id" :items="employees" item-title="fullName" item-value="id"
-                    clearable dense>
-                  </v-autocomplete>
+                  <v-combobox :items="users" item-title="fullName" item-value="id" search-input
+                    v-model="filters.user_id" label="Assign to Employee" variant="outlined">
+                  </v-combobox>
                 </v-col>
               </v-list-item>
               <!-- Filter by Evaluator -->
               <v-list-item>
                 <v-col cols="12">
                   <v-label>Evaluator:</v-label>
-                  <v-autocomplete v-model="filters.evaluator_id" :items="evaluators" item-title="fullName"
-                    item-value="id" clearable dense>
-                  </v-autocomplete>
+                  <v-combobox :items="users" item-title="fullName" item-value="id" search-input
+                    v-model="filters.evaluator_id" label="Assign to Employee" variant="outlined">
+                  </v-combobox>
                 </v-col>
               </v-list-item>
             </v-list>
@@ -228,18 +235,43 @@
         </v-row>
       </v-col>
       <v-divider></v-divider>
-      <v-row justify="end" class="text-right">
-        <v-col cols="auto">
-          <v-icon size="16" color="primary mx-1" @click.stop="drawer = !drawer" small>mdi-filter</v-icon>
-          
-            <!-- <v-btn v-if="permissions.includes('evaluate')" @click="addEvaluationDialog = true" icon> -->
-              <v-btn  @click="addEvaluationDialog = true" icon>
+      <v-row align="center" justify="space-between" class="mb-4">
+        <!-- Left side (Filter icon + Add button) -->
+        <v-col cols="auto" class="d-flex align-center">
+          <v-icon size="20" color="primary" class="mx-2" @click.stop="drawer = !drawer">
+            mdi-filter
+          </v-icon>
 
+          <v-btn @click="addEvaluationDialog = true" icon>
             <v-tooltip activator="parent" location="top">Add Evaluation</v-tooltip>
             <v-icon color="primary">mdi-plus</v-icon>
+          </v-btn>
+        </v-col>
+
+        <!-- Right side (Download button with dropdown) -->
+        <v-col cols="auto">
+
+
+          <div class="d-flex">
+            <!-- <v-btn color="primary" class="mr-2" @click="downloadFullReport">
+              <v-icon left>mdi-file-excel</v-icon>
+              Download All Evaluations
+            </v-btn> -->
+
+            <v-btn color="primary" class="mr-2" @click="downloadRankingReport">
+              <v-icon left>mdi-podium</v-icon>
+              Download Employee Rankings
             </v-btn>
+
+            <v-btn color="primary" @click="downloadFullReport">
+              <v-icon left>mdi-download</v-icon>
+              Download Reports
+            </v-btn>
+          </div>
+
         </v-col>
       </v-row>
+
 
       <!-- Data Table for Performance Evaluations -->
       <v-row no-gutters>
@@ -315,23 +347,18 @@
 
 
                 <v-col cols="12" sm="6">
-  <v-autocomplete
-    v-model="newEvaluation.user_id"
-    :items="team"
-    item-title="fullname"
-    item-value="id"
-    label="Employee"
-    clearable
-    dense
-  />
-</v-col>
+                  <v-autocomplete v-model="newEvaluation.user_id" :items="team" item-title="fullname" item-value="id"
+                    label="Employee" clearable dense />
+                </v-col>
 
-             
+
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.attendance" label="Attendance" type="number" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.attendance" label="Attendance" type="number"
+                    dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number"
+                    dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted" type="number"
@@ -345,33 +372,40 @@
                   <v-text-field v-model="newEvaluation.team_work" label="Team Work" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility" type="number"
+                  <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility"
+                    type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="newEvaluation.productivity" label="Productivity" type="number"
                     dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.productivity" label="Productivity" type="number" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.discipline" label="Discipline" type="number"
+                    dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.discipline" label="Discipline" type="number" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" type="number"
+                    dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.communication" label="Communication" type="number" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.communication" label="Communication" type="number"
+                    dense></v-text-field>
                 </v-col>
 
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number"
+                    dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.total_score" label="Total Score" type="number" dense disabled></v-text-field>
+                  <v-text-field v-model="newEvaluation.total_score" label="Total Score" type="number" dense
+                    disabled></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.percentage" label="Percentage" type="number" dense disabled></v-text-field>
+                  <v-text-field v-model="newEvaluation.percentage" label="Percentage" type="number" dense
+                    disabled></v-text-field>
                 </v-col>
 
-              
+
               </v-row>
             </v-form>
           </v-card-text>
@@ -471,6 +505,21 @@ export default {
         { title: 'Actions', value: 'actions', sortable: false },
       ],
 
+      rankedEmployees: [],
+      loadingRankings: false,
+      rankingSearch: '',
+      rankingHeaders: [
+        { text: 'Rank', value: 'rank', align: 'center', width: '70px' },
+        { text: 'Employee', value: 'full_name' },
+        { text: 'Department', value: 'department' },
+        { text: 'Average Score', value: 'avg_score', align: 'center' },
+        { text: 'Average Percentage', value: 'avg_percentage', align: 'center' },
+        { text: 'Attendance', value: 'avg_attendance', align: 'center' },
+        { text: 'Problems Solved', value: 'avg_problems_solved', align: 'center' },
+        { text: 'Team Work', value: 'avg_team_work', align: 'center' },
+        { text: 'Productivity', value: 'avg_productivity', align: 'center' },
+      ],
+
       drawer: false,
       selected: [],
       search: '',
@@ -480,7 +529,7 @@ export default {
       evaluators: [],
       departments: [],
       team: [],
-      user:'',
+      user: '',
       averageTotalScore: 0,
       averagePercentage: 0,
       averageAttendance: 0,
@@ -538,12 +587,109 @@ export default {
     this.fetchEvaluations();
     this.fetchDepartments();
     this.fetchTeam();
+    this.fetchUsers();
     console.log("User:", this.user);
     console.log("Roles:", this.roles);
     console.log("Permissions:", this.permissions);
+    // this.fetchFilterOptions();
+
   },
 
   methods: {
+
+    fetchUsers() {
+      console.log('Fetching users from the API...');
+      axios.get('/api/v1/users')
+        .then(response => {
+          console.log('API response received:', response);
+
+          if (response.data && response.data.users) {
+
+            console.log('Users data found:', response.data.users);
+
+            this.users = response.data.users.map(user => ({
+
+              id: user.id,
+
+              fullName: `${user.firstname} ${user.lastname}`,
+            }));
+            // console.log('Processed users:', this.users); 
+            console.log('Processed users:', JSON.parse(JSON.stringify(this.users)));
+
+          } else {
+
+            console.warn('No users found in the response.');
+
+          }
+
+        })
+        .catch(error => {
+
+          console.error('Error fetching users:', error); // Log the error
+        });
+    },
+
+
+
+    downloadRankingReport() {
+  this.loadingRankings = true;
+
+  axios.post('/api/v1/performance-reports/ranked-employees', {
+    evaluations: this.evaluations
+  }, {
+    responseType: 'blob' // Needed for file download
+  })
+    .then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'ranked_employees.xlsx'); // Adjust filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    })
+    .catch(error => {
+      console.error('Error downloading ranked report:', error);
+      this.$toastr.error('Failed to download ranked report.');
+    })
+    .finally(() => {
+      this.loadingRankings = false;
+    });
+}
+,
+downloadFullReport() {
+  this.loading = true;
+
+  axios.post('/api/v1/performance-reports/export', {
+    evaluations: this.evaluations
+  }, {
+    responseType: 'blob' // Needed for file download
+  })
+    .then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'full_performance_report.xlsx'); // Adjust filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    })
+    .catch(error => {
+      console.error('Error downloading full report:', error);
+      this.$toastr.error('Failed to download full report.');
+    })
+    .finally(() => {
+      this.loading = false;
+    });
+},
+
+
+    getRankColor(rank) {
+      if (rank === 1) return 'gold';
+      if (rank === 2) return 'silver';
+      if (rank === 3) return '#CD7F32'; // Bronze
+      return 'grey';
+    },
     calculateScores() {
       const fields = [
         'attendance',
@@ -571,118 +717,46 @@ export default {
     addEvaluation() {
       this.calculateScores();
       axios.post('/api/v1/performance-evaluations', this.newEvaluation)
-      .then(response => {
-        this.fetchEvaluations();
-        this.$toastr.success('Evaluation added successfully!');
-        this.addEvaluationDialog = false;
-        // Reset form
-        this.newEvaluation = {
-        user_id: this.user.id,
-        evaluator_id: null,
-        department_id: null,
-        evaluation_date: null,
-        attendance: "",
-        problems_solved: "",
-        reports_submitted: "",
-        knowledge_of_work: "",
-        team_work: "",
-        reliability_visibility: "",
-        productivity: "",
-        discipline: "",
-        quality_of_work: "",
-        communication: "",
-        leadership: "",
-        total_score: "",
-        percentage: "",
-        };
-        this.$refs.evaluationForm.reset();
-      })
-      .catch(error => {
-        console.error('Error adding evaluation:', error);
-        this.$toastr.error('Failed to add evaluation.');
-      });
+        .then(response => {
+          this.fetchEvaluations();
+          this.$toastr.success('Evaluation added successfully!');
+          this.addEvaluationDialog = false;
+          // Reset form
+          this.newEvaluation = {
+            user_id: this.user.id,
+            evaluator_id: null,
+            department_id: null,
+            evaluation_date: null,
+            attendance: "",
+            problems_solved: "",
+            reports_submitted: "",
+            knowledge_of_work: "",
+            team_work: "",
+            reliability_visibility: "",
+            productivity: "",
+            discipline: "",
+            quality_of_work: "",
+            communication: "",
+            leadership: "",
+            total_score: "",
+            percentage: "",
+          };
+          this.$refs.evaluationForm.reset();
+        })
+        .catch(error => {
+          console.error('Error adding evaluation:', error);
+          this.$toastr.error('Failed to add evaluation.');
+        });
     },
 
 
     async fetchEvaluations() {
-  this.loading = true;
-  try {
-    const response = await axios.get('/api/v1/performance-evaluations');
-    const data = response.data; // Directly access the response data
-    if (data.evaluations) {
-      this.evaluations = data.evaluations.map(evaluation => ({
-        ...evaluation,
-        user: {
-          ...evaluation.user,
-          fullName: `${evaluation.user.firstname} ${evaluation.user.lastname}`
-        },
-        evaluator: evaluation.evaluator ? {
-          ...evaluation.evaluator,
-          fullName: `${evaluation.evaluator.firstname} ${evaluation.evaluator.lastname}`
-        } : null,
-      }));
-      console.log("Evaluations:", this.evaluations);
-      this.averageTotalScore = data.average_total_score || 0;
-      this.averagePercentage = data.average_percentage || 0;
-      this.averageAttendance = data.average_attendance || 0;
-      this.averageProductivity = data.average_productivity || 0;
-    } else {
-      console.error('Evaluations data is undefined');
-    }
-  } catch (error) {
-    console.error('Error fetching evaluations:', error);
-  } finally {
-    this.loading = false;
-  }
-},
-
-
-
-fetchTeam() {
-  const apiUrl = `api/v1/team`;
-
-  axios.get(apiUrl)
-    .then(response => {
-      this.user = response.data.user;
-
-      this.users = response.data.users.map(user => ({
-        ...user,
-        fullname: `${user.firstname} ${user.lastname}`,
-      }));
-
-      this.team = response.data.team.map(user => ({
-        ...user,
-        fullname: `${user.firstname} ${user.lastname}`,
-      }));
-
-      console.log("Team members based on role:", this.team);
-    })
-    .catch(error => {
-      console.error('Error fetching team:', error);
-    });
-}
-,
-
-    async fetchDepartments() {
-      try {
-        const response = await axios.get('/api/v1/departments');
-        this.departments = response.data.departments;
-      } catch (error) {
-        console.error('Error fetching departments:', error);
-      }
-    },
-    filterEvaluations() {
       this.loading = true;
-      const params = {
-        department_id: this.filters.department_id,
-        evaluation_date: this.filters.evaluation_date,
-        user_id: this.filters.user_id,
-        // evaluator_id: this.filters.evaluator_id,
-      };
-      axios.get('/api/v1/users', { params })
-        .then(response => {
-          this.drawer = false;
-          this.evaluations = response.data.evaluations.map(evaluation => ({
+      try {
+        const response = await axios.get('/api/v1/performance-evaluations');
+        const data = response.data; // Directly access the response data
+        if (data.evaluations) {
+          this.evaluations = data.evaluations.map(evaluation => ({
             ...evaluation,
             user: {
               ...evaluation.user,
@@ -693,14 +767,109 @@ fetchTeam() {
               fullName: `${evaluation.evaluator.firstname} ${evaluation.evaluator.lastname}`
             } : null,
           }));
-          this.loading = false;
+          console.log("Evaluations:", this.evaluations);
+          this.averageTotalScore = data.average_total_score || 0;
+          this.averagePercentage = data.average_percentage || 0;
+          this.averageAttendance = data.average_attendance || 0;
+          this.averageProductivity = data.average_productivity || 0;
+        } else {
+          console.error('Evaluations data is undefined');
+        }
+      } catch (error) {
+        console.error('Error fetching evaluations:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+
+
+    fetchTeam() {
+      const apiUrl = `api/v1/team`;
+
+      axios.get(apiUrl)
+        .then(response => {
+          this.user = response.data.user;
+
+          this.users = response.data.users.map(user => ({
+            ...user,
+            fullname: `${user.firstname} ${user.lastname}`,
+          }));
+
+          this.team = response.data.team.map(user => ({
+            ...user,
+            fullname: `${user.firstname} ${user.lastname}`,
+          }));
+
+          console.log("Team members based on role:", this.team);
         })
         .catch(error => {
+          console.error('Error fetching team:', error);
+        });
+    }
+    ,
+
+    async fetchDepartments() {
+      try {
+        const response = await axios.get('/api/v1/departments');
+        this.departments = response.data.departments;
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      }
+    },
+
+
+
+    filterEvaluations() {
+      this.loading = true;
+      const params = {
+        department_id: this.filters.department_id,
+        start_date: this.filters.evaluation_date ? this.filters.evaluation_date.start : null,
+        end_date: this.filters.evaluation_date ? this.filters.evaluation_date.end : null,
+        user_id: this.filters.user_id,
+        evaluator_id: this.filters.evaluator_id,
+      };
+
+      axios.get('/api/v1/performance-evaluations/filter', { params })
+        .then(response => {
+          this.drawer = false;
+
+          // Add fullName to each evaluation.user
+          this.evaluations = response.data.evaluations.map(evaluation => {
+            return {
+              ...evaluation,
+              user: {
+                ...evaluation.user,
+                fullName: `${evaluation.user.firstname} ${evaluation.user.lastname}`
+              }
+            };
+          });
+
+          // Update averages
+          this.averageTotalScore = response.data.average_total_score;
+          this.averagePercentage = response.data.average_percentage;
+          this.averageAttendance = response.data.average_attendance;
+          this.averageProductivity = response.data.average_productivity;
+          this.averageProblemsSolved = response.data.average_problems_solved;
+          this.averageReportsSubmitted = response.data.average_reports_submitted;
+          this.averageKnowledgeOfWork = response.data.average_knowledge_of_work;
+          this.averageTeamWork = response.data.average_team_work;
+          this.averageReliabilityVisibility = response.data.average_reliability_visibility;
+          this.averageDiscipline = response.data.average_discipline;
+          this.averageQualityOfWork = response.data.average_quality_of_work;
+          this.averageCommunication = response.data.average_communication;
+
+          this.loading = false;
+        })
+
+        .catch(error => {
           console.error('Error filtering evaluations:', error);
+          this.$toastr.error('Error filtering evaluations. Please try again.');
           this.loading = false;
         });
     },
-    
+
+
     viewEvaluation(evaluation) {
       this.selectedEvaluation = {
         evaluation_date: evaluation.evaluation_date,
@@ -719,6 +888,7 @@ fetchTeam() {
         leadership: evaluation.leadership,
         total_score: evaluation.total_score,
         percentage: evaluation.percentage,
+        
       };
       this.viewEvaluationModal = true;
     },
