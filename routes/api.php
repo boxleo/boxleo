@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\DisciplinaryApiController;
 use App\Http\Controllers\Api\PerformanceApiEvaluation;
 use App\Http\Controllers\Api\RequisitionApiController;
 use App\Http\Controllers\PerformanceApiReportController;
+use App\Http\Controllers\Api\UserDetailApiController;
 
 Route::middleware('auth:sanctum')->group(function () {
   //users
@@ -42,6 +43,14 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::put('v1/users/update/{user}', [UserApiController::class, 'update']);
   Route::get('v1/telesale-agents', [UserApiController::class, 'telesaleAgents']);
   Route::get('v1/team', [UserApiController::class, 'getTeam']);
+
+//   User details
+    Route::get('v1/user-details', [UserDetailApiController::class, 'index']);
+    Route::post('v1/user-details', [UserDetailApiController::class, 'store']);
+    Route::delete('v1/user-details/{user}', [UserDetailApiController::class, 'destroy']);
+    Route::put('v1/user-details/{user}', [UserDetailApiController::class, 'update']);
+    Route::get('v1/user-details/{id}', [UserDetailApiController::class, 'show']);
+
 
 
 

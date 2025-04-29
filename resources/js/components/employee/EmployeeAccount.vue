@@ -65,11 +65,13 @@
           </v-card-actions>
         </v-card>
       </v-col>
-      
+
+      <!-- {{user}} -->
+
       <!-- Personal Details Form Component -->
-      <personal-details-form 
-        :userId="user.id" 
-        :userData="userDetails"
+      <personal-details-form
+        :user="user"
+        :user-data="userDetails"
         @details-updated="onDetailsUpdated"
       />
     </v-row>
@@ -80,27 +82,44 @@
 import PersonalDetailsForm from '@/components/employee/PersonalDetailsForm.vue';
 
 export default {
+
+
+    props: {
+    user: Object,
+    roles: Array,
+    permissions: Array
+  },
+  computed: {
+    userId() {
+      return this.user?.id   
+    }
+  },
   components: {
     PersonalDetailsForm
   },
   data() {
     return {
-      user: {
-        id: null,
-        firstname: '',
-        lastname: '',
-        email: '',
-        phone: '',
-        avatar: null,
-        unit: { name: '' },
-        designation: { name: '' }
-      },
+    //   user: {
+    //     id: null,
+    //     firstname: '',
+    //     lastname: '',
+    //     email: '',
+    //     phone: '',
+    //     avatar: null,
+    //     unit: { name: '' },
+    //     designation: { name: '' }
+    //   },
       userDetails: {},
       actions: [
         { title: 'Edit Profile', icon: 'mdi-pencil', type: 'edit', field: 'fullname', label: 'Full Name', rules: [(v) => !!v || 'Full name is required'] },
         { title: 'Change Password', icon: 'mdi-lock-reset', type: 'edit', field: 'password', label: 'New Password', rules: [(v) => !!v || 'Password is required'] },
         { title: 'Edit Email', icon: 'mdi-email', type: 'edit', field: 'email', label: 'Email', rules: [(v) => !!v || 'Email is required'] },
-        { title: 'Edit Phone', icon: 'mdi-phone', type: 'edit', field: 'phone', label: 'Phone', rules: [(v) => !!v || 'Phone number is required'] }
+        { title: 'Edit Phone', icon: 'mdi-phone', type: 'edit', field: 'phone', label: 'Phone', rules: [(v) => !!v || 'Phone number is required'] },
+        { title: 'Delete Account', icon: 'mdi-delete', type: 'delete', field: 'delete', label: '', rules: [] },
+        { title: 'Edit National ID', icon: 'mdi-card-account-details', type: 'edit', field: 'national_id', label: 'National ID', rules: [(v) => !!v || 'Required'] },
+        { title: 'Edit KRA PIN', icon: 'mdi-barcode', type: 'edit', field: 'kra_pin', label: 'KRA PIN', rules: [(v) => !!v || 'Required'] },
+        { title: 'Edit NSSF No.', icon: 'mdi-bank', type: 'edit', field: 'nssf_no', label: 'NSSF Number', rules: [(v) => !!v || 'Required'] },
+  // Add more actions here
       ],
       dialog: false,
       currentAction: null,
@@ -114,23 +133,37 @@ export default {
   },
   created() {
     this.fetchUserData();
+    if (!this.user)       console.warn('EmployeeAccount: missing `user` prop');
+  if (!this.roles.length)       console.warn('EmployeeAccount: missing `roles` prop');
+  if (!this.permissions.length) console.warn('EmployeeAccount: missing `permissions` prop');
   },
   methods: {
+    // fetchUserData() {
+    //   // Fetch basic user info
+    //   axios.get(`/api/v1/user-details/${this.user.id}`)
+    //     .then(response => {
+    //       this.user = response.data;
+    //       // After getting user ID, fetch additional details
+    //       return axios.get(`/api/v1/user-details/${this.user.id}`);
+    //     })
+    //     .then(response => {
+    //       this.userDetails = response.data;
+    //     })
+    //     .catch(error => {
+    //       console.error('Error fetching user data:', error);
+    //     });
+    // },
     fetchUserData() {
-      // Fetch basic user info
-      axios.get('/api/user/profile')
-        .then(response => {
-          this.user = response.data;
-          // After getting user ID, fetch additional details
-          return axios.get(`/api/user-details/${this.user.id}`);
-        })
-        .then(response => {
-          this.userDetails = response.data;
-        })
-        .catch(error => {
-          console.error('Error fetching user data:', error);
-        });
-    },
+  const userId = this.user.id; // assume this is already available
+  axios.get(`/api/v1/user-details/${userId}`)
+    .then(response => {
+      this.userDetails = response.data;
+    })
+    .catch(error => {
+      console.error('Error fetching user data:', error);
+    });
+},
+
     openModal(action) {
       this.currentAction = action;
       this.dialog = true;

@@ -23,9 +23,9 @@
             Cancel
           </v-btn>
         </v-card-title>
-        
+
         <v-divider></v-divider>
-        
+
         <v-card-text>
           <v-form ref="detailsForm" v-model="valid" @submit.prevent="saveDetails">
             <v-row>
@@ -33,7 +33,7 @@
               <v-col cols="12">
                 <h3 class="subtitle-1 font-weight-bold mb-3">Personal Information</h3>
               </v-col>
-              
+
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="formData.national_id"
@@ -44,7 +44,7 @@
                   :rules="[(v) => !!v || 'National ID is required']"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="6">
                 <v-select
                   v-model="formData.gender"
@@ -55,7 +55,7 @@
                   :disabled="!editing"
                 ></v-select>
               </v-col>
-              
+
               <v-col cols="12" md="6">
                 <v-select
                   v-model="formData.marital_status"
@@ -66,7 +66,14 @@
                   :disabled="!editing"
                 ></v-select>
               </v-col>
-              
+
+              <v-col cols="12" sm="6">
+                                <v-text-field v-model="formData.date_of_birth" label="Date of Birth" outlined
+                  dense
+                  :disabled="!editing"
+                                    type="date"></v-text-field>
+                            </v-col>
+
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="formData.staffID"
@@ -76,12 +83,12 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <!-- Location Information -->
               <v-col cols="12">
                 <h3 class="subtitle-1 font-weight-bold mb-3">Location Information</h3>
               </v-col>
-              
+
               <v-col cols="12" md="4">
                 <v-text-field
                   v-model="formData.country"
@@ -91,7 +98,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="4">
                 <v-text-field
                   v-model="formData.nationality"
@@ -101,7 +108,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="4">
                 <v-text-field
                   v-model="formData.region"
@@ -111,12 +118,12 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <!-- Next of Kin Information -->
               <v-col cols="12">
                 <h3 class="subtitle-1 font-weight-bold mb-3">Next of Kin Information</h3>
               </v-col>
-              
+
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="formData.kin"
@@ -126,7 +133,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="formData.kin_contact"
@@ -136,7 +143,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="formData.spouse"
@@ -146,7 +153,7 @@
                   :disabled="!editing || formData.marital_status !== 'Married'"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="formData.spouse_no"
@@ -156,12 +163,12 @@
                   :disabled="!editing || formData.marital_status !== 'Married'"
                 ></v-text-field>
               </v-col>
-              
+
               <!-- Financial Information -->
               <v-col cols="12">
                 <h3 class="subtitle-1 font-weight-bold mb-3">Financial Information</h3>
               </v-col>
-              
+
               <v-col cols="12" md="4">
                 <v-text-field
                   v-model="formData.bank_name"
@@ -171,7 +178,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="4">
                 <v-text-field
                   v-model="formData.bank_branch"
@@ -181,7 +188,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="4">
                 <v-text-field
                   v-model="formData.bank_account"
@@ -191,7 +198,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="3">
                 <v-text-field
                   v-model="formData.mpesa_no"
@@ -201,12 +208,12 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <!-- Official Documentation -->
               <v-col cols="12">
                 <h3 class="subtitle-1 font-weight-bold mb-3">Official Documentation</h3>
               </v-col>
-              
+
               <v-col cols="12" md="3">
                 <v-text-field
                   v-model="formData.nhif_no"
@@ -216,7 +223,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="3">
                 <v-text-field
                   v-model="formData.nssf_no"
@@ -226,7 +233,7 @@
                   :disabled="!editing"
                 ></v-text-field>
               </v-col>
-              
+
               <v-col cols="12" md="3">
                 <v-text-field
                   v-model="formData.kra_pin"
@@ -239,7 +246,7 @@
             </v-row>
           </v-form>
         </v-card-text>
-        
+
         <v-card-actions v-if="editing">
           <v-spacer></v-spacer>
           <v-btn
@@ -263,12 +270,13 @@
       </v-card>
     </v-col>
   </template>
-  
+
   <script>
   export default {
     props: {
-      userId: {
-        type: [Number, String],
+      user: {
+        // type: [Number, String],
+        type: Object,
         required: true
       },
       userData: {
@@ -276,8 +284,16 @@
         default: () => ({})
       }
     },
+    computed: {
+        userId() {
+            return this.user.id   // now userId will be the real number
+        }
+    },
+
     data() {
       return {
+
+        
         editing: false,
         valid: true,
         loading: false,
@@ -299,25 +315,44 @@
           nssf_no: '',
           national_id: '',
           gender: '',
-          staffID: ''
+          staffID: '',
+          date_of_birth: '',
         },
         originalFormData: {}
       };
     },
-    created() {
-      this.loadUserDetails();
+    // created() {
+    //   this.loadUserDetails();
+    // },
+
+    watch: {
+    // whenever userId becomes non-null, reload details
+        userId: {
+        immediate: true,
+        handler(newId) {
+            if (newId) {
+            this.loadUserDetails();
+            }
+        }
+        }
     },
+
     methods: {
       loadUserDetails() {
+
+        console.log('Loading user details for userId:', this.userId);
+        console.log('Initial userData from props:', this.userData);
         // Initialize with data from props if available
         if (this.userData && Object.keys(this.userData).length) {
           this.formData = { ...this.formData, ...this.userData };
+          this.originalFormData = { ...this.formData };
+
         } else {
           // Otherwise fetch from API
           this.loading = true;
-          axios.get(`/api/user-details/${this.userId}`)
+          axios.get(`/api/v1/user-details/${this.userId}`)
             .then(response => {
-              this.formData = { ...this.formData, ...response.data };
+              this.formData = { ...this.formData, ...response.data.data };
               // Store original data for cancel operation
               this.originalFormData = { ...this.formData };
             })
@@ -332,31 +367,32 @@
         // Store original data for cancel operation
         this.originalFormData = { ...this.formData };
       },
-      
+
       cancelEdit() {
         // Restore original data
         this.formData = { ...this.originalFormData };
         this.editing = false;
       },
-      
+
       saveDetails() {
         if (!this.$refs.detailsForm.validate()) return;
-        
+
         this.loading = true;
-        
+
         // Add user_id to the payload
         const payload = {
           ...this.formData,
-          user_id: this.userId
+        //   user_id: this.userId
         };
-        
-        axios.post('/api/user-details/update', payload)
+
+        // axios.post('/api/user-details/update', payload)
+        axios.put(`/api/v1/user-details/${this.userId}`, payload)
           .then(response => {
-            this.$toast.success('Personal details updated successfully');
+            this.$toastr.success('Personal details updated successfully');
             this.editing = false;
             // Update original data
             this.originalFormData = { ...this.formData };
-            
+
             // Emit event to notify parent component
             this.$emit('details-updated', this.formData);
           })

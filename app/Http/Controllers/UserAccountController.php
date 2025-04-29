@@ -30,6 +30,13 @@ class UserAccountController extends Controller
         $roles = $user->getRoleNames(); // Returns a collection of role names
         $permissions = $user->getAllPermissions()->pluck('name'); // Returns a collection of permission names
 
+           // Debugging: Dump the data before returning the view
+    // dd([
+    //     'user' => $user,
+    //     'roles' => $roles,
+    //     'permissions' => $permissions
+    // ]);
+
         // Pass them to the view
         return view('account.index', [
             'user' => $user,

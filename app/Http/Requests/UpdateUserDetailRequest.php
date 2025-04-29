@@ -11,7 +11,8 @@ class UpdateUserDetailRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        // Allow authorization. You can add custom logic if needed.
+        return true;
     }
 
     /**
@@ -22,7 +23,38 @@ class UpdateUserDetailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'user_id' => 'sometimes|exists:users,id',
+            'kin' => 'nullable|string|max:255',
+            'kin_contact' => 'nullable|string|max:20',
+            'gender' => 'nullable|in:Male,Female,Other',
+            'payment_mode' => 'nullable|string|max:50',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_branch' => 'nullable|string|max:255',
+            'bank_account' => 'nullable|string|max:50',
+            'mpesa_no' => 'nullable|string|max:20',
+            'nhif_no' => 'nullable|string|max:50',
+            'national_id' => 'nullable|string|max:50',
+            'nssf_no' => 'nullable|string|max:50',
+            'kra_pin' => 'nullable|string|max:50',
+            'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
+            'spouse' => 'nullable|string|max:255',
+            'spouse_no' => 'nullable|string|max:20',
+            'staffID' => 'nullable|string|max:50',
+            'nationality' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'region' => 'nullable|string|max:100',
+            'date_of_birth' => 'nullable|date',
+            'place_of_birth' => 'nullable|string|max:255',
+            'residential_address' => 'nullable|string|max:255',
+            'postal_address' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:100',
+            'county' => 'nullable|string|max:100',
+            'country_of_origin' => 'nullable|string|max:100',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_relationship' => 'nullable|string|max:100',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'emergency_contact_email' => 'nullable|email|max:255',
         ];
     }
 }
