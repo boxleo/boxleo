@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
-   
+
     protected function schedule(Schedule $schedule)
     {
         // Log::info("Schedule is running...");
@@ -30,6 +30,16 @@ class Kernel extends ConsoleKernel
             ->after(function () {
                 Log::info("leave:reminder command has executed.");
             });
+
+            // Birthday wishes
+            $schedule->command('app:send-birthday-notification')->dailyAt('08:00')
+            ->before(function () {
+                Log::info("🎉 app:send-birthday-notification is about to run...");
+            })
+            ->after(function () {
+                Log::info("🎂 app:send-birthday-notification finished running.");
+            });
+
 
             $schedule->job(new AddMonthlyLeaveBalance)
             ->dailyAt('00:00')

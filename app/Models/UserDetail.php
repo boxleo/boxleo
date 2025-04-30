@@ -15,7 +15,12 @@ class UserDetail extends Model
 
     public function user()
     {
-        return $this->hasOne(User::class);
+        return $this->belongsTo(User::class);
     }
+    public function details()
+    {
+        return $this->hasOne(UserDetail::class);
+    }
+
 }
 
