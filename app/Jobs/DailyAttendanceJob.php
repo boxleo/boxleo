@@ -64,8 +64,8 @@ class DailyAttendanceJob implements ShouldQueue
             Attendance::create([
                 'user_id' => $user->id,
                 'attendance_date' => $date,
-                'clock_in_time' => null,
-                'clock_out_time' => null,
+                'clock_in_time' => '00:00:00',
+                'clock_out_time' => '00:00:00',
                 'hours_worked' => 0,
                 'status' => $status,
                 'is_present' => 0,
