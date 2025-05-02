@@ -306,6 +306,8 @@
               <template v-slot:item.actions="{ item }">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
+                    <!-- inlcude icon to edit  -->
+                     
                     <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
                       mdi-information
                     </v-icon>
