@@ -89,213 +89,313 @@ class PerformanceApiEvaluation extends Controller
 
 
 
+    // public function index(Request $request)
+    // {
+    //     Log::info('Fetching performance evaluations', ['user_id' => $request->user()->id]);
+
+    //     $user = $request->user();
+    //     $roles = $user->getRoleNames(); // Get roles as a collection
+
+    //     Log::info('Fetching performance evaluations', [
+    //         'user_id' => $user->id,
+    //         'roles' => $roles
+    //     ]);
+
+    //     // Initialize $evaluations as null
+    //     $evaluations = null;
+
+    //     switch (true) {
+    //         case $user->is_hr:
+    //             Log::info('Role is HR');
+    //             $evaluations = PerformanceEvaluation::with('user')->get();
+    //             break;
+
+    //         case ($user->designation_id == 1):
+    //             Log::info('Role is Manager');
+    //             // fetch only the managerDepartments
+
+
+    //             //    $evaluations = PerformanceEvaluation::with('user.department')->get();
+
+    //             $departmentIds = $user->managerDepartments->pluck('id');
+
+    //             if ($departmentIds->isNotEmpty()) {
+    //                 // Get all users in these departments
+    //                 $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
+    //                 // inlcude users of same unit if the manager is does not have any managerDerpartment 
+
+    //                 Log::info('Manager oversees users', ['user_ids' => $userIds]);
+
+    //                 // Fetch evaluations only for users in these departments
+    //                 $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
+    //             } else {
+    //                 Log::warning('Manager has no assigned departments');
+    //                 return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
+    //             }
+
+    //             break;
+
+    //         case $user->is_hod:
+    //             Log::info('Role is HOD');
+    //             $departmentIds = $user->hodDepartments->pluck('id');
+
+    //             $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
+
+    //             // return response()->json($departments);
+    //             if ($departmentIds->isNotEmpty()) {
+    //                 // evaluations of user with department that exist in $departments = $user->hodDepartments->pluck('id');
+    //                 // $evaluations = PerformanceEvaluation::with('user')->get();
+    //                 $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
+
+
+    //             } else {
+    //                 Log::warning('HOD has no assigned departments');
+    //                 return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
+    //             }
+    //             break;
+
+    //         default:
+    //             // Default case: authenticated user who is not manager, HR, or HODq
+    //             $evaluations = PerformanceEvaluation::where('user_id', $user->id)->with('user')->get();
+    //             break;
+    //     }
+
+    //     Log::info('Performance evaluations fetched successfully', ['count' => $evaluations->count()]);
+    //     return response()->json(['evaluations' => $evaluations]);
+    // }
+
+
+
+
     public function index(Request $request)
     {
         Log::info('Fetching performance evaluations', ['user_id' => $request->user()->id]);
 
         $user = $request->user();
-        $roles = $user->getRoleNames(); // Get roles as a collection
+        $roles = $user->getRoleNames();
 
-        Log::info('Fetching performance evaluations', [
+        Log::info('User roles', [
             'user_id' => $user->id,
             'roles' => $roles
         ]);
 
-        // Initialize $evaluations as null
         $evaluations = null;
 
         switch (true) {
             case $user->is_hr:
-                Log::info('Role is HR');
-                $evaluations = PerformanceEvaluation::with('user')->get();
+                Log::info('Role: HR');
+                $evaluations = PerformanceEvaluation::with('user.department')->get();
                 break;
 
-            case ($user->designation_id == 1):
-                Log::info('Role is Manager');
-                // fetch only the managerDepartments
-
-
-                //    $evaluations = PerformanceEvaluation::with('user.department')->get();
-
+            case ($user->designation_id == 1): // Manager
+                Log::info('Role: Manager');
                 $departmentIds = $user->managerDepartments->pluck('id');
 
                 if ($departmentIds->isNotEmpty()) {
-                    // Get all users in these departments
                     $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
-
                     Log::info('Manager oversees users', ['user_ids' => $userIds]);
-
-                    // Fetch evaluations only for users in these departments
-                    $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
                 } else {
-                    Log::warning('Manager has no assigned departments');
-                    return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
+                    // Fallback to users in the same unit
+                    Log::warning('Manager has no departments, using unit fallback');
+                    $userIds = User::where('unit_id', $user->unit_id)
+                        ->where('id', '!=', $user->id)
+                        ->pluck('id');
                 }
 
+                $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)
+                    ->with('user.department')
+                    ->get();
                 break;
 
             case $user->is_hod:
-                Log::info('Role is HOD');
-                $departmentIds = $user->hodDepartments->pluck('id');
+                Log::info('Role: HOD');
+                $hodDeptIds = $user->hodDepartments->pluck('id');
 
-                $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
-
-                // return response()->json($departments);
-                if ($departmentIds->isNotEmpty()) {
-                    // evaluations of user with department that exist in $departments = $user->hodDepartments->pluck('id');
-                    // $evaluations = PerformanceEvaluation::with('user')->get();
-                    $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
-
-                } else {
+                if ($hodDeptIds->isEmpty()) {
                     Log::warning('HOD has no assigned departments');
                     return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
                 }
+
+                // Include:
+                // - Users who manage departments under the HOD
+                // - Managers with no departments (designation_id == 1)
+                $userIds = User::where(function ($query) use ($hodDeptIds) {
+                    $query->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+                        $q->whereIn('department_id', $hodDeptIds);
+                    })
+                        ->orWhere(function ($q) {
+                            $q->doesntHave('managerDepartments')
+                                ->where('designation_id', 1);
+                        });
+                })->pluck('id');
+
+                Log::info('HOD oversees users', ['user_ids' => $userIds]);
+
+                $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)
+                    ->with('user.department')
+                    ->get();
                 break;
 
             default:
-                // Default case: authenticated user who is not manager, HR, or HODq
-                $evaluations = PerformanceEvaluation::where('user_id', $user->id)->with('user')->get();
+                Log::info('Role: Regular User');
+                $evaluations = PerformanceEvaluation::where('user_id', $user->id)
+                    ->with('user.department')
+                    ->get();
                 break;
         }
 
-        Log::info('Performance evaluations fetched successfully', ['count' => $evaluations->count()]);
+        Log::info('Performance evaluations fetched', ['count' => $evaluations->count()]);
         return response()->json(['evaluations' => $evaluations]);
     }
 
 
 
-public function attendance($userId, $year, $month)
-{
-    // 1. Get first and last day of the month
-    $startOfMonth = Carbon::createFromDate($year, $month)->startOfMonth();
-    $endOfMonth = Carbon::createFromDate($year, $month)->endOfMonth();
 
-    // 2. Count total weekdays (Mon-Fri) in the month (working days) please note we work on Saturday too.
-    $workingDays = CarbonPeriod::create($startOfMonth, $endOfMonth)
-        ->filter(function (Carbon $date) {
-            return $date->isWeekday();
-        })
-        ->count();
+    public function attendance($userId, $year, $month)
+    {
+        // 1. Get first and last day of the month
+        $startOfMonth = Carbon::createFromDate($year, $month)->startOfMonth();
+        $endOfMonth = Carbon::createFromDate($year, $month)->endOfMonth();
 
-    // 3. Count days the user was present in that period
-    $presentDays =  Attendance::where('user_id', $userId)
-        ->whereBetween('attendance_date', [$startOfMonth, $endOfMonth])
-        ->where('is_present', 1)
-        ->count();
+        // 2. Count total weekdays (Mon-Fri) in the month (working days) please note we work on Saturday too.
+        $workingDays = CarbonPeriod::create($startOfMonth, $endOfMonth)
+            ->filter(function (Carbon $date) {
+                return $date->isWeekday();
+            })
+            ->count();
 
-    // 4. Calculate attendance percentage
-    $attendancePercentage = $workingDays > 0
-        ? round(($presentDays / $workingDays) * 100, 2)
-        : 0;
+        // 3. Count days the user was present in that period
+        $presentDays =  Attendance::where('user_id', $userId)
+            ->whereBetween('attendance_date', [$startOfMonth, $endOfMonth])
+            ->where('is_present', 1)
+            ->count();
 
-    return [
-        'user_id' => $userId,
-        'month' => $month,
-        'year' => $year,
-        'working_days' => $workingDays,
-        'present_days' => $presentDays,
-        'attendance_percentage' => $attendancePercentage,
-    ];
-}
+        // 4. Calculate attendance percentage
+        $attendancePercentage = $workingDays > 0
+            ? round(($presentDays / $workingDays) * 100, 2)
+            : 0;
 
-
-
-/**
- * Filter performance evaluations based on criteria
- * 
- * @param Request $request
- * @return \Illuminate\Http\JsonResponse
- */
-public function filterEvaluations(Request $request)
-{
-    Log::info('Filtering performance evaluations', ['request' => $request->all()]);
-
-    // Start with a base query
-    $query = PerformanceEvaluation::with(['user.department', 'evaluator'])
-        ->whereNull('deleted_at');
-    
-    // Apply department filter (supports multiple departments)
-    if ($request->has('department_id') && $request->department_id) {
-        Log::info('Applying department filter', ['department_id' => $request->department_id]);
-        $userIds = User::whereIn('department_id', (array) $request->department_id)->pluck('id');
-        $query->whereIn('user_id', $userIds);
+        return [
+            'user_id' => $userId,
+            'month' => $month,
+            'year' => $year,
+            'working_days' => $workingDays,
+            'present_days' => $presentDays,
+            'attendance_percentage' => $attendancePercentage,
+        ];
     }
-    // Apply evaluation date filter
-    if ($request->has('evaluation_date') && $request->evaluation_date) {
-        Log::info('Applying evaluation date filter', ['evaluation_date' => $request->evaluation_date]);
-        $query->whereDate('evaluation_date', $request->evaluation_date);
+
+
+
+    /**
+     * Filter performance evaluations based on criteria
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function filterEvaluations(Request $request)
+    {
+        Log::info('Filtering performance evaluations', ['request' => $request->all()]);
+
+        try {
+            // Start with a base query
+            $query = PerformanceEvaluation::with(['user.department', 'evaluator'])
+                ->whereNull('deleted_at');
+
+            // Apply department filter (supports multiple departments)
+            if ($request->has('department_id') && $request->department_id) {
+                Log::info('Applying department filter', ['department_id' => $request->department_id]);
+                $userIds = User::whereIn('department_id', (array) $request->department_id)->pluck('id');
+                Log::debug('User IDs for department filter', ['user_ids' => $userIds]);
+                $query->whereIn('user_id', $userIds);
+            }
+
+            // Apply evaluation date filter
+            // if ($request->has('evaluation_date') && $request->evaluation_date) {
+            //     Log::info('Applying evaluation date filter', ['evaluation_date' => $request->evaluation_date]);
+            //     $query->whereDate('evaluation_date', $request->evaluation_date);
+            // }
+
+            // Apply user filter
+            if ($request->has('user_id') && $request->user_id) {
+                Log::info('Applying user filter', ['user_id' => $request->user_id]);
+                $query->where('user_id', $request->user_id);
+            }
+
+            // Apply evaluator filter
+            if ($request->has('evaluator_id') && $request->evaluator_id) {
+                Log::info('Applying evaluator filter', ['evaluator_id' => $request->evaluator_id]);
+                $query->where('evaluator_id', $request->evaluator_id);
+            }
+
+            // Apply date range filter
+            if ($request->has('start_date') && $request->has('end_date')) {
+                Log::info('Applying date range filter', [
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date
+                ]);
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            }
+
+            // Get filtered evaluations
+            $evaluations = $query->get();
+            Log::info('Filtered evaluations retrieved', ['count' => $evaluations->count()]);
+
+            return response()->json(['evaluations' => $evaluations]);
+        } catch (\Exception $e) {
+            Log::error('Error filtering evaluations', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'An error occurred while filtering evaluations'], 500);
+        }
     }
-    
-    // Apply user filter
-    if ($request->has('user_id') && $request->user_id) {
-        Log::info('Applying user filter', ['user_id' => $request->user_id]);
-        $query->where('user_id', $request->user_id);
+
+    /**
+     * Get employees for the filter dropdown
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getFilterOptions()
+    {
+        Log::info('Fetching filter options for employees, evaluators, and departments');
+
+        // Get list of all employees
+        $employees = User::select('id', 'firstname', 'lastname')
+            ->whereNull('deleted_at')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'fullName' => $user->firstname . ' ' . $user->lastname
+                ];
+            });
+        Log::info('Employees fetched', ['count' => $employees->count()]);
+
+        // Get list of all evaluators
+        $evaluators = User::select('id', 'firstname', 'lastname')
+            ->whereHas('evaluatorPerformances')
+            ->whereNull('deleted_at')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'fullName' => $user->firstname . ' ' . $user->lastname
+                ];
+            });
+        Log::info('Evaluators fetched', ['count' => $evaluators->count()]);
+
+        // Get departments
+        $departments = Department::select('id', 'name')
+            ->whereNull('deleted_at')
+            ->get();
+        Log::info('Departments fetched', ['count' => $departments->count()]);
+
+        return response()->json([
+            'status' => 'success',
+            'employees' => $employees,
+            'evaluators' => $evaluators,
+            'departments' => $departments
+        ]);
     }
-    
-    // Apply evaluator filter
-    if ($request->has('evaluator_id') && $request->evaluator_id) {
-        Log::info('Applying evaluator filter', ['evaluator_id' => $request->evaluator_id]);
-        $query->where('evaluator_id', $request->evaluator_id);
-    }
-    
-    // Get filtered evaluations
-    $evaluations = $query->get();
-    Log::info('Filtered evaluations retrieved', ['count' => $evaluations->count()]);
-    
-
-    return response()->json(['evaluations' => $evaluations]);
-
-  
-}
-
-/**
- * Get employees for the filter dropdown
- * 
- * @return \Illuminate\Http\JsonResponse
- */
-public function getFilterOptions()
-{
-    Log::info('Fetching filter options for employees, evaluators, and departments');
-
-    // Get list of all employees
-    $employees = User::select('id', 'firstname', 'lastname')
-        ->whereNull('deleted_at')
-        ->get()
-        ->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'fullName' => $user->firstname . ' ' . $user->lastname
-            ];
-        });
-    Log::info('Employees fetched', ['count' => $employees->count()]);
-
-    // Get list of all evaluators
-    $evaluators = User::select('id', 'firstname', 'lastname')
-        ->whereHas('evaluatorPerformances')
-        ->whereNull('deleted_at')
-        ->get()
-        ->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'fullName' => $user->firstname . ' ' . $user->lastname
-            ];
-        });
-    Log::info('Evaluators fetched', ['count' => $evaluators->count()]);
-
-    // Get departments
-    $departments = Department::select('id', 'name')
-        ->whereNull('deleted_at')
-        ->get();
-    Log::info('Departments fetched', ['count' => $departments->count()]);
-
-    return response()->json([
-        'status' => 'success',
-        'employees' => $employees,
-        'evaluators' => $evaluators,
-        'departments' => $departments
-    ]);
-}
-
-
-
 }

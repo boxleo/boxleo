@@ -16,52 +16,121 @@ class UserApiController extends Controller
 {
 
 
-
-
   public function getTeam()
-{
-    // Log::info('Fetching team information for the authenticated user');
-    $authUser = auth()->user();
-    // Log::info('Authenticated user retrieved', ['user_id' => $authUser->id]);
+  {
+      $authUser = auth()->user();
+  
+      $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
+  
+      $response = [
+          'user' => $authUser,
+          'users' => $allUsers,
+          'team' => [],
+          'is_hod' => $authUser->is_hod,
+          'is_manager' => $authUser->designation_id === 1,
+      ];
+  
+      // if ($authUser->is_hod) {
+      //     $hodDeptIds = $authUser->hodDepartments->pluck('id');
+  
+      //     // Fetch users who manage the HOD's departments OR have no managerDepartments
+      //     $team = User::with(['department', 'unit', 'designation'])
+      //         ->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+      //             $q->whereIn('department_id', $hodDeptIds);
+      //         })
+      //         ->orWhereDoesntHave('managerDepartments')
+      //         ->get();
+  
+      //     $response['team'] = $team->unique('id')->values(); // avoid duplicates
+      // } 
 
-    $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
-    // Log::info('All users with related departments retrieved', ['total_users' => $allUsers->count()]);
 
-    $response = [
-        'user' => $authUser,
-        'users' => $allUsers,
-        'team' => [],
-    ];
-
-    if ($authUser->is_hod ) {
-        // Log::info('User is a Head of Department', ['user_id' => $authUser->id]);
+      if ($authUser->is_hod) {
         $hodDeptIds = $authUser->hodDepartments->pluck('id');
-        // Log::info('User HOD department IDs', ['hod_dept_ids' => $hodDeptIds]);
-
-        $team = User::whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
-            $q->whereIn('department_id', $hodDeptIds);
-        })->get();
-
-        $response['team'] = $team;
-        Log::info('Team members under HOD retrieved', ['team_count' => $team->count()]);
-    } elseif ($authUser->designation_id === 1) {
-        // Log::info('User is a Manager', ['user_id' => $authUser->id]);
-        $managerDeptIds = $authUser->managerDepartments->pluck('id');
-        // Log::info('User manager department IDs', ['manager_dept_ids' => $managerDeptIds]);
-
-        $team = User::whereIn('department_id', $managerDeptIds)
-                    ->where('unit_id', $authUser->unit_id)
-                    // ->where('designation_id', '!=', 1)
-                    ->get();
-
-        $response['team'] = $team;
-        // Log::info('Team members under Manager retrieved', ['team_count' => $team->count()]);
+    
+        $team = User::with(['department', 'unit', 'designation'])
+            ->where(function ($query) use ($hodDeptIds) {
+                $query->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+                    $q->whereIn('department_id', $hodDeptIds);
+                })
+                ->orWhere(function ($q) {
+                    $q->doesntHave('managerDepartments')
+                      ->where('designation_id', 1); // Only include managers
+                });
+            })
+            ->get();
+    
+        $response['team'] = $team->unique('id')->values();
     }
+    
+      elseif ($authUser->designation_id === 1) {
+          $managerDeptIds = $authUser->managerDepartments->pluck('id');
+  
+          // Get users from same department and unit
+          $departmentUsers = User::with(['department', 'unit', 'designation'])
+              ->whereIn('department_id', $managerDeptIds)
+              ->where('unit_id', $authUser->unit_id)
+              ->get();
+  
+          // Also get all users in the same unit
+          $unitUsers = User::with(['department', 'unit', 'designation'])
+              ->where('unit_id', $authUser->unit_id)
+              ->get();
+  
+          $team = $departmentUsers->merge($unitUsers)->unique('id')->values();
+          $response['team'] = $team;
+      }
+  
+      return response()->json($response);
+  }
+  
 
-    // Log::info('Team information response prepared for the user', ['user_id' => $authUser->id]);
+//   public function getTeam()
+// {
+//     // Log::info('Fetching team information for the authenticated user');
+//     $authUser = auth()->user();
+//     // Log::info('Authenticated user retrieved', ['user_id' => $authUser->id]);
 
-    return response()->json($response);
-}
+//     $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
+//     // Log::info('All users with related departments retrieved', ['total_users' => $allUsers->count()]);
+
+//     $response = [
+//         'user' => $authUser,
+//         'users' => $allUsers,
+//         'team' => [],
+//     ];
+
+//     if ($authUser->is_hod ) {
+//         // Log::info('User is a Head of Department', ['user_id' => $authUser->id]);
+//         $hodDeptIds = $authUser->hodDepartments->pluck('id');
+//         // Log::info('User HOD department IDs', ['hod_dept_ids' => $hodDeptIds]);
+
+//         $team = User::whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+//             $q->whereIn('department_id', $hodDeptIds);
+//             // append also  manager without department
+//         })->get();
+
+//         $response['team'] = $team;
+//         Log::info('Team members under HOD retrieved', ['team_count' => $team->count()]);
+//     } elseif ($authUser->designation_id === 1) {
+//         // Log::info('User is a Manager', ['user_id' => $authUser->id]);
+//         $managerDeptIds = $authUser->managerDepartments->pluck('id');
+//         // Log::info('User manager department IDs', ['manager_dept_ids' => $managerDeptIds]);
+
+//         $team = User::whereIn('department_id', $managerDeptIds)
+//                     ->where('unit_id', $authUser->unit_id)
+//                     // ->where('designation_id', '!=', 1)
+//                     // also include user all usersfrom the same unit
+//                     ->get();
+
+//         $response['team'] = $team;
+//         // Log::info('Team members under Manager retrieved', ['team_count' => $team->count()]);
+//     }
+
+//     // Log::info('Team information response prepared for the user', ['user_id' => $authUser->id]);
+
+//     return response()->json($response);
+// }
 
   // public function index(Request $request)
   // {
