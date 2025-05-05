@@ -36,9 +36,9 @@ class PerformanceExport implements FromCollection, WithHeadings, WithMapping, Wi
         return [
             'ID',
             'Employee Name',
-            'Evaluator',
+            // 'Evaluator',
             'Department',
-            'Evaluation Date',
+            // 'Evaluation Date',
             'Attendance',
             'Problems Solved',
             'Reports Submitted',
