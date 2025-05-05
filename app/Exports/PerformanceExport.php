@@ -70,13 +70,13 @@ class PerformanceExport implements FromCollection, WithHeadings, WithMapping, Wi
         ($evaluation['user']['firstname'] ?? 'N/A') . ' ' . ($evaluation['user']['lastname'] ?? 'N/A'),
 
         // Evaluator
-        ($evaluation['evaluator']['firstname'] ?? 'N/A') . ' ' . ($evaluation['evaluator']['lastname'] ?? 'N/A'),
+        // ($evaluation['evaluator']['firstname'] ?? 'N/A') . ' ' . ($evaluation['evaluator']['lastname'] ?? 'N/A'),
 
         // Department
         $evaluation['user']['department']['name'] ?? 'N/A',
 
         // Evaluation Date
-        $evaluation['evaluation_date'] ? Carbon::parse($evaluation['evaluation_date'])->format('Y-m-d') : 'N/A',
+        // $evaluation['evaluation_date'] ? Carbon::parse($evaluation['evaluation_date'])->format('Y-m-d') : 'N/A',
 
         // Other fields
         $evaluation['attendance'] ?? 'N/A',
