@@ -557,21 +557,21 @@ class RequisitionApiController extends Controller
                         Log::warning('Department Mismatch');
                         return response()->json(['error' => 'You can only approve requests in your department'], 403);
                     }
-                } elseif ($approver->is_hr === 1 && $requisition->status === 'Finance Manager Approved') {
+                } elseif ($approver->is_hr === 1 && $requisition->status === 'Manager Approved') {
                     $requisition->status = 'HR Approved';
                     $requisition->is_hr = 1;
 
-                    // Log the HR Approval
+                    // Log the COO approval
                     $this->logRequisitionAction($requisition, 'HR Approved', $details, $userId);
                     Log::info('Requisition Status Updated', ['newStatus' => 'HR Approved']);
-                } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'Manager Approved') {
+                } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'HR Approved') {
                     $requisition->status = 'Finance Manager Approved';
                     $requisition->is_finance_manager = 1;
 
                     // Log the HR approval
                     $this->logRequisitionAction($requisition, 'Finance Manager Approved', $details, $userId);
                     Log::info('Requisition Status Updated', ['newStatus' => 'Finance Manager Approved']);
-                } elseif ($approver->is_coo === 1 && $requisition->status === 'HR Approved') {
+                } elseif ($approver->is_coo === 1 && $requisition->status === 'Finance Manager Approved') {
                     $requisition->status = 'COO Approved';
                     $requisition->is_coo = 1;
 
@@ -792,9 +792,9 @@ class RequisitionApiController extends Controller
         // Set the approval path based on approver_type
         if ($requisition->approver_type === "HR") {
             $nextRole = [
-                'Manager Approved' => 'is_finance_manager',
-                'Finance Manager Approved'=>'is_hr',
-                'HR Approved' => 'is_coo',
+                'Manager Approved' => 'is_hr',
+                'HR Approved' => 'is_finance_manager',
+                'Finance Manager Approved' => 'is_coo',
                 'COO Approved' => 'is_cfo',
                 'Approved' => 'is_cfo',
             ];
