@@ -134,7 +134,7 @@ export default {
     roles: Array,
     permissions: Array
   },
-  
+
     data() {
         return {
             showDialog: false,
@@ -208,7 +208,7 @@ export default {
                 .catch(error => console.error(error));
         },
         viewAnnouncement(item) {
-            //
+            // 
 
             this.viewedAnnouncement = Object.assign({}, item);
 

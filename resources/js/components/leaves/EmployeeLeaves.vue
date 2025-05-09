@@ -35,10 +35,13 @@
           <template v-slot:item.actions="{ item }">
             <td>
               <div class="d-flex align-items-center">
+                <v-icon @click="viewLeave(item)" color="info" style="margin-right: 8px;"
+                title="View Leave">mdi-eye-check-outline</v-icon>
+
                 <v-icon @click.prevent="openLogsModal(item)" color="primary" class="mr-2" title="View Logs">mdi-history
                 </v-icon>
 
-                <v-icon v-if="item.status == 'Pending'" @click="openEditLeaveModal(item.id)" title="Edit Leave"
+                <v-icon  v-if="item.status == 'Pending'" @click="openEditLeaveModal(item.id)" title="Edit Leave"
                   class="mr-2" color="info">mdi-pencil
                 </v-icon>
                 <v-icon v-if="item.status == 'Pending'" class="cancel-icon" @click="openCancelLeaveModal(item.id)"
@@ -114,6 +117,65 @@
                     <v-textarea v-model="newLeave.comment" label="Comment (Optional)" variant="outlined" clearable
                       class="rounded-lg"></v-textarea>
                   </v-col>
+
+                  <!-- <v-col cols="12">
+                    <v-autocomplete v-model="newLeave.follower" :items="followers" label="Delegate your tasks to:" item-value="id"
+                      item-title="fullname" variant="outlined" clearable class="rounded-lg" multiple></v-autocomplete>
+                  </v-col>
+
+                  <v-col cols="12">
+                    <v-textarea v-model="newLeave.task" label="Tasks (Optional)" variant="outlined" clearable
+                      class="rounded-lg"></v-textarea>
+                  </v-col> -->
+
+                  <v-col cols="12">
+                    <div class="mb-2">
+    <span class="text-subtitle-1 font-weight-medium">Assign Tasks (Optional)</span>
+  </div>
+
+  <div
+    v-for="(task, index) in newLeave.delegatedTasks"
+    :key="index"
+    class="mb-4"
+  >
+    <v-row>
+      <v-col cols="12" md="5">
+        <v-select
+          v-model="task.assignee_id"
+          :items="followers"
+          item-value="id"
+          item-title="fullname"
+          label="Assign To"
+          :rules="[v => !!v || 'Assignee is required']"
+          variant="outlined"
+          dense
+        ></v-select>
+      </v-col>
+
+      <v-col cols="12" md="6">
+        <v-text-field
+          v-model="task.task_description"
+          label="Task Description"
+          :rules="[v => !!v || 'Task description is required']"
+          variant="outlined"
+          dense
+        ></v-text-field>
+      </v-col>
+
+      <v-col cols="12" md="1" class="d-flex align-center justify-center">
+        <v-btn icon @click="removeNewTask(index)" variant="text" color="red">
+          <v-icon>mdi-delete</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
+  </div>
+
+  <v-btn color="primary" @click="addNewTask" text class="mb-4">
+    <v-icon left>mdi-plus</v-icon> Add Task
+  </v-btn>
+</v-col>
+
+
                 </v-row>
               </v-container>
             </v-form>
@@ -190,6 +252,43 @@
                     <v-textarea v-model="selectedLeave.comment" label="Comment (Optional)" outlined clearable>
                     </v-textarea>
                   </v-col>
+                  <v-col cols="12">
+  <v-divider class="my-4"></v-divider>
+  <h3 class="text-h6 mb-2">Assign Tasks (Optional)</h3>
+
+  <v-row v-for="(task, index) in selectedLeave.tasks" :key="index" align="center">
+    <v-col cols="12" md="5">
+      <v-select
+        v-model="task.assignee_id"
+        :items="users"
+        label="Assignee"
+        item-value="id"
+        item-title="fullname"
+        outlined
+        dense
+        clearable
+      ></v-select>
+    </v-col>
+    <v-col cols="12" md="6">
+      <v-text-field
+        v-model="task.task_description"
+        label="Task Description"
+        outlined
+        dense
+      ></v-text-field>
+    </v-col>
+    <v-col cols="12" md="1" class="d-flex align-center justify-center">
+      <v-btn icon color="red" variant="text" @click="removeEditTask(index)">
+        <v-icon>mdi-delete</v-icon>
+      </v-btn>
+    </v-col>
+  </v-row>
+
+  <v-btn color="primary" small @click="addEditTask">
+    <v-icon left>mdi-plus</v-icon> Add Task
+  </v-btn>
+</v-col>
+
                 </v-row>
               </v-container>
             </v-form>
@@ -200,6 +299,104 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <!-- view Leave Dialog -->
+      <v-dialog v-model="viewLeaveModal" max-width="600px" persistent responsive>
+        <v-card class="view-leave-card">
+          <v-card-title class="headline mb-3"> <!-- Added margin-bottom -->
+            <v-icon color="primary">mdi-information-outline</v-icon>
+            Leave Information
+          </v-card-title>
+          <v-card-subtitle class="mb-3"> <!-- Added margin-bottom -->
+            <v-icon color="primary">mdi-account-circle</v-icon>
+            Employee Name: {{ selectedItem.user.firstname }} {{ selectedItem.user.lastname }}
+          </v-card-subtitle>
+          <v-card-subtitle class="mb-3"> <!-- Added margin-bottom -->
+            <v-icon color="info">mdi-calendar-text</v-icon>
+            Leave Type: {{ selectedItem.leave_type.name.replace('_', ' ') }}
+          </v-card-subtitle>
+          <v-card-text class="mb-4"> <!-- Added margin-bottom -->
+            <!-- Display other leave information here -->
+            <div class="mb-2"> <!-- Added margin-bottom -->
+              <v-icon color="grey darken-2">mdi-calendar-clock</v-icon>
+              Application Date: {{ formatDate(selectedItem.created_at) }}
+            </div>
+            <div class="mb-2"> <!-- Added margin-bottom -->
+              <v-icon color="success">mdi-clock-time-eight</v-icon>
+              From: {{ selectedItem.from }}
+            </div>
+            <div class="mb-2"> <!-- Added margin-bottom -->
+              <v-icon color="error">mdi-clock-end</v-icon>
+              To: {{ selectedItem.to }}
+            </div>
+            <div class="mb-2"> <!-- Added margin-bottom -->
+              <v-icon color="indigo">mdi-calendar-star</v-icon>
+              Leave Days: {{ selectedItem.days }}
+            </div>
+            <div class="mb-2"> <!-- Added margin-bottom -->
+              <v-icon color="teal">mdi-comment-text-multiple</v-icon>
+              Comment: {{ selectedItem.comment || 'N/A' }}
+            </div>
+            <div class="mb-2"> <!-- Added margin-bottom -->
+              <v-icon color="purple">mdi-office-building</v-icon>
+              Department: {{ selectedItem.user.department}}
+            </div>
+            <div class="mb-2">
+              <v-icon color="blue">mdi-check-circle</v-icon>
+              Leave Status: {{ selectedItem.status }}
+            </div>
+            <!-- Tasks Section -->
+<div class="mt-4">
+  <v-divider class="mb-3"></v-divider>
+
+  <v-card-subtitle class="mb-2 d-flex align-center">
+    <v-icon color="amber darken-2" class="mr-2">mdi-clipboard-list</v-icon>
+    Delegated Tasks
+  </v-card-subtitle>
+
+  <v-list v-if="selectedItem.tasks && selectedItem.tasks.length > 0" dense class="rounded-lg">
+    <v-list-item
+      v-for="(task, index) in selectedItem.tasks"
+      :key="index"
+      class="mb-2 pa-2 grey lighten-4 rounded"
+    >
+      <v-list-item-icon>
+        <v-icon color="amber darken-1">mdi-clipboard-text-outline</v-icon>
+      </v-list-item-icon>
+
+      <v-list-item-content>
+        <v-list-item-title class="text-subtitle-2 font-weight-medium">
+          {{ task.task_description || 'No description provided' }}
+        </v-list-item-title>
+
+        <v-list-item-subtitle class="text-body-2" v-if="task.assignee">
+          <v-icon small color="primary" class="mr-1">mdi-account</v-icon>
+          Assigned to: {{ task.assignee.firstname }} {{ task.assignee.lastname }}
+        </v-list-item-subtitle>
+
+        <v-list-item-subtitle class="text-body-2" v-else>
+          <v-icon small color="grey" class="mr-1">mdi-account-off</v-icon>
+          Assigned to: Unassigned
+        </v-list-item-subtitle>
+      </v-list-item-content>
+    </v-list-item>
+  </v-list>
+
+  <v-alert v-else type="info" dense text class="mb-0">
+    No tasks delegated for this leave request
+  </v-alert>
+</div>
+
+
+          </v-card-text>
+          <v-card-actions class="justify-end"> <!-- Align to the right -->
+            <v-btn color="primary" @click="closeLeaveViewModal">
+              <v-icon left>mdi-close-circle-outline</v-icon> Close
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
 
       <!-- Cancel Leave Modal -->
       <v-dialog v-model="cancelLeaveModal" max-width="600px">
@@ -291,6 +488,8 @@ export default {
       users: [],
       managers: [],
       hods: [],
+      followers: [],
+      delegatedTasks: [],
       user: {},
       user_unit_id: null,
       leaveTypes: [],
@@ -306,9 +505,11 @@ export default {
         hod: null,
         document: null,
         comment: '',
-        phone: null
+        phone: null,
+        follower: null,
       },
       logsModal: false,
+      viewLeaveModal: false,
       newLeave: {
         leave_type_id: null,
         from: null,
@@ -319,6 +520,11 @@ export default {
         hod: null,
         document: null,
         comment: null,
+        follower: null,
+        task: '',
+      delegatedTasks: [
+        { assignee_id: null, task_description: '' },
+      ],
       },
       isLoading: false,
       cancelComment: '',
@@ -326,6 +532,7 @@ export default {
       cancelLeaveModal: false,
       selectedLeave: {},
       createLeaveModal: false,
+      isNewLeaveMode: true,
     };
   },
   computed: {
@@ -362,6 +569,10 @@ export default {
     this.fetchLeaveTypes();
   },
   methods: {
+    formatDate(date) {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(date).toLocaleDateString(undefined, options);
+    },
 
     handleFileUpload(file) {
       if (file) {
@@ -391,6 +602,7 @@ export default {
       axios.get(apiUrl)
         .then(response => {
           this.leaves = response.data.leaves;
+          console.log("Leaves: ", this.leaves);
         })
         .catch(error => {
           console.error('Error fetching leaves:', error);
@@ -410,6 +622,17 @@ export default {
 
           this.hods = this.users.filter(user => user.is_hod === 1);
           this.managers = this.users.filter(user => user.designation_id === 1);
+          // Find users in the same department as the logged-in user
+        //   this.followers = this.users.filter(user =>
+        //         // user.department_id === this.user.department_id &&
+        //         user.unit_id === this.user.unit_id &&
+        //         user.id !== parseInt(this.userId)
+        //   );
+        this.followers = this.users.filter(u =>
+        u.unit_id       === this.user.unit_id    &&   // same unit
+        u.department_id === this.user.department_id &&   // same department
+        u.id            !== this.user.id              // exclude yourself
+        );
 
           console.log("HODs: ", this.hods);
           console.log("Managers: ", this.managers);
@@ -419,10 +642,33 @@ export default {
         });
     },
 
+    // openEditLeaveModal(leaveId) {
+    // // Create a deep copy and ensure consistent property names
+    // const leave = this.leaves.find(leave => leave.id === leaveId);
+
+    // this.selectedLeave = {
+    //     ...leave,
+    //     // Keep the property name as 'tasks' to be consistent with your edit methods
+    //     tasks: leave?.tasks || [{ assignee_id: null, task_description: '' }]
+    // };
+
+    // this.isNewLeaveMode = false;
+    // this.editLeaveModal = true;
+    // },
     openEditLeaveModal(leaveId) {
-      this.selectedLeave = this.leaves.find(leave => leave.id === leaveId);
-      this.editLeaveModal = true;
-    },
+  // Find the leave in your data source
+  const originalLeave = this.leaves.find(leave => leave.id === leaveId);
+
+  // Create a deep copy to avoid direct mutation
+  this.selectedLeave = JSON.parse(JSON.stringify(originalLeave));
+
+  // Ensure tasks array exists and is properly initialized
+  if (!this.selectedLeave.tasks || !Array.isArray(this.selectedLeave.tasks)) {
+    this.selectedLeave.tasks = [{ assignee_id: null, task_description: '' }];
+  }
+
+  this.editLeaveModal = true;
+},
 
     openCancelLeaveModal(leaveId) {
       this.selectedLeave = this.leaves.find(leave => leave.id === leaveId);
@@ -452,7 +698,7 @@ export default {
         formData.append('days', this.newLeave.days);
         formData.append('manager', this.newLeave.manager);
         formData.append('hod', this.newLeave.hod);
-        formData.append('comment', this.newLeave.comment);      
+        formData.append('comment', this.newLeave.comment);
         if (this.newLeave.document && this.newLeave.document.length > 0) {
           const file = this.newLeave.document[0]; // Get the first file from the array
           console.log('Appending file:', file);
@@ -460,6 +706,7 @@ export default {
         } else {
           console.log('No file selected');
         }
+        formData.append('delegatedTasks', JSON.stringify(this.newLeave.delegatedTasks));
         axios.post('/api/v1/leaves', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -498,6 +745,7 @@ export default {
           document: this.selectedLeave.document,
           comment: this.selectedLeave.comment,
           phone: this.selectedLeave.phone,
+          delegatedTasks: this.selectedLeave.tasks || [],
         };
 
         const apiUrl = this.base_url + `api/v1/leaves/${this.selectedLeave.id}`;
@@ -539,6 +787,13 @@ export default {
           console.error('Cancel leave error:', error);
         });
     },
+    viewLeave(item) {
+      this.selectedItem = item;
+      this.viewLeaveModal = true;
+    },
+    closeLeaveViewModal() {
+      this.viewLeaveModal = false;
+    },
     capitalizeEachWord(string) {
       return string.replace(/\b\w/g, c => c.toUpperCase());
     },
@@ -570,6 +825,63 @@ export default {
           this.logsModal = true;
         });
     },
-  },
+    // addTask() {
+    //   this.newLeave.delegatedTasks.push({ assignee_id: null, task_description: '' });
+    // },
+    // removeTask(index) {
+    //   this.newLeave.delegatedTasks.splice(index, 1);
+    // },
+
+    // Method to add a task in edit leave
+addEditTask() {
+  // Make sure tasks array exists
+  if (!this.selectedLeave.tasks) {
+    this.$set(this.selectedLeave, 'tasks', []);
+  }
+
+  // Add new task
+  this.selectedLeave.tasks.push({
+    assignee_id: null,
+    task_description: ''
+  });
+},
+
+// Method to remove a task in edit leave
+removeEditTask(index) {
+  if (!this.selectedLeave.tasks) {
+    return;
+  }
+
+  if (this.selectedLeave.tasks.length > 1) {
+    this.selectedLeave.tasks.splice(index, 1);
+  } else {
+    // If it's the last task, just clear it
+    this.selectedLeave.tasks[0] = {
+      assignee_id: null,
+      task_description: ''
+    };
+  }
+},
+// Method to add a task in apply leave
+addNewTask() {
+  if (!this.newLeave.delegatedTasks) {
+    this.newLeave.delegatedTasks = [];
+  }
+
+  this.newLeave.delegatedTasks.push({
+    assignee_id: null,
+    task_description: ''
+  });
+},
+
+// Method to remove a task in apply leave
+removeNewTask(index) {
+  if (!this.newLeave.delegatedTasks) {
+    return;
+  }
+
+  this.newLeave.delegatedTasks.splice(index, 1);
+}
+  }
 };
 </script>

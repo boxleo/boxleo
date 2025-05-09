@@ -61,6 +61,7 @@
                             class="la la-slack"></i>
                         <span>Leaves</span><span class="menu-arrow"></span></a>
                     <ul id="leave-menu" class="collapse">
+                        <li><a href="/employee-leaves">Apply Leave</a></li>
                         <li><a href="/leave-requests">Leave Requests</a></li>
                         <li><a href="/leaves">All Leaves</a></li>
                         <li><a href="/leave-balances">Leave Balances</a></li>

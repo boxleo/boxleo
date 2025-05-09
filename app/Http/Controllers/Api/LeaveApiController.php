@@ -17,6 +17,7 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use App\Notifications\TaskAssignedNotification; 
 
 
 class LeaveApiController extends Controller
@@ -29,7 +30,7 @@ class LeaveApiController extends Controller
   {
     Log::info('Fetching leave records', ['user_id' => auth()->id(), 'request_params' => $request->all()]);
 
-    $query = Leave::with('leave_type', 'user.department','user.unit')
+    $query = Leave::with('leave_type', 'user.department','user.unit', 'tasks', 'tasks.assignee')
       ->whereHas('user', function ($query) {
         $query->whereNull('deleted_at');
       });
@@ -110,8 +111,10 @@ class LeaveApiController extends Controller
       $leave->user->name = $leave->user->firstname . ' ' . $leave->user->lastname;
       return $leave;
     });
-
+    
+    Log::info('Leaves data fetched', ['leaves' => $leaves]);
     Log::info('Leaves fetched successfully', ['leave_count' => count($leaves)]);
+    Log::info('Leaves as array', ['leaves_array' => $leaves->toArray()]);
 
     return response()->json(['leaves' => $leaves]);
   }
@@ -207,7 +210,7 @@ class LeaveApiController extends Controller
   public function userLeaves(Request $request)
   {
 
-    $leaves = Leave::with('leave_type')
+    $leaves = Leave::with('leave_type', 'tasks', 'tasks.assignee', 'user')
       ->orderBy('created_at', 'desc')
       ->where('user_id', $request->user_id)
       ->get();
@@ -707,6 +710,40 @@ class LeaveApiController extends Controller
 
     Log::info('Leave application created', ['leave_id' => $leave->id]);
 
+    // 💡 Save delegated tasks
+    if ($request->filled('delegatedTasks')) {
+        try {
+            $tasks = is_string($request->delegatedTasks)
+                ? json_decode($request->delegatedTasks, true)
+                : $request->delegatedTasks;
+    
+            if (is_array($tasks)) {
+                foreach ($tasks as $task) {
+                    if (!empty($task['assignee_id']) && !empty($task['task_description'])) {
+                        $leave->tasks()->create([
+                            'assignee_id' => $task['assignee_id'],
+                            'task_description' => $task['task_description'],
+                        ]);
+                    }
+                }
+                Log::info('Delegated tasks saved', ['task_count' => count($tasks)]);
+            } else {
+                Log::warning('Delegated tasks is not an array', ['value' => $request->delegatedTasks]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to save delegated tasks', ['error' => $e->getMessage()]);
+        }
+    }
+    // if ($request->has('delegatedTasks')) {
+    //     foreach ($request->delegatedTasks as $task) {
+    //         $leave->tasks()->create([
+    //             'assignee_id' => $task['assignee_id'],
+    //             'task_description' => $task['task_description'],
+    //         ]);
+    //     }
+    //     Log::info('Delegated tasks saved', ['task_count' => count($request->delegatedTasks)]);
+    // }
+
     $leaveType = LeaveType::find($request->leave_type_id);
     if ($leaveType) {
       $userLeaveBalance = LeaveBalance::firstOrCreate([
@@ -793,6 +830,7 @@ class LeaveApiController extends Controller
             $leave->status = 'Approved';
             $this->logLeaveAction($leave, 'Approved', $userId);
             $this->notifyEmployee($leave);
+            $this->notifyTaskAssignees($leave);
           } else {
             return response()->json(['error' => 'Unauthorized'], 403);
           }
@@ -876,6 +914,34 @@ class LeaveApiController extends Controller
       Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
     }
   }
+
+  /**
+ * Notify task assignees after leave approval
+ */
+private function notifyTaskAssignees(Leave $leave)
+{
+    // Get the delegated tasks
+    $tasks = $leave->tasks ?? [];
+    
+    foreach ($tasks as $task) {
+        // Skip tasks with no assignee
+        if (empty($task['assignee_id'])) {
+            continue;
+        }
+        
+        // Find the assignee user
+        $assignee = User::find($task['assignee_id']);
+        
+        if ($assignee) {
+            // Notify the assignee through email
+            $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
+            
+            Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
+        } else {
+            Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
+        }
+    }
+}
 
 
 
@@ -1044,6 +1110,34 @@ class LeaveApiController extends Controller
     ]);
 
     $leave->update($validatedData);
+
+    // 💡 Update delegated tasks
+    if ($request->filled('delegatedTasks')) {
+        try {
+            $tasks = is_string($request->delegatedTasks)
+                ? json_decode($request->delegatedTasks, true)
+                : $request->delegatedTasks;
+
+            $leave->tasks()->delete(); // Remove existing tasks
+
+            if (is_array($tasks)) {
+                foreach ($tasks as $task) {
+                    if (!empty($task['assignee_id']) && !empty($task['task_description'])) {
+                        $leave->tasks()->create([
+                            'assignee_id' => $task['assignee_id'],
+                            'task_description' => $task['task_description'],
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to update delegated tasks', ['error' => $e->getMessage()]);
+        }
+    }
+
+    // 🔄 Load tasks and related models
+    $leave->load('tasks.assignee', 'leave_type', 'user');
+
 
     return response()->json(['message' => 'Leave updated successfully'], 200);
   }

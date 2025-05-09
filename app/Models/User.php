@@ -252,4 +252,10 @@ class User extends Authenticatable
      return $this->firstname . ' ' . $this->lastname;
   }
 
+  public function delegatedTasks()
+    {
+        return $this->hasMany(LeaveTask::class, 'assignee_id');
+    }
+
+
 }

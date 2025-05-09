@@ -188,12 +188,54 @@
             </div>
             <div class="mb-2"> <!-- Added margin-bottom -->
               <v-icon color="purple">mdi-office-building</v-icon>
-              Department: {{ selectedItem.user.department }}
+              Department: {{ selectedItem.user.department.name }}
             </div>
             <div class="mb-2">
               <v-icon color="blue">mdi-check-circle</v-icon>
               Leave Status: {{ selectedItem.status }}
             </div>
+            <!-- Tasks Section -->
+<div class="mt-4">
+  <v-divider class="mb-3"></v-divider>
+
+  <v-card-subtitle class="mb-2 d-flex align-center">
+    <v-icon color="amber darken-2" class="mr-2">mdi-clipboard-list</v-icon>
+    Delegated Tasks
+  </v-card-subtitle>
+
+  <v-list v-if="selectedItem.tasks && selectedItem.tasks.length > 0" dense class="rounded-lg">
+    <v-list-item
+      v-for="(task, index) in selectedItem.tasks"
+      :key="index"
+      class="mb-2 pa-2 grey lighten-4 rounded"
+    >
+      <v-list-item-icon>
+        <v-icon color="amber darken-1">mdi-clipboard-text-outline</v-icon>
+      </v-list-item-icon>
+
+      <v-list-item-content>
+        <v-list-item-title class="text-subtitle-2 font-weight-medium">
+          {{ task.task_description || 'No description provided' }}
+        </v-list-item-title>
+
+        <v-list-item-subtitle class="text-body-2" v-if="task.assignee">
+          <v-icon small color="primary" class="mr-1">mdi-account</v-icon>
+          Assigned to: {{ task.assignee.firstname }} {{ task.assignee.lastname }}
+        </v-list-item-subtitle>
+
+        <v-list-item-subtitle class="text-body-2" v-else>
+          <v-icon small color="grey" class="mr-1">mdi-account-off</v-icon>
+          Assigned to: Unassigned
+        </v-list-item-subtitle>
+      </v-list-item-content>
+    </v-list-item>
+  </v-list>
+
+  <v-alert v-else type="info" dense text class="mb-0">
+    No tasks delegated for this leave request
+  </v-alert>
+</div>
+
 
           </v-card-text>
           <v-card-actions class="justify-end"> <!-- Align to the right -->
@@ -574,7 +616,7 @@ export default {
     isDateInRange(date, range) {
       const currentDate = new Date(date);
       const today = new Date();
-
+      Comment
       switch (range) {
         case 'Today':
           return currentDate.toDateString() === today.toDateString();
@@ -767,6 +809,26 @@ export default {
           console.error('Error generating PDF file:', error);
         });
     },
+    // Get assignee name from user ID
+    // getAssigneeName(assigneeId) {
+    // if (!assigneeId) return 'Unassigned';
+
+    // const user = this.users.find(user => user.id === assigneeId);
+    // if (user) {
+    //     return `${user.firstname} ${user.lastname}`;
+    // }
+    // return 'Unknown User';
+    // },
+    // Format date for better readability
+// formatDate(date) {
+//   if (!date) return 'N/A';
+//   return new Date(date).toLocaleDateString('en-US', {
+//     year: 'numeric', 
+//     month: 'long', 
+//     day: 'numeric'
+//   });
+// },
+
   },
 };
 </script>
