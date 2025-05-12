@@ -30,7 +30,7 @@ class LeaveCreatedNotification extends Notification
             ->line('Leave Days: ' . $this->leave->days)
             ->line('Application Date: ' . $this->leave->created_at)
             ->line('Comment: ' . $this->leave->comment)
-            ->action('View Leave', url('/leaves'))
+            ->action('View Leave', url('/leave-requests'))
             ->line('Thank you!');
     }
 

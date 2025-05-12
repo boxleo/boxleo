@@ -306,6 +306,8 @@
               <template v-slot:item.actions="{ item }">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
+                    <!-- inlcude icon to edit  -->
+                     
                     <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
                       mdi-information
                     </v-icon>
@@ -536,7 +538,8 @@ export default {
       averageProductivity: 0,
       filters: {
         department_id: null,
-        evaluation_date: null,
+        evaluation_date_end:null,
+        evaluation_date_start: null,
         user_id: null,
         evaluator_id: null,
       },
@@ -824,8 +827,8 @@ downloadFullReport() {
       this.loading = true;
       const params = {
         department_id: this.filters.department_id,
-        start_date: this.filters.evaluation_date ? this.filters.evaluation_date.start : null,
-        end_date: this.filters.evaluation_date ? this.filters.evaluation_date.end : null,
+        start_date: this.filters.evaluation_date_start,
+        end_date: this.filters.evaluation_date_end,
         user_id: this.filters.user_id,
         evaluator_id: this.filters.evaluator_id,
       };

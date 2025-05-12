@@ -32,7 +32,14 @@ class DailyAttendanceJob implements ShouldQueue
     $date = Carbon::today();
     $dayOfWeek = $date->format('l'); // e.g. Monday, Tuesday...
 
-    $users = User::all(); // or filter for only active users
+    $exemptEmails = [
+        'brian.omondi@boxleocourier.com',
+        'moses.oluoch@boxleocourier.com',
+        'cheryl.lukase@boxleocourier.com',
+        'hr@boxleocourier.com',
+    ];
+
+    $users = User::whereNotIn('email', $exemptEmails)->get();
 
     foreach ($users as $user) {
         Log::info("Processing user: {$user->name} ({$user->id})");
@@ -51,6 +58,8 @@ class DailyAttendanceJob implements ShouldQueue
                 ->whereDate('to', '>=', $date)
                 ->exists();
 
+                // 
+
             Log::info("User {$user->name} ({$user->id}) is " . ($onLeave ? 'on leave' : 'not on leave'));
 
             $status = $onLeave ? 'leave' : 'absent';
@@ -64,8 +73,8 @@ class DailyAttendanceJob implements ShouldQueue
             Attendance::create([
                 'user_id' => $user->id,
                 'attendance_date' => $date,
-                'clock_in_time' => null,
-                'clock_out_time' => null,
+                'clock_in_time' => '00:00:00',
+                'clock_out_time' => '00:00:00',
                 'hours_worked' => 0,
                 'status' => $status,
                 'is_present' => 0,
