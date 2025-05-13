@@ -20,21 +20,22 @@ class PerformanceApiEvaluation extends Controller
         $validatedData = $request->validate([
             'user_id' => 'required|integer',
             // 'evaluator_id' => 'required|integer',
-            // 'department_id' => 'required|integer',
+            'unit_id' => 'required|integer',
+            'department_id' => 'required|integer',
             // 'evaluation_date' => 'required|date',
-            'attendance' => 'required|integer',
-            'problems_solved' => 'required|integer',
-            'reports_submitted' => 'required|integer',
-            'knowledge_of_work' => 'required|integer',
-            'team_work' => 'required|integer',
-            'reliability_visibility' => 'required|integer',
-            'productivity' => 'required|integer',
-            'discipline' => 'required|integer',
-            'quality_of_work' => 'required|integer',
-            'communication' => 'required|integer',
+            'attendance' => 'required|integer|min:0|max:10',
+            'problems_solved' => 'required|integer|min:0|max:10',
+            'reports_submitted' => 'required|integer|min:0|max:10',
+            'knowledge_of_work' => 'required|integer|min:0|max:10',
+            'team_work' => 'required|integer|min:0|max:10',
+            'reliability_visibility' => 'required|integer|min:0|max:10',
+            'productivity' => 'required|integer|min:0|max:10',
+            'discipline' => 'required|integer|min:0|max:10',
+            'quality_of_work' => 'required|integer|min:0|max:10',
+            'communication' => 'required|integer|min:0|max:10',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
-            'leadership' => 'required|numeric',
+            'leadership' => 'nullable|numeric|min:0|max:10',
         ]);
 
         // Assuming you have a model named PerformanceEvaluation
@@ -50,21 +51,22 @@ class PerformanceApiEvaluation extends Controller
         $validatedData = $request->validate([
             'user_id' => 'required|integer',
             // 'evaluator_id' => 'required|integer',
-            // 'department_id' => 'required|integer',
+            'unit_id' => 'required|integer',
+            'department_id' => 'required|integer',
             // 'evaluation_date' => 'required|date',
-            'attendance' => 'required|integer',
-            'problems_solved' => 'required|integer',
-            'reports_submitted' => 'required|integer',
-            'knowledge_of_work' => 'required|integer',
-            'team_work' => 'required|integer',
-            'reliability_visibility' => 'required|integer',
-            'productivity' => 'required|integer',
-            'discipline' => 'required|integer',
-            'quality_of_work' => 'required|integer',
-            'communication' => 'required|integer',
+            'attendance' => 'required|integer|min:0|max:10',
+            'problems_solved' => 'required|integer|min:0|max:10',
+            'reports_submitted' => 'required|integer|min:0|max:10',
+            'knowledge_of_work' => 'required|integer|min:0|max:10',
+            'team_work' => 'required|integer|min:0|max:10',
+            'reliability_visibility' => 'required|integer|min:0|max:10',
+            'productivity' => 'required|integer|min:0|max:10',
+            'discipline' => 'required|integer|min:0|max:10',
+            'quality_of_work' => 'required|integer|min:0|max:10',
+            'communication' => 'required|integer|min:0|max:10',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
-            'leadership' => 'required|numeric',
+            'leadership' => 'nullable|numeric|min:0|max:10',
 
         ]);
 
@@ -303,8 +305,16 @@ class PerformanceApiEvaluation extends Controller
 
         try {
             // Start with a base query
-            $query = PerformanceEvaluation::with(['user.department', 'evaluator'])
+            $query = PerformanceEvaluation::with(['user.unit', 'user.department', 'evaluator'])
                 ->whereNull('deleted_at');
+
+            // Apply unit filter (supports multiple units)
+            if ($request->has('unit_id') && $request->unit_id) {
+                Log::info('Applying unit filter', ['unit_id' => $request->unit_id]);
+                $userIds = User::whereIn('unit_id', (array) $request->unit_id)->pluck('id');
+                Log::debug('User IDs for unit filter', ['user_ids' => $userIds]);
+                $query->whereIn('user_id', $userIds);
+            }
 
             // Apply department filter (supports multiple departments)
             if ($request->has('department_id') && $request->department_id) {
@@ -402,4 +412,22 @@ class PerformanceApiEvaluation extends Controller
             'departments' => $departments
         ]);
     }
+
+    public function rules()
+    {
+        return [
+            'attendance'         => 'required|integer|min:0|max:10',
+            'problems_solved'    => 'required|integer|min:0|max:10',
+            'reports_submitted'  => 'required|integer|min:0|max:10',
+            'knowledge_of_work'  => 'required|integer|min:0|max:10',
+            'team_work'          => 'required|integer|min:0|max:10',
+            'reliability_visibility' => 'required|integer|min:0|max:10',
+            'productivity'       => 'required|integer|min:0|max:10',
+            'discipline'         => 'required|integer|min:0|max:10',
+            'quality_of_work'    => 'required|integer|min:0|max:10',
+            'communication'      => 'required|integer|min:0|max:10',
+            'leadership'         => 'required|integer|min:0|max:10',
+        ];
+    }
+
 }

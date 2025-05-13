@@ -352,32 +352,39 @@
               <v-row>
 
                 <v-col cols="12">
-                            <v-autocomplete
-                                v-model="filters.unit_id"
-                                :items="units"
-                                label="Unit"
-                                variant="outlined"
-                                item-title="name"
-                                item-value="id"
-                                clearable
-                            />
-                            </v-col>
+                  <v-autocomplete
+                    v-model="newEvaluation.unit_id"
+                    :items="units"
+                    label="Unit"
+                    variant="outlined"
+                    item-title="name"
+                    item-value="id"
+                    clearable
+                  />
+                </v-col>
 
-                            <v-col cols="12">
-                            <v-autocomplete
-                                v-model="filters.department_id"
-                                :items="departments || []"
-                                label="Department"
-                                variant="outlined"
-                                item-title="name"
-                                item-value="id"
-                                clearable
-                            />
-                            </v-col>
+                <v-col cols="12">
+                  <v-autocomplete
+                    v-model="newEvaluation.department_id"
+                    :items="departments"
+                    label="Department"
+                    variant="outlined"
+                    item-title="name"
+                    item-value="id"
+                    clearable
+                  />
+                </v-col>
 
                 <v-col cols="12" sm="6">
-                  <v-autocomplete v-model="newEvaluation.user_id" :items="team" item-title="fullname" item-value="id"
-                    label="Employee" clearable dense />
+                  <v-autocomplete
+                    v-model="newEvaluation.user_id"
+                    :items="team"
+                    item-title="fullname"
+                    item-value="id"
+                    label="Employee"
+                    clearable
+                    dense
+                  />
                 </v-col>
 
 
@@ -389,7 +396,7 @@
                   <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number"
                     dense></v-text-field>
                 </v-col>
-                <v-col cols="12" sm="6">
+                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id).designation_id !== 1">
                   <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted" type="number"
                     dense></v-text-field>
                 </v-col>
@@ -421,7 +428,7 @@
                     dense></v-text-field>
                 </v-col>
 
-                <v-col cols="12" sm="6">
+                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id).designation_id === 1">
                   <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number"
                     dense></v-text-field>
                 </v-col>
@@ -616,12 +623,29 @@ export default {
       selectedEvaluationId: null,
     };
   },
+  watch: {
+    'newEvaluation.unit_id'(newUnit) {
+      // Clear dependent fields
+      this.newEvaluation.department_id = null;
+      this.newEvaluation.user_id = null;
+
+      // Fetch new departments
+      this.fetchDepartments();
+      // No need to fetchEmployees yet because dept_id is null
+    },
+    'newEvaluation.department_id'(newDept) {
+      // Clear selected user
+      this.newEvaluation.user_id = null;
+      // Only fetch if unit is set
+      this.fetchEmployees();
+    }
+  },
   created() {
     this.fetchEvaluations();
     this.fetchDepartments();
     this.fetchUnits();
-    this.fetchTeam();
-    this.fetchUsers();
+    // this.fetchEmployees();
+    // this.fetchUsers();
     console.log("User:", this.user);
     console.log("Roles:", this.roles);
     console.log("Permissions:", this.permissions);
@@ -724,29 +748,70 @@ downloadFullReport() {
       if (rank === 3) return '#CD7F32'; // Bronze
       return 'grey';
     },
+    // calculateScores() {
+    //   const fields = [
+    //     'attendance',
+    //     'problems_solved',
+    //     'reports_submitted',
+    //     'knowledge_of_work',
+    //     'team_work',
+    //     'reliability_visibility',
+    //     'productivity',
+    //     'discipline',
+    //     'quality_of_work',
+    //     'communication',
+    //     'leadership'
+    //   ];
+
+    //   let total = 0;
+    //   fields.forEach(field => {
+    //     total += parseFloat(this.newEvaluation[field]) || 0;
+    //   });
+
+    //   this.newEvaluation.total_score = total;
+    //   this.newEvaluation.percentage = (total / (fields.length * 10)) * 100; // Assuming each field is out of 10
+    // },
     calculateScores() {
-      const fields = [
-        'attendance',
-        'problems_solved',
-        'reports_submitted',
-        'knowledge_of_work',
-        'team_work',
-        'reliability_visibility',
-        'productivity',
-        'discipline',
-        'quality_of_work',
-        'communication',
-        'leadership'
-      ];
+  const fields = [
+    'attendance',
+    'problems_solved',
+    'reports_submitted',
+    'knowledge_of_work',
+    'team_work',
+    'reliability_visibility',
+    'productivity',
+    'discipline',
+    'quality_of_work',
+    'communication',
+    'leadership'
+  ];
 
-      let total = 0;
-      fields.forEach(field => {
-        total += parseFloat(this.newEvaluation[field]) || 0;
-      });
+  // 1. Gather only the fields the user has actually entered (not null/empty)
+  const answered = fields.filter(field => {
+    const val = this.newEvaluation[field];
+    return val !== null && val !== undefined && val !== '';
+  });
 
-      this.newEvaluation.total_score = total;
-      this.newEvaluation.percentage = (total / (fields.length * 10)) * 100; // Assuming each field is out of 10
-    },
+  // 2. Sum only those answered fields
+  const total = answered.reduce((sum, field) => {
+    return sum + (parseFloat(this.newEvaluation[field]) || 0);
+  }, 0);
+
+  // 3. Compute max possible based on how many questions were answered
+  const maxPossible = answered.length * 10;
+
+  // 4. Calculate percentage (guard against division by zero)
+  const percentage = maxPossible > 0
+    ? (total / maxPossible) * 100
+    : 0;
+
+  // 5. Assign back:
+  //    - total_score = raw sum, or swap if you want it to be % by default
+  //    - percentage = computed percent
+  this.newEvaluation.total_score = total;
+  this.newEvaluation.percentage  = Math.round(percentage * 100) / 100; // round to 2dp
+},
+
 
     addEvaluation() {
       this.calculateScores();
@@ -819,38 +884,77 @@ downloadFullReport() {
 
 
 
-    fetchTeam() {
-      const apiUrl = `api/v1/team`;
+    // fetchEmployees() {
+    //   const apiUrl = `api/v1/team`;
 
-      axios.get(apiUrl)
-        .then(response => {
-          this.user = response.data.user;
+    //   axios.get(apiUrl)
+    //     .then(response => {
+    //       this.user = response.data.user;
 
-          this.users = response.data.users.map(user => ({
-            ...user,
-            fullname: `${user.firstname} ${user.lastname}`,
-          }));
+    //       this.users = response.data.users.map(user => ({
+    //         ...user,
+    //         fullname: `${user.firstname} ${user.lastname}`,
+    //       }));
 
-          this.team = response.data.team.map(user => ({
-            ...user,
-            fullname: `${user.firstname} ${user.lastname}`,
-          }));
+    //       this.team = response.data.team.map(user => ({
+    //         ...user,
+    //         fullname: `${user.firstname} ${user.lastname}`,
+    //       }));
 
-          console.log("Team members based on role:", this.team);
-        })
-        .catch(error => {
-          console.error('Error fetching team:', error);
+    //       console.log("Team members based on role:", this.team);
+    //     })
+    //     .catch(error => {
+    //       console.error('Error fetching team:', error);
+    //     });
+    // }
+    // ,
+    async fetchEmployees() {
+    // clear old list
+    this.team = [];
+
+    const { unit_id, department_id } = this.newEvaluation;
+
+    // only fetch if both are selected
+    if (!unit_id || !department_id) return;
+
+    try {
+        const { data } = await axios.get('/api/v1/team', {
+        params: { unit_id, department_id }
         });
-    }
-    ,
 
+        // map to { id, fullname }
+        this.team = data.team.map(u => ({
+        id: u.id,
+        fullname: `${u.firstname} ${u.lastname}`
+        }));
+
+        console.log('Filtered team:', this.team);
+
+    } catch (err) {
+        console.error('Error fetching team:', err);
+        this.team = [];
+    }
+    },
+
+
+    // async fetchDepartments() {
+    //   try {
+    //     const response = await axios.get('/api/v1/departments');
+    //     this.departments = response.data.departments;
+    //   } catch (error) {
+    //     console.error('Error fetching departments:', error);
+    //   }
+    // },
     async fetchDepartments() {
-      try {
-        const response = await axios.get('/api/v1/departments');
-        this.departments = response.data.departments;
-      } catch (error) {
-        console.error('Error fetching departments:', error);
+      // Fetch depts for the selected unit
+      if (!this.newEvaluation.unit_id) {
+        this.departments = [];
+        return;
       }
+      const { data } = await axios.get('/api/v1/departments', {
+        params: { unit_id: this.newEvaluation.unit_id }
+      });
+      this.departments = data.departments;
     },
     fetchUnits() {
             return axios.get('/api/v1/branches')
@@ -876,6 +980,7 @@ downloadFullReport() {
     filterEvaluations() {
       this.loading = true;
       const params = {
+        unit_id: this.filters.unit_id,
         department_id: this.filters.department_id,
         start_date: this.filters.evaluation_date_start,
         end_date: this.filters.evaluation_date_end,

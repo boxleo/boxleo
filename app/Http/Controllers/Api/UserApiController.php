@@ -14,75 +14,128 @@ use Illuminate\Support\Str;
 
 class UserApiController extends Controller
 {
-
-
-  public function getTeam()
-  {
-      $authUser = auth()->user();
-  
-      $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
-  
-      $response = [
-          'user' => $authUser,
-          'users' => $allUsers,
-          'team' => [],
-          'is_hod' => $authUser->is_hod,
-          'is_manager' => $authUser->designation_id === 1,
-      ];
-  
-      // if ($authUser->is_hod) {
-      //     $hodDeptIds = $authUser->hodDepartments->pluck('id');
-  
-      //     // Fetch users who manage the HOD's departments OR have no managerDepartments
-      //     $team = User::with(['department', 'unit', 'designation'])
-      //         ->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
-      //             $q->whereIn('department_id', $hodDeptIds);
-      //         })
-      //         ->orWhereDoesntHave('managerDepartments')
-      //         ->get();
-  
-      //     $response['team'] = $team->unique('id')->values(); // avoid duplicates
-      // } 
-
-
-      if ($authUser->is_hod) {
-        $hodDeptIds = $authUser->hodDepartments->pluck('id');
+    public function getTeam(Request $request)
+    {
+        $authUser = $request->user();
+        $unitFilter = $request->query('unit_id');
+        $deptFilter = $request->query('department_id');
     
-        $team = User::with(['department', 'unit', 'designation'])
-            ->where(function ($query) use ($hodDeptIds) {
-                $query->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
-                    $q->whereIn('department_id', $hodDeptIds);
-                })
-                ->orWhere(function ($q) {
-                    $q->doesntHave('managerDepartments')
-                      ->where('designation_id', 1); // Only include managers
-                });
-            })
-            ->get();
+        // Start with a base User query including the relations you need
+        $query = User::with(['department', 'unit', 'designation']);
     
-        $response['team'] = $team->unique('id')->values();
+        // 1) Apply role-based scoping
+        if ($authUser->is_hod) {
+            $hodDeptIds = $authUser->hodDepartments->pluck('id');
+            $query->where(function($q) use ($hodDeptIds) {
+                $q->whereHas('managerDepartments', fn($q2) => 
+                        $q2->whereIn('department_id', $hodDeptIds)
+                    )
+                  ->orWhere(fn($q2) => 
+                        $q2->doesntHave('managerDepartments')
+                           ->where('designation_id', 1) // include standalone managers
+                    );
+            });
+    
+        } elseif ($authUser->designation_id === 1) {
+            $managerDeptIds = $authUser->managerDepartments->pluck('id');
+            $query->where(function($q) use ($managerDeptIds, $authUser) {
+                // users in the manager’s departments, or anyone in same unit
+                $q->whereIn('department_id', $managerDeptIds)
+                  ->orWhere('unit_id', $authUser->unit_id);
+            });
+    
+        } else {
+            // regular user: only themselves
+            $query->where('id', $authUser->id);
+        }
+    
+        // 2) Apply optional filters from the front-end
+        if ($unitFilter) {
+            $query->where('unit_id', $unitFilter);
+        }
+        if ($deptFilter) {
+            $query->where('department_id', $deptFilter);
+        }
+    
+        // 3) Execute
+        $team = $query->orderBy('firstname')->get();
+    
+        // 4) Build your response
+        return response()->json([
+            'user'         => $authUser,
+            'team'         => $team,
+            'is_hod'       => $authUser->is_hod,
+            'is_manager'   => $authUser->designation_id === 1,
+        ]);
     }
+
+//   public function getTeam()
+//   {
+//       $authUser = auth()->user();
+  
+//       $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
+  
+//       $response = [
+//           'user' => $authUser,
+//           'users' => $allUsers,
+//           'team' => [],
+//           'is_hod' => $authUser->is_hod,
+//           'is_manager' => $authUser->designation_id === 1,
+//       ];
+  
+//       // if ($authUser->is_hod) {
+//       //     $hodDeptIds = $authUser->hodDepartments->pluck('id');
+  
+//       //     // Fetch users who manage the HOD's departments OR have no managerDepartments
+//       //     $team = User::with(['department', 'unit', 'designation'])
+//       //         ->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+//       //             $q->whereIn('department_id', $hodDeptIds);
+//       //         })
+//       //         ->orWhereDoesntHave('managerDepartments')
+//       //         ->get();
+  
+//       //     $response['team'] = $team->unique('id')->values(); // avoid duplicates
+//       // } 
+
+
+//       if ($authUser->is_hod) {
+//         $hodDeptIds = $authUser->hodDepartments->pluck('id');
     
-      elseif ($authUser->designation_id === 1) {
-          $managerDeptIds = $authUser->managerDepartments->pluck('id');
+//         $team = User::with(['department', 'unit', 'designation'])
+//             ->where(function ($query) use ($hodDeptIds) {
+//                 $query->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+//                     $q->whereIn('department_id', $hodDeptIds);
+//                 })
+//                 ->orWhere(function ($q) {
+//                     $q->doesntHave('managerDepartments')
+//                       ->where('designation_id', 1); // Only include managers
+//                 });
+//             })
+//             ->get();
+    
+//         $response['team'] = $team->unique('id')->values();
+//     }
+    
+//       elseif ($authUser->designation_id === 1) {
+//           $managerDeptIds = $authUser->managerDepartments->pluck('id');
   
-          // Get users from same department and unit
-          $departmentUsers = User::with(['department', 'unit', 'designation'])
-              ->whereIn('department_id', $managerDeptIds)
-              ->where('unit_id', $authUser->unit_id)
-              ->get();
+//           // Get users from same department and unit
+//           $departmentUsers = User::with(['department', 'unit', 'designation'])
+//               ->whereIn('department_id', $managerDeptIds)
+//               ->where('unit_id', $authUser->unit_id)
+//               ->get();
   
-          // Also get all users in the same unit
-          $unitUsers = User::with(['department', 'unit', 'designation'])
-              ->where('unit_id', $authUser->unit_id)
-              ->get();
+//           // Also get all users in the same unit
+//           $unitUsers = User::with(['department', 'unit', 'designation'])
+//               ->where('unit_id', $authUser->unit_id)
+//               ->get();
   
-          $team = $departmentUsers->merge($unitUsers)->unique('id')->values();
-          $response['team'] = $team;
-      }
+//           $team = $departmentUsers->merge($unitUsers)->unique('id')->values();
+//           $response['team'] = $team;
+//       }
   
-      return response()->json($response);
-  }
+//       return response()->json($response);
+//   }
   
 
 //   public function getTeam()
