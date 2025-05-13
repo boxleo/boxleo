@@ -18,6 +18,12 @@
               <!-- Filter by Department -->
               <v-list-item>
                 <v-col cols="12">
+                  <v-label>Unit:</v-label>
+                  <v-select v-model="filters.unit_id" item-value="id" item-title="name" :items="units"
+                    multiple clearable dense>
+                  </v-select>
+                </v-col>
+                <v-col cols="12">
                   <v-label>Department:</v-label>
                   <v-select v-model="filters.department_id" item-value="id" item-title="name" :items="departments"
                     multiple clearable dense>
@@ -307,7 +313,7 @@
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <!-- inlcude icon to edit  -->
-                     
+
                     <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
                       mdi-information
                     </v-icon>
@@ -345,8 +351,29 @@
             <v-form ref="evaluationForm">
               <v-row>
 
+                <v-col cols="12">
+                            <v-autocomplete
+                                v-model="filters.unit_id"
+                                :items="units"
+                                label="Unit"
+                                variant="outlined"
+                                item-title="name"
+                                item-value="id"
+                                clearable
+                            />
+                            </v-col>
 
-
+                            <v-col cols="12">
+                            <v-autocomplete
+                                v-model="filters.department_id"
+                                :items="departments || []"
+                                label="Department"
+                                variant="outlined"
+                                item-title="name"
+                                item-value="id"
+                                clearable
+                            />
+                            </v-col>
 
                 <v-col cols="12" sm="6">
                   <v-autocomplete v-model="newEvaluation.user_id" :items="team" item-title="fullname" item-value="id"
@@ -530,6 +557,7 @@ export default {
       employees: [],
       evaluators: [],
       departments: [],
+      units: [],
       team: [],
       user: '',
       averageTotalScore: 0,
@@ -537,6 +565,7 @@ export default {
       averageAttendance: 0,
       averageProductivity: 0,
       filters: {
+        unit_id: null,
         department_id: null,
         evaluation_date_end:null,
         evaluation_date_start: null,
@@ -547,6 +576,7 @@ export default {
         user_id: null,
         evaluator_id: null,
         department_id: null,
+        unit_id: null,
         evaluation_date: null,
         attendance: "",
         problems_solved: "",
@@ -589,6 +619,7 @@ export default {
   created() {
     this.fetchEvaluations();
     this.fetchDepartments();
+    this.fetchUnits();
     this.fetchTeam();
     this.fetchUsers();
     console.log("User:", this.user);
@@ -616,7 +647,7 @@ export default {
 
               fullName: `${user.firstname} ${user.lastname}`,
             }));
-            // console.log('Processed users:', this.users); 
+            // console.log('Processed users:', this.users);
             console.log('Processed users:', JSON.parse(JSON.stringify(this.users)));
 
           } else {
@@ -729,6 +760,7 @@ downloadFullReport() {
             user_id: this.user.id,
             evaluator_id: null,
             department_id: null,
+            unit_id: null,
             evaluation_date: null,
             attendance: "",
             problems_solved: "",
@@ -820,6 +852,24 @@ downloadFullReport() {
         console.error('Error fetching departments:', error);
       }
     },
+    fetchUnits() {
+            return axios.get('/api/v1/branches')
+                .then(response => {
+                    console.log('Units:', response.data);
+                    if (response.data && response.data.branches && Array.isArray(response.data.branches)) {
+                        this.units = response.data.branches;
+                        console.log('Units loaded:', this.units.length);
+                    } else {
+                        console.warn('Unexpected data format:', response.data);
+                        this.units = [];
+                    }
+                    return this.units;
+                })
+                .catch(error => {
+                    console.error('Failed to fetch units', error)
+                    this.units = [];
+                    return this.units;});
+        },
 
 
 
@@ -891,7 +941,7 @@ downloadFullReport() {
         leadership: evaluation.leadership,
         total_score: evaluation.total_score,
         percentage: evaluation.percentage,
-        
+
       };
       this.viewEvaluationModal = true;
     },

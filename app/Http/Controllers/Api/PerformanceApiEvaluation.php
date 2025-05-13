@@ -122,7 +122,7 @@ class PerformanceApiEvaluation extends Controller
     //             if ($departmentIds->isNotEmpty()) {
     //                 // Get all users in these departments
     //                 $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
-    //                 // inlcude users of same unit if the manager is does not have any managerDerpartment 
+    //                 // inlcude users of same unit if the manager is does not have any managerDerpartment
 
     //                 Log::info('Manager oversees users', ['user_ids' => $userIds]);
 
@@ -170,24 +170,24 @@ class PerformanceApiEvaluation extends Controller
     public function index(Request $request)
     {
         Log::info('Fetching performance evaluations', ['user_id' => $request->user()->id]);
-    
+
         $user = $request->user();
         $roles = $user->getRoleNames();
-    
+
         Log::info('User roles', [
             'user_id' => $user->id,
             'roles' => $roles
         ]);
-    
+
         $evaluations = collect(); // default empty collection
-    
+
         switch (true) {
             case $user->is_hr:
                 Log::info('Role: HR');
-    
+
                 // Fetch evaluations with relationships for better frontend rendering
                 $evaluations = PerformanceEvaluation::with('user.department')->get();
-    
+
                 Log::info('Evaluations fetched', ['count' => $evaluations->count()]);
                 break;
 
@@ -293,7 +293,7 @@ class PerformanceApiEvaluation extends Controller
 
     /**
      * Filter performance evaluations based on criteria
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -357,7 +357,7 @@ class PerformanceApiEvaluation extends Controller
 
     /**
      * Get employees for the filter dropdown
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getFilterOptions()
