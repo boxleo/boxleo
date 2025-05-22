@@ -252,4 +252,21 @@ class User extends Authenticatable
      return $this->firstname . ' ' . $this->lastname;
   }
 
+  public function OtherDeduction()
+  {
+    return $this->hasMany(OtherDeduction::class);
+  }
+  public function StatutoryDeduction()
+  {
+    return $this->hasMany(StatutoryDeduction::class);
+  }
+  public function Earning()
+  {
+    return $this->hasMany(Earning::class);
+  }
+  public function Payslip()
+  {
+    return $this->hasMany(Payslip::class);
+  }
+
 }
