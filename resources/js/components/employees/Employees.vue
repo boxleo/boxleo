@@ -95,7 +95,6 @@
                 </v-text-field>
               </v-col>
             </v-row>
-
             <v-row>
               <v-col cols="12" md="6">
                 <v-select variant="outlined" v-model="formData.unit_id" :items="branches" label="Branch" item-value="id"
@@ -121,6 +120,18 @@
                   item-value="id" item-title="name" prepend-icon="mdi-account-tie"
                   :rules="[v => !!v || 'Designation is required']">
                 </v-select>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="formData.zk_user_id" label="ZK User ID"
+                  prepend-icon="mdi-numeric" :rules="[v => !!v || 'ZK User ID is required']">
+                </v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="formData.zk_username" label="ZK Username"
+                  prepend-icon="mdi-account" :rules="[v => !!v || 'ZK Username is required']">
+                </v-text-field>
               </v-col>
             </v-row>
             <v-row>
@@ -152,7 +163,6 @@
                 </v-radio-group>
               </v-col>
             </v-row>
-
             <v-row>
               <v-col cols="12">
                 <v-subheader class="font-weight-bold">Role</v-subheader>
@@ -170,7 +180,6 @@
                 </v-radio-group>
               </v-col>
             </v-row>
-
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn color="danger" @click="addUserModal = false">Close</v-btn>
@@ -180,109 +189,120 @@
             </v-card-actions>
           </v-form>
         </v-card-text>
-
       </v-card>
     </v-dialog>
 
     <!-- Edit User Dialog -->
     <v-dialog v-model="editUserDialog" max-width="650px" persistent>
       <v-card>
-        <v-card-title>Edit User</v-card-title>
-        <v-card-text>
-          <v-form ref="editForm" @submit.prevent="submitEditUserForm">
+      <v-card-title>Edit User</v-card-title>
+      <v-card-text>
+        <v-form ref="editForm" @submit.prevent="submitEditUserForm">
+        <v-row>
+          <v-col cols="12" md="6">
+          <v-text-field variant="outlined" v-model="editedUser.first_name" label="First Name"
+            prepend-icon="mdi-account" :rules="[v => !!v || 'First name is required']">
+          </v-text-field>
+          </v-col>
+          <v-col cols="12" md="6">
+          <v-text-field variant="outlined" v-model="editedUser.last_name" label="Last Name"
+            prepend-icon="mdi-account" :rules="[v => !!v || 'Last name is required']">
+          </v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" md="6">
+          <v-text-field variant="outlined" v-model="editedUser.phone" label="Phone" prepend-icon="mdi-phone"
+            :rules="[v => !!v || 'Phone number is required']">
+          </v-text-field>
+          </v-col>
+          <v-col cols="12" md="6">
+          <v-text-field variant="outlined" v-model="editedUser.email" label="Email" prepend-icon="mdi-email"
+            :rules="[v => !!v || 'Email is required', v => /.+@.+\..+/.test(v) || 'E-mail must be valid']">
+          </v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" md="6">
+          <v-select variant="outlined" v-model="editedUser.unit_id" :items="branches" label="Branch"
+            item-value="id" item-title="name" prepend-icon="mdi-domain"
+            :rules="[v => !!v || 'Branch is required']">
+          </v-select>
+          </v-col>
+          <v-col cols="12" md="6">
+          <v-select variant="outlined" v-model="editedUser.office_id" :items="offices" label="Office"
+            item-value="id" item-title="name" prepend-icon="mdi-briefcase"
+            :rules="[v => !!v || 'Office is required']">
+          </v-select>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" md="6">
+          <v-combobox variant="outlined" v-model="editedUser.department_id" :items="departments" label="Department"
+            item-value="id" item-title="name" prepend-icon="mdi-office-building"
+            :rules="[v => !!v || 'Department is required']">
+          </v-combobox>
+          </v-col>
+          <v-col cols="12" md="6">
+          <v-select variant="outlined" v-model="editedUser.designation_id" :items="designations"
+            label="Designation" item-value="id" item-title="name" prepend-icon="mdi-account-tie"
+            :rules="[v => !!v || 'Designation is required']">
+          </v-select>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" md="6">
+          <v-text-field variant="outlined" v-model="editedUser.zk_user_id" label="ZK User ID"
+            prepend-icon="mdi-numeric" :rules="[v => !!v || 'ZK User ID is required']">
+          </v-text-field>
+          </v-col>
+          <v-col cols="12" md="6">
+          <v-text-field variant="outlined" v-model="editedUser.zk_username" label="ZK Username"
+            prepend-icon="mdi-account" :rules="[v => !!v || 'ZK Username is required']">
+          </v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+          <v-subheader class="font-weight-bold">Gender</v-subheader>
+          </v-col>
+          <v-col cols="12">
+          <v-radio-group v-model="editedUser.gender" :rules="[v => !!v || 'Gender is required']">
             <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field variant="outlined" v-model="editedUser.first_name" label="First Name"
-                  prepend-icon="mdi-account" :rules="[v => !!v || 'First name is required']">
-                </v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field variant="outlined" v-model="editedUser.last_name" label="Last Name"
-                  prepend-icon="mdi-account" :rules="[v => !!v || 'Last name is required']">
-                </v-text-field>
-              </v-col>
+            <v-col>
+              <v-radio label="Male" value="Male"></v-radio>
+            </v-col>
+            <v-col>
+              <v-radio label="Female" value="Female"></v-radio>
+            </v-col>
             </v-row>
+          </v-radio-group>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+          <v-subheader class="font-weight-bold">Role</v-subheader>
+          </v-col>
+          <v-col cols="12">
+          <v-radio-group v-model="editedUser.role" :rules="[v => !!v || 'Role is required']">
             <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field variant="outlined" v-model="editedUser.phone" label="Phone" prepend-icon="mdi-phone"
-                  :rules="[v => !!v || 'Phone number is required']">
-                </v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field variant="outlined" v-model="editedUser.email" label="Email" prepend-icon="mdi-email"
-                  :rules="[v => !!v || 'Email is required', v => /.+@.+\..+/.test(v) || 'E-mail must be valid']">
-                </v-text-field>
-              </v-col>
+            <v-col>
+              <v-radio label="Admin" value="admin"></v-radio>
+            </v-col>
+            <v-col>
+              <v-radio label="Employee" value="employee"></v-radio>
+            </v-col>
             </v-row>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-select variant="outlined" v-model="editedUser.unit_id" :items="branches" label="Branch"
-                  item-value="id" item-title="name" prepend-icon="mdi-domain"
-                  :rules="[v => !!v || 'Branch is required']">
-                </v-select>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select variant="outlined" v-model="editedUser.office_id" :items="offices" label="Office"
-                  item-value="id" item-title="name" prepend-icon="mdi-briefcase"
-                  :rules="[v => !!v || 'Office is required']">
-                </v-select>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-combobox variant="outlined" v-model="editedUser.department_id" :items="departments" label="Department"
-                  item-value="id" item-title="name" prepend-icon="mdi-office-building"
-                  :rules="[v => !!v || 'Department is required']">
-                </v-combobox>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select variant="outlined" v-model="editedUser.designation_id" :items="designations"
-                  label="Designation" item-value="id" item-title="name" prepend-icon="mdi-account-tie"
-                  :rules="[v => !!v || 'Designation is required']">
-                </v-select>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12">
-                <v-subheader class="font-weight-bold">Gender</v-subheader>
-              </v-col>
-              <v-col cols="12">
-                <v-radio-group v-model="editedUser.gender" :rules="[v => !!v || 'Gender is required']">
-                  <v-row>
-                    <v-col>
-                      <v-radio label="Male" value="Male"></v-radio>
-                    </v-col>
-                    <v-col>
-                      <v-radio label="Female" value="Female"></v-radio>
-                    </v-col>
-                  </v-row>
-                </v-radio-group>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12">
-                <v-subheader class="font-weight-bold">Role</v-subheader>
-              </v-col>
-              <v-col cols="12">
-                <v-radio-group v-model="editedUser.role" :rules="[v => !!v || 'Role is required']">
-                  <v-row>
-                    <v-col>
-                      <v-radio label="Admin" value="admin"></v-radio>
-                    </v-col>
-                    <v-col>
-                      <v-radio label="Employee" value="employee"></v-radio>
-                    </v-col>
-                  </v-row>
-                </v-radio-group>
-              </v-col>
-            </v-row>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="red" @click="editUserDialog = false">Close</v-btn>
-              <v-btn color="primary" type="submit">Update</v-btn>
-            </v-card-actions>
-          </v-form>
-        </v-card-text>
+          </v-radio-group>
+          </v-col>
+        </v-row>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="red" @click="editUserDialog = false">Close</v-btn>
+          <v-btn color="primary" type="submit">Update</v-btn>
+        </v-card-actions>
+        </v-form>
+      </v-card-text>
       </v-card>
     </v-dialog>
     <!-- Permissions Modal -->
@@ -377,6 +397,8 @@ export default {
         { title: 'Email', key: 'email' },
         { title: 'Phone', key: 'phone' },
         { title: 'Branch', key: 'unit.name' },
+        { title: 'ZK User ID', key: 'zk_user_id' },
+        { title: 'ZK Username', key: 'zk_username' },
         { title: 'Biometrics', key: 'has_biometrics' },
         { title: 'Department', key: 'department.name' },
         { title: 'Status', key: 'is_enabled' },
@@ -408,6 +430,8 @@ export default {
         enable_login: false,
         send_logins: false,
         role: null,
+        zk_user_id: '',
+        zk_username: '',
       },
       editedUser: {
         id: null,
@@ -421,6 +445,8 @@ export default {
         department_id: null,
         designation_id: null,
         role: null,
+        zk_user_id: '',
+        zk_username: '',
       },
       branches: [],
       offices: [],
@@ -489,7 +515,6 @@ export default {
     formatPermissionName(name) {
       return name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
     },
-
     fetchUsers() {
       const apiUrl = this.base_url + 'api/v1/users';
       axios.get(apiUrl)
@@ -507,10 +532,10 @@ export default {
             has_biometrics: user.has_biometrics,
             office: user.office,
             gender: user.gender,
-            role: user.role
+            role: user.role,
+            zk_user_id: user.zk_user_id,
+            zk_username: user.zk_username
           }));
-
-
         })
         .catch(error => {
           console.error('Error fetching users:', error);
@@ -711,6 +736,8 @@ export default {
             designation_id: userData.designation_id,
             role: userData.role[0],
             gender: userData.gender,
+            zk_user_id: userData.zk_user_id,
+            zk_username: userData.zk_username,
           };
 
           this.editUserDialog = true;
@@ -737,6 +764,8 @@ export default {
         designation_id: this.editedUser.designation_id,
         role: this.editedUser.role,
         gender: this.editedUser.gender,
+        zk_user_id: this.editedUser.zk_user_id,
+        zk_username: this.editedUser.zk_username,
       };
 
       axios.put(apiUrl, updatedUserData)
@@ -887,3 +916,5 @@ export default {
 };
 
 </script>
+
+

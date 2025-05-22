@@ -14,75 +14,128 @@ use Illuminate\Support\Str;
 
 class UserApiController extends Controller
 {
-
-
-  public function getTeam()
-  {
-      $authUser = auth()->user();
-  
-      $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
-  
-      $response = [
-          'user' => $authUser,
-          'users' => $allUsers,
-          'team' => [],
-          'is_hod' => $authUser->is_hod,
-          'is_manager' => $authUser->designation_id === 1,
-      ];
-  
-      // if ($authUser->is_hod) {
-      //     $hodDeptIds = $authUser->hodDepartments->pluck('id');
-  
-      //     // Fetch users who manage the HOD's departments OR have no managerDepartments
-      //     $team = User::with(['department', 'unit', 'designation'])
-      //         ->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
-      //             $q->whereIn('department_id', $hodDeptIds);
-      //         })
-      //         ->orWhereDoesntHave('managerDepartments')
-      //         ->get();
-  
-      //     $response['team'] = $team->unique('id')->values(); // avoid duplicates
-      // } 
-
-
-      if ($authUser->is_hod) {
-        $hodDeptIds = $authUser->hodDepartments->pluck('id');
+    public function getTeam(Request $request)
+    {
+        $authUser = $request->user();
+        $unitFilter = $request->query('unit_id');
+        $deptFilter = $request->query('department_id');
     
-        $team = User::with(['department', 'unit', 'designation'])
-            ->where(function ($query) use ($hodDeptIds) {
-                $query->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
-                    $q->whereIn('department_id', $hodDeptIds);
-                })
-                ->orWhere(function ($q) {
-                    $q->doesntHave('managerDepartments')
-                      ->where('designation_id', 1); // Only include managers
-                });
-            })
-            ->get();
+        // Start with a base User query including the relations you need
+        $query = User::with(['department', 'unit', 'designation']);
     
-        $response['team'] = $team->unique('id')->values();
+        // 1) Apply role-based scoping
+        if ($authUser->is_hod) {
+            $hodDeptIds = $authUser->hodDepartments->pluck('id');
+            $query->where(function($q) use ($hodDeptIds) {
+                $q->whereHas('managerDepartments', fn($q2) => 
+                        $q2->whereIn('department_id', $hodDeptIds)
+                    )
+                  ->orWhere(fn($q2) => 
+                        $q2->doesntHave('managerDepartments')
+                           ->where('designation_id', 1) // include standalone managers
+                    );
+            });
+    
+        } elseif ($authUser->designation_id === 1) {
+            $managerDeptIds = $authUser->managerDepartments->pluck('id');
+            $query->where(function($q) use ($managerDeptIds, $authUser) {
+                // users in the manager’s departments, or anyone in same unit
+                $q->whereIn('department_id', $managerDeptIds)
+                  ->orWhere('unit_id', $authUser->unit_id);
+            });
+    
+        } else {
+            // regular user: only themselves
+            $query->where('id', $authUser->id);
+        }
+    
+        // 2) Apply optional filters from the front-end
+        if ($unitFilter) {
+            $query->where('unit_id', $unitFilter);
+        }
+        if ($deptFilter) {
+            $query->where('department_id', $deptFilter);
+        }
+    
+        // 3) Execute
+        $team = $query->orderBy('firstname')->get();
+    
+        // 4) Build your response
+        return response()->json([
+            'user'         => $authUser,
+            'team'         => $team,
+            'is_hod'       => $authUser->is_hod,
+            'is_manager'   => $authUser->designation_id === 1,
+        ]);
     }
+
+//   public function getTeam()
+//   {
+//       $authUser = auth()->user();
+  
+//       $allUsers = User::with(['department', 'managerDepartments', 'hodDepartments'])->get();
+  
+//       $response = [
+//           'user' => $authUser,
+//           'users' => $allUsers,
+//           'team' => [],
+//           'is_hod' => $authUser->is_hod,
+//           'is_manager' => $authUser->designation_id === 1,
+//       ];
+  
+//       // if ($authUser->is_hod) {
+//       //     $hodDeptIds = $authUser->hodDepartments->pluck('id');
+  
+//       //     // Fetch users who manage the HOD's departments OR have no managerDepartments
+//       //     $team = User::with(['department', 'unit', 'designation'])
+//       //         ->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+//       //             $q->whereIn('department_id', $hodDeptIds);
+//       //         })
+//       //         ->orWhereDoesntHave('managerDepartments')
+//       //         ->get();
+  
+//       //     $response['team'] = $team->unique('id')->values(); // avoid duplicates
+//       // } 
+
+
+//       if ($authUser->is_hod) {
+//         $hodDeptIds = $authUser->hodDepartments->pluck('id');
     
-      elseif ($authUser->designation_id === 1) {
-          $managerDeptIds = $authUser->managerDepartments->pluck('id');
+//         $team = User::with(['department', 'unit', 'designation'])
+//             ->where(function ($query) use ($hodDeptIds) {
+//                 $query->whereHas('managerDepartments', function ($q) use ($hodDeptIds) {
+//                     $q->whereIn('department_id', $hodDeptIds);
+//                 })
+//                 ->orWhere(function ($q) {
+//                     $q->doesntHave('managerDepartments')
+//                       ->where('designation_id', 1); // Only include managers
+//                 });
+//             })
+//             ->get();
+    
+//         $response['team'] = $team->unique('id')->values();
+//     }
+    
+//       elseif ($authUser->designation_id === 1) {
+//           $managerDeptIds = $authUser->managerDepartments->pluck('id');
   
-          // Get users from same department and unit
-          $departmentUsers = User::with(['department', 'unit', 'designation'])
-              ->whereIn('department_id', $managerDeptIds)
-              ->where('unit_id', $authUser->unit_id)
-              ->get();
+//           // Get users from same department and unit
+//           $departmentUsers = User::with(['department', 'unit', 'designation'])
+//               ->whereIn('department_id', $managerDeptIds)
+//               ->where('unit_id', $authUser->unit_id)
+//               ->get();
   
-          // Also get all users in the same unit
-          $unitUsers = User::with(['department', 'unit', 'designation'])
-              ->where('unit_id', $authUser->unit_id)
-              ->get();
+//           // Also get all users in the same unit
+//           $unitUsers = User::with(['department', 'unit', 'designation'])
+//               ->where('unit_id', $authUser->unit_id)
+//               ->get();
   
-          $team = $departmentUsers->merge($unitUsers)->unique('id')->values();
-          $response['team'] = $team;
-      }
+//           $team = $departmentUsers->merge($unitUsers)->unique('id')->values();
+//           $response['team'] = $team;
+//       }
   
-      return response()->json($response);
-  }
+//       return response()->json($response);
+//   }
   
 
 //   public function getTeam()
@@ -214,6 +267,8 @@ class UserApiController extends Controller
       'role' => 'required',
       'gender' => 'required|string|in:Male,Female',
       'avatar' => 'nullable|file|image|mimes:jpg,jpeg,png,gif',
+      'zk_user_id' => 'nullable|string|max:255',
+      'zk_username' => 'nullable|string|max:255',
     ]);
 
     $imageName = null;
@@ -237,6 +292,8 @@ class UserApiController extends Controller
       'password' => Hash::make($randomPassword),
       'avatar' => $imageName,
       'is_enabled' => true,
+      'zk_user_id' => $request->zk_user_id,
+      'zk_username' => $request->zk_username,
     ]);
 
     $user->user_detail()->create();
@@ -264,9 +321,7 @@ class UserApiController extends Controller
 
           if ($request->role == 'employee' && $request->designation_id == 1) {
             array_push($permissions, 'view_team_leaves');
-
           }
-          ;
           break;
 
         default:
@@ -446,83 +501,83 @@ class UserApiController extends Controller
 
 public function update(Request $request, User $user)
 {
-    Log::info('User update request received', ['user_id' => $user->id, 'request_data' => $request->all()]);
+  Log::info('User update request received', ['user_id' => $user->id, 'request_data' => $request->all()]);
 
-    $validatedData = $request->validate([
-        'firstname' => 'required|string',
-        'lastname' => 'required|string',
-        'email' => 'required|email',
-        'phone' => 'required|string',
-        'unit_id' => 'required|exists:units,id',
-        'office_id' => 'required|exists:offices,id',
-        'department_id' => 'required|exists:departments,id',
-        'designation_id' => 'required|exists:designations,id',
-        'role' => 'required|string|in:admin,employee',
-        'gender' => 'required|string|in:Male,Female',
+  $validatedData = $request->validate([
+    'firstname' => 'required|string',
+    'lastname' => 'required|string',
+    'email' => 'required|email',
+    'phone' => 'required|string',
+    'unit_id' => 'required|exists:units,id',
+    'office_id' => 'required|exists:offices,id',
+    'department_id' => 'required|exists:departments,id',
+    'designation_id' => 'required|exists:designations,id',
+    'role' => 'required|string|in:admin,employee',
+    'gender' => 'required|string|in:Male,Female',
+    'zk_user_id' => 'nullable|string|max:255',
+    'zk_username' => 'nullable|string|max:255',
+  ]);
+
+  Log::info('User validation passed', ['validated_data' => $validatedData]);
+
+  try {
+    $user->update($validatedData);
+    Log::info('User updated successfully', ['user_id' => $user->id]);
+
+    if ($request->has('role')) {
+      Log::info('Updating role for user', ['user_id' => $user->id, 'new_role' => $request->role]);
+
+      // Sync the role to remove old ones and assign the new one
+      $user->syncRoles($request->role);
+
+      Log::info('Role updated successfully', ['user_id' => $user->id, 'current_roles' => $user->roles->pluck('name')]);
+      Log::info('Syncing permissions for user', ['user_id' => $user->id, 'role' => $request->role]);
+
+      $user->syncPermissions([]);
+
+      $permissions = [];
+
+      switch ($request->role) {
+        case 'admin':
+          $permissions = [
+            'view_admin_panel',
+            'create_resource',
+            'edit_resource',
+            'delete_resource',
+            'view_employee_profile',
+            'edit_user',
+          ];
+          break;
+        case 'employee':
+          $permissions = [
+            'view_employee_panel',
+          ];
+
+          if ($user->designation_id == 1) {
+            $permissions[] = 'view_team_leaves';
+          }
+          break;
+      }
+
+      Log::info('Assigning permissions', ['user_id' => $user->id, 'permissions' => $permissions]);
+
+      $user->syncPermissions($permissions);
+    }
+
+    $updatedUser = User::with('department', 'unit', 'office', 'designation', 'roles')->find($user->id);
+
+    Log::info('Returning updated user data', ['user_id' => $user->id, 'updated_user' => $updatedUser]);
+
+    return response()->json(['message' => 'User updated successfully', 'user' => $updatedUser], 200);
+  } catch (\Exception $e) {
+    Log::error('Error updating user', [
+      'user_id' => $user->id,
+      'error_message' => $e->getMessage(),
+      'trace' => $e->getTraceAsString(),
     ]);
 
-    Log::info('User validation passed', ['validated_data' => $validatedData]);
-
-    try {
-        $user->update($validatedData);
-        Log::info('User updated successfully', ['user_id' => $user->id]);
-
-        if ($request->has('role')) {
-
-
-          Log::info('Updating role for user', ['user_id' => $user->id, 'new_role' => $request->role]);
-
-    // Sync the role to remove old ones and assign the new one
-    $user->syncRoles($request->role);
-
-    Log::info('Role updated successfully', ['user_id' => $user->id, 'current_roles' => $user->roles->pluck('name')]);
-            Log::info('Syncing permissions for user', ['user_id' => $user->id, 'role' => $request->role]);
-
-            $user->syncPermissions([]);
-
-            $permissions = [];
-
-            switch ($request->role) {
-                case 'admin':
-                    $permissions = [
-                        'view_admin_panel',
-                        'create_resource',
-                        'edit_resource',
-                        'delete_resource',
-                        'view_employee_profile',
-                        'edit_user',
-                    ];
-                    break;
-                case 'employee':
-                    $permissions = [
-                        'view_employee_panel',
-                    ];
-
-                    if ($user->designation_id == 1) {
-                        $permissions[] = 'view_team_leaves';
-                    }
-                    break;
-            }
-
-            Log::info('Assigning permissions', ['user_id' => $user->id, 'permissions' => $permissions]);
-
-            $user->syncPermissions($permissions);
-        }
-
-        $updatedUser = User::with('department', 'unit', 'office', 'designation', 'roles')->find($user->id);
-
-        Log::info('Returning updated user data', ['user_id' => $user->id, 'updated_user' => $updatedUser]);
-
-        return response()->json(['message' => 'User updated successfully', 'user' => $updatedUser], 200);
-    } catch (\Exception $e) {
-        Log::error('Error updating user', [
-            'user_id' => $user->id,
-            'error_message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return response()->json(['message' => 'Error updating user', 'error' => $e->getMessage()], 500);
-    }
+    return response()->json(['message' => 'Error updating user', 'error' => $e->getMessage()], 500);
+  }
 }
 
 

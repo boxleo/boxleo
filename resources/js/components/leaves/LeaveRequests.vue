@@ -246,7 +246,10 @@
             </v-card-text>
             <v-card-actions class="justify-end">
               <v-btn @click="closeApproveLeaveModal">No</v-btn>
-              <v-btn color="success" @click="approveLeaveAction">Yes, Approve</v-btn>
+              <v-btn color="success" @click="approveLeaveAction">Yes, Approve
+                <v-progress-circular v-if="isLoading" class="ml-2" color="primary" indeterminate
+              size="24"></v-progress-circular>
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
@@ -313,6 +316,7 @@ export default {
       search: '',
       viewLeaveModal: false,
       approveLeaveModal: false,
+      isLoading: false,
       cancelLeaveModal: false,
       selectedItem: null,
       approveNotes: '',
@@ -706,6 +710,7 @@ export default {
         });
     },
     approveLeaveAction() {
+        this.isLoading = true;
       const apiUrl = `${this.base_url}api/v1/leaves/${this.selectedItem.id}/approve`;
       const requestData = { userId: this.userId };
 
@@ -718,6 +723,7 @@ export default {
           this.$toastr.error(error.response.data.error);
         })
         .finally(() => {
+            this.isLoading = false;
           this.closeApproveLeaveModal();
         });
     },

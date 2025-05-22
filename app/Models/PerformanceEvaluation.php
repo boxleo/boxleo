@@ -15,6 +15,7 @@ class PerformanceEvaluation extends Model
         'user_id',
         'evaluator_id',
         'department_id',
+        'unit_id',
         'evaluation_date',
         'attendance',
         'problems_solved',
@@ -22,7 +23,7 @@ class PerformanceEvaluation extends Model
         'knowledge_of_work',
         'team_work',
         'reliability_visibility',
-        'productivity',                                                                                                                                                                                                                                                                                                                                             
+        'productivity',
         'discipline',
         'quality_of_work',
         'communication',
@@ -58,12 +59,12 @@ class PerformanceEvaluation extends Model
 
 
     // write a function to calcaluate total score and percentage for the evaluation
-  
+
 
     // public function calculateTotalScore()
     // {
     //     $totalScore = $this->attendance + $this->problems_solved + $this->reports_submitted + $this->knowledge_of_work + $this->team_work + $this->reliability_visibility + $this->productivity + $this->discipline + $this->quality_of_work + $this->communication;
     //     $this->total_score = $totalScore;
     //     $this->percentage = ($totalScore / 100) * 100;
-    //   
+    //
 }

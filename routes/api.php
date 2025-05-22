@@ -31,6 +31,11 @@ use App\Http\Controllers\Api\RequisitionApiController;
 use App\Http\Controllers\PerformanceApiReportController;
 use App\Http\Controllers\Api\UserDetailApiController;
 
+
+
+
+Route::post('v1/syncZkteco', [AttendanceApiController::class, 'syncZkteco']);
+
 Route::middleware('auth:sanctum')->group(function () {
   //users
   Route::get('v1/users', [UserApiController::class, 'index']);
@@ -125,6 +130,8 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::put('v1/attendances/update/status', [AttendanceApiController::class, 'updateStatus']);
   Route::get('v1/attendances/{user_id}/logs', [AttendanceApiController::class, 'attendanceLogs']);
   Route::get('v1/user-timezone', [AttendanceApiController::class, 'Usertimezone']);
+  // 
+  // Route::post('v1/syncZkteco', [AttendanceApiController::class, 'syncZkteco']);
 
   //leave
   Route::get('v1/leaves', [LeaveApiController::class, 'index']);

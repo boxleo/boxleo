@@ -170,6 +170,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/requisitions', [RequisitionController::class, 'index']);
     Route::get('/resources', [ResourceController::class, 'index']);
     Route::get('/employee-voice', [ComplaintController::class, 'employeeComplaints']);
+    Route::get('/employee-leaves', [LeaveController::class, 'employeeLeaves']);
 
     // performance
     Route::get('/performance-evaluations', [PerformanceController::class, 'performanceEvaluations'])->name('performance-evaluations');

@@ -134,7 +134,7 @@ export default {
     roles: Array,
     permissions: Array
   },
-  
+
     data() {
         return {
             showDialog: false,

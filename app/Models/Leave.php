@@ -64,4 +64,10 @@ class Leave extends Model
     {
         return Carbon::parse($value)->format('Y-m-d H:i:s'); // Change format as needed
     }
+
+    public function tasks()
+    {
+        return $this->hasMany(LeaveTask::class);
+    }
+
 }

@@ -43,6 +43,8 @@ class User extends Authenticatable
     'super_admin',
     'office_id',
     'avatar',
+    'zk_user_id', 
+    'zk_username'
   ];
 
   protected $hidden = [
@@ -252,21 +254,10 @@ class User extends Authenticatable
      return $this->firstname . ' ' . $this->lastname;
   }
 
-  public function OtherDeduction()
-  {
-    return $this->hasMany(OtherDeduction::class);
-  }
-  public function StatutoryDeduction()
-  {
-    return $this->hasMany(StatutoryDeduction::class);
-  }
-  public function Earning()
-  {
-    return $this->hasMany(Earning::class);
-  }
-  public function Payslip()
-  {
-    return $this->hasMany(Payslip::class);
-  }
+  public function delegatedTasks()
+    {
+        return $this->hasMany(LeaveTask::class, 'assignee_id');
+    }
+
 
 }

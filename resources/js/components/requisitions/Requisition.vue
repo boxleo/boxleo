@@ -398,7 +398,10 @@
             </v-card-text>
             <v-card-actions class="justify-end">
               <v-btn @click="CloseapproveRequisitionModal">No</v-btn>
-              <v-btn color="success" @click="approveRequisition(selectedRequisition)">Yes, Approve</v-btn>
+              <v-btn color="success" @click="approveRequisition(selectedRequisition)">Yes, Approve
+                <v-progress-circular v-if="isLoading" class="ml-2" color="primary" indeterminate
+              size="24"></v-progress-circular>
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
@@ -522,6 +525,7 @@ export default {
       statusDialog: false,
       commentsDialog: false,
       EditRequisitionModa: false,
+      isLoading: false,
       popDialog: false,
       selectedItem: {},
       drawer: false,
@@ -633,13 +637,13 @@ export default {
 
   filteredRequisitions() {
     // First apply tab-based filtering (current vs all)
-    let result = this.tab === 1 
+    let result = this.tab === 1
       ? this.requisitions.filter(req => {
           const today = new Date().toISOString().slice(0, 10); // Format: YYYY-MM-DD
           return req.created_at.slice(0, 10) === today;
         })
       : this.requisitions; // Show all when tab is 2
-    
+
     // Then apply role-based filtering if needed
     // if (this.user) {
     //   if (this.user.is_cfo) {
@@ -647,19 +651,19 @@ export default {
     //   } else if (this.user.is_coo) {
     //     result = result.filter(req => req.status === 'HR Approved');
     //   } else if (this.user.is_hr) {
-    //     result = result.filter(req => 
-    //       req.status === 'Manager Approved' || 
+    //     result = result.filter(req =>
+    //       req.status === 'Manager Approved' ||
     //       req.status === 'Finance Manager Approved'
     //     );
     //   }
     //   // Finance Manager sees all requisitions, so no additional filtering needed
     //   // Regular users also see all requisitions that pass the tab filter
     // }
-    
+
     return result;
   }
 },
-  
+
   methods: {
 
 
@@ -999,6 +1003,7 @@ export default {
       this.cancelRequisitionModal = false;
     },
     approveRequisition(selectedRequisition) {
+        this.isLoading = true;
       // Prepare the approval data
       const approvalData = {
         requisition_id: selectedRequisition.id,
@@ -1012,11 +1017,13 @@ export default {
           this.$toastr.success('Requisition approved successfully!');
           this.fetchRequisitions();
           this.CloseapproveRequisitionModal();
-
         })
         .catch((error) => {
           console.error('Error approving requisition:', error.response?.data || error.message);
           this.$toastr.error('Failed to approve requisition. Please try again.');
+        })
+        .finally(() => {
+        this.isLoading = false; // Ensure loader stops
         });
     },
 
