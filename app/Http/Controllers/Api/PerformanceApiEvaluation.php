@@ -186,10 +186,17 @@ class PerformanceApiEvaluation extends Controller
         switch (true) {
             case $user->is_hr:
                 Log::info('Role: HR');
+<<<<<<< Updated upstream
 
                 // Fetch evaluations with relationships for better frontend rendering
                 $evaluations = PerformanceEvaluation::with('user.department')->get();
 
+=======
+    
+                // Fetch evaluations witM{j1Q5%7@OfZh relationships for better frontend rendering
+                $evaluations = PerformanceEvaluation::with('user')->get();
+    
+>>>>>>> Stashed changes
                 Log::info('Evaluations fetched', ['count' => $evaluations->count()]);
                 break;
 

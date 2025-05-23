@@ -8,6 +8,31 @@ return new class extends Migration
 {
 
 
+    // public function up(): void
+    // {
+    //     Schema::create('performance_evaluations', function (Blueprint $table) {
+    //         $table->id();
+    //         $table->foreignId('user_id')
+    //             ->constrained()
+    //             ->onDelete('cascade'); // Employee being rated
+
+    //         $table->foreignId('evaluator_id')
+    //             ->nullable()
+    //             ->constrained('users')
+    //             ->nullOnDelete(); // Evaluator (the "doer" of the rating)
+
+    //         $table->foreignId('department_id')
+    //             ->nullable()
+    //             ->constrained()
+    //             ->nullOnDelete();
+
+    //         $table->foreignId('unit_id')
+    //             ->nullable()
+    //             ->constrained()
+    //             ->nullOnDelete();
+
+    //         $table->date('evaluation_date')->nullable(); // The date or period of evaluation
+
     public function up(): void
     {
         Schema::create('performance_evaluations', function (Blueprint $table) {
@@ -22,6 +47,11 @@ return new class extends Migration
                 ->nullOnDelete(); // Evaluator (the "doer" of the rating)
 
             $table->foreignId('department_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->foreignId('unit_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
@@ -50,8 +80,15 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+//     
+
+public function down(): void
     {
-        Schema::dropIfExists('performance_evaluations');
+        Schema::table('performance_evaluations', function (Blueprint $table) {
+            if (Schema::hasColumn('performance_evaluations', 'unit_id')) {
+                $table->dropForeign(['unit_id']);
+                $table->dropColumn('unit_id');
+            }
+        });
     }
 };
