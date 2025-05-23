@@ -473,68 +473,206 @@ class AttendanceApiController extends Controller
     }
 
 
+    // public function syncZkteco(Request $request)
+    // {
+    //     Log::info('syncZkteco called', ['request_data' => $request->all()]);
+
+    //     $records = collect($request->input('records', []));
+    //     Log::info('Records received', ['count' => $records->count()]);
+
+    //     $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
+    //     Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
+
+    //     $grouped = $records->groupBy(function ($item) {
+    //         return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
+    //     });
+
+    //     foreach ($grouped as $groupKey => $userRecords) {
+    //         Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
+    //         $sorted = $userRecords->sortBy('time')->values();
+    //         $zkUserId = explode('_', $groupKey)[0];
+    //         $date = Carbon::parse($sorted->first()['time'])->toDateString();
+
+    //         $user = $users->get($zkUserId);
+    //         if (!$user) {
+    //             Log::warning("User not found for zk_id: $zkUserId");
+    //             continue;
+    //         }
+
+    //         $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
+    //         $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
+    //         $workedHours = Carbon::parse($clockOut)->diffInHours(Carbon::parse($clockIn));
+
+    //         Log::info('Attendance data prepared', [
+    //             'user_id' => $user->id,
+    //             'date' => $date,
+    //             'clock_in' => $clockIn,
+    //             'clock_out' => $clockOut,
+    //             'worked_hours' => $workedHours
+    //         ]);
+
+    //         Attendance::updateOrCreate(
+    //             [
+    //                 'user_id' => $user->id,
+    //                 'attendance_date' => $date,
+    //             ],
+    //             [
+    //                 'clock_in_time' => $clockIn,
+    //                 'clock_out_time' => $clockOut,
+    //                 'hours_worked' => $workedHours,
+    //                 'status' => 'Present',
+    //                 'is_present' => 1,
+    //                 'notes' => 'Auto-synced from ZKTeco',
+    //                 'ip_address' => request()->ip(),
+    //             ]
+    //         );
+
+    //         Log::info("Synced attendance for user", [
+    //             'user_id' => $user->id,
+    //             'user_name' => $user->name ?? ($user->firstname ?? '') . ' ' . ($user->lastname ?? ''),
+    //             'date' => $date
+    //         ]);
+    //     }
+
+    //     Log::info('ZKTeco sync completed');
+    //     return response()->json(['message' => 'ZKTeco records synced']);
+    // }
+
+
+
     public function syncZkteco(Request $request)
+{
+    Log::info('syncZkteco called', ['request_data' => $request->all()]);
+
+    $records = collect($request->input('records', []));
+    Log::info('Records received', ['count' => $records->count()]);
+
+    $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
+    Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
+
+    $grouped = $records->groupBy(function ($item) {
+        return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
+    });
+
+    foreach ($grouped as $groupKey => $userRecords) {
+        Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
+
+        $sorted = $userRecords->sortBy('time')->values();
+        $zkUserId = explode('_', $groupKey)[0];
+        $date = Carbon::parse($sorted->first()['time'])->toDateString();
+
+        $user = $users->get($zkUserId);
+        if (!$user) {
+            Log::warning("User not found for zk_id: $zkUserId");
+            continue;
+        }
+
+        $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
+        $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
+
+        Log::info('Attendance data prepared', [
+            'user_id' => $user->id,
+            'date' => $date,
+            'clock_in' => $clockIn,
+            'clock_out' => $clockOut,
+        ]);
+
+        // Use helper method
+        $this->processAttendanceFromZkteco(
+            $user,
+            $date,
+            $clockIn,
+            $clockOut,
+            $user->unit,
+            'Auto-synced from ZKTeco'
+        );
+
+        Log::info("Synced attendance for user", [
+            'user_id' => $user->id,
+            'user_name' => $user->name ?? ($user->firstname ?? '') . ' ' . ($user->lastname ?? ''),
+            'date' => $date
+        ]);
+    }
+
+    Log::info('ZKTeco sync completed');
+    return response()->json(['message' => 'ZKTeco records synced']);
+}
+
+
+
+
+    private function processAttendanceFromZkteco($user, $date, $clockIn, $clockOut, $unit, $notes = null)
     {
-        Log::info('syncZkteco called', ['request_data' => $request->all()]);
+        Log::info('Processing ZKTeco attendance', [
+            'user_id' => $user->id,
+            'date' => $date,
+            'clock_in' => $clockIn,
+            'clock_out' => $clockOut,
+        ]);
 
-        $records = collect($request->input('records', []));
-        Log::info('Records received', ['count' => $records->count()]);
+        $existingAttendance = Attendance::firstOrNew([
+            'user_id' => $user->id,
+            'attendance_date' => $date,
+        ]);
 
-        $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
-        Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
-
-        $grouped = $records->groupBy(function ($item) {
-            return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
-        });
-
-        foreach ($grouped as $groupKey => $userRecords) {
-            Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
-            $sorted = $userRecords->sortBy('time')->values();
-            $zkUserId = explode('_', $groupKey)[0];
-            $date = Carbon::parse($sorted->first()['time'])->toDateString();
-
-            $user = $users->get($zkUserId);
-            if (!$user) {
-                Log::warning("User not found for zk_id: $zkUserId");
-                continue;
-            }
-
-            $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
-            $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
-            $workedHours = Carbon::parse($clockOut)->diffInHours(Carbon::parse($clockIn));
-
-            Log::info('Attendance data prepared', [
-                'user_id' => $user->id,
-                'date' => $date,
-                'clock_in' => $clockIn,
-                'clock_out' => $clockOut,
-                'worked_hours' => $workedHours
-            ]);
-
-            Attendance::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'attendance_date' => $date,
-                ],
-                [
-                    'clock_in_time' => $clockIn,
-                    'clock_out_time' => $clockOut,
-                    'hours_worked' => $workedHours,
-                    'status' => 'Present',
-                    'is_present' => 1,
-                    'notes' => 'Auto-synced from ZKTeco',
-                    'ip_address' => request()->ip(),
-                ]
-            );
-
-            Log::info("Synced attendance for user", [
-                'user_id' => $user->id,
-                'user_name' => $user->name ?? ($user->firstname ?? '') . ' ' . ($user->lastname ?? ''),
-                'date' => $date
+        if (!$existingAttendance->clock_in_time) {
+            $existingAttendance->clock_in_time = $clockIn;
+            $existingAttendance->status = $this->isLateFromZkteco($clockIn, $unit) ? 'Late' : 'In Time';
+            Log::info('Clock-in set for ZKTeco', [
+                'status' => $existingAttendance->status
             ]);
         }
 
-        Log::info('ZKTeco sync completed');
-        return response()->json(['message' => 'ZKTeco records synced']);
+        if (!$existingAttendance->clock_out_time) {
+            $existingAttendance->clock_out_time = $clockOut;
+            Log::info('Clock-out set for ZKTeco');
+        }
+
+        $existingAttendance->hours_worked = Carbon::parse($clockOut)->diffInHours(Carbon::parse($clockIn));
+        $existingAttendance->is_present = true;
+        $existingAttendance->notes = $notes ?? 'Auto-synced from ZKTeco';
+        $existingAttendance->status = $existingAttendance->status ?? 'Present';
+        $existingAttendance->ip_address = request()->ip();
+        $existingAttendance->save();
+
+        Log::info('ZKTeco attendance saved', ['attendance_id' => $existingAttendance->id]);
+    }
+
+
+
+    private function isLateFromZkteco($clockInTime, $unit)
+    {
+        if (!$unit) {
+            Log::warning('Missing unit for lateness check');
+            return false;
+        }
+
+        $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+
+        $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+        $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+
+        $userDayOfWeek = $userTime->dayOfWeek;
+
+        $weekendDays = is_array($unit->weekend_day)
+            ? $unit->weekend_day
+            : [$unit->weekend_day ?? Carbon::SATURDAY];
+
+        $isWeekend = in_array($userDayOfWeek, $weekendDays);
+        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+        $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
+
+        $thresholdTime = Carbon::parse(
+            $userTime->toDateString() . ' ' . $lateThreshold,
+            $unit->timezone
+        )->setTimezone('UTC');
+
+        Log::info('Evaluating lateness for ZKTeco', [
+            'user_time' => $userTime->toDateTimeString(),
+            'threshold' => $thresholdTime->toDateTimeString(),
+        ]);
+
+        return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
     }
 }
