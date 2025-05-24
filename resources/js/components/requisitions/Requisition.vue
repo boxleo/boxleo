@@ -34,16 +34,50 @@
                 <!-- <v-date-picker v-model="filterOptions.date_created" label="Date Created" prepend-icon="mdi-calendar"
                   clearable range></v-date-picker> -->
 
-                <v-text-field v-model="filterOptions.date_created" type="date" label="Date Created" clearable
-                  variant="outlined">
-                </v-text-field>
+                <v-row>
+                  <v-col>
+                    <v-text-field
+                      v-model="filterOptions.date_created_start"
+                      type="date"
+                      label="Date Created (Start)"
+                      clearable
+                      variant="outlined"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="filterOptions.date_created_end"
+                      type="date"
+                      label="Date Created (End)"
+                      clearable
+                      variant="outlined"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
               </v-col>
 
               <!-- input type date  -->
               <v-col>
-                <v-text-field v-model="filterOptions.date_paid" type="date" label="Date Paid" clearable
-                  variant="outlined">
-                </v-text-field>
+                <v-row>
+                  <v-col>
+                    <v-text-field
+                      v-model="filterOptions.date_paid_start"
+                      type="date"
+                      label="Date Paid (Start)"
+                      clearable
+                      variant="outlined"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="filterOptions.date_paid_end"
+                      type="date"
+                      label="Date Paid (End)"
+                      clearable
+                      variant="outlined"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
               </v-col>
 
             </v-col>
@@ -539,9 +573,12 @@ export default {
         item_names: [],
         department_ids: [],
         statuses: [],
-        date_created: null,
+        date_created_start: null,
+        date_created_end: null,
+        date_paid_start: null,
+        date_paid_end: null,
         approver_types: [],
-        date_paid: null,
+       
 
       },
       modalWidth: 1500,

@@ -378,69 +378,130 @@ class AttendanceApiController extends Controller
     }
 
 
+    // private function isLate($clockInTime, $unit)
+    // {
+    //     // Validate input
+    //     if (!$unit) {
+    //         Log::error('Invalid unit provided to isLate function');
+    //         return false;
+    //     }
+
+    //     // Convert clock-in time to unit's timezone
+    //     $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+
+    //     // Set default thresholds
+    //     $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+    //     $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+
+    //     // Get day of week (0 = Sunday, 6 = Saturday)
+    //     $userDayOfWeek = $userTime->dayOfWeek;
+
+    //     // Parse weekend day configuration - handle both integer and string inputs
+    //     $weekendDays = [];
+    //     if (isset($unit->weekend_day)) {
+    //         if (is_array($unit->weekend_day)) {
+    //             $weekendDays = $unit->weekend_day;
+    //         } else {
+    //             $weekendDays = [$unit->weekend_day];
+    //         }
+    //     } else {
+    //         // Default to Saturday only
+    //         $weekendDays = [Carbon::SATURDAY];
+    //     }
+
+    //     // Check if it's a weekend
+    //     $isWeekend = in_array($userDayOfWeek, $weekendDays);
+
+    //     // Check if it's a holiday
+    //     $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+    //     // Decide which threshold to use
+    //     $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
+
+    //     // Create a Carbon instance for the threshold time on the same day
+    //     $thresholdTime = Carbon::parse(
+    //         $userTime->toDateString() . ' ' . $lateThreshold,
+    //         $unit->timezone
+    //     )->setTimezone('UTC');
+
+    //     Log::info('Evaluating lateness', [
+    //         'clock_in_time_utc' => $clockInTime,
+    //         'user_time' => $userTime->toDateTimeString(),
+    //         'is_weekend' => $isWeekend,
+    //         'is_holiday' => $isHoliday,
+    //         'threshold_local' => $lateThreshold,
+    //         'threshold_utc' => $thresholdTime->toDateTimeString(),
+    //     ]);
+
+    //     // Determine if the user is late
+    //     return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+    // }
+
 
 
 
     private function isLate($clockInTime, $unit)
-    {
-        // Validate input
-        if (!$unit) {
-            Log::error('Invalid unit provided to isLate function');
-            return false;
-        }
-
-        // Convert clock-in time to unit's timezone
-        $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
-
-        // Set default thresholds
-        $defaultLateThreshold = $unit->late_threshold ?? '08:00';
-        $weekendThreshold = $unit->weekend_threshold ?? '08:30';
-
-        // Get day of week (0 = Sunday, 6 = Saturday)
-        $userDayOfWeek = $userTime->dayOfWeek;
-
-        // Parse weekend day configuration - handle both integer and string inputs
-        $weekendDays = [];
-        if (isset($unit->weekend_day)) {
-            if (is_array($unit->weekend_day)) {
-                $weekendDays = $unit->weekend_day;
-            } else {
-                $weekendDays = [$unit->weekend_day];
-            }
-        } else {
-            // Default to Saturday only
-            $weekendDays = [Carbon::SATURDAY];
-        }
-
-        // Check if it's a weekend
-        $isWeekend = in_array($userDayOfWeek, $weekendDays);
-
-        // Check if it's a holiday
-        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
-
-        // Decide which threshold to use
-        $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
-
-        // Create a Carbon instance for the threshold time on the same day
-        $thresholdTime = Carbon::parse(
-            $userTime->toDateString() . ' ' . $lateThreshold,
-            $unit->timezone
-        )->setTimezone('UTC');
-
-        Log::info('Evaluating lateness', [
-            'clock_in_time_utc' => $clockInTime,
-            'user_time' => $userTime->toDateTimeString(),
-            'is_weekend' => $isWeekend,
-            'is_holiday' => $isHoliday,
-            'threshold_local' => $lateThreshold,
-            'threshold_utc' => $thresholdTime->toDateTimeString(),
-        ]);
-
-        // Determine if the user is late
-        return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+{
+    // Validate input
+    if (!$unit) {
+        Log::error('Invalid unit provided to isLate function');
+        return false;
     }
 
+    // Convert clock-in time to unit's timezone
+    $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
 
+    // Set default thresholds
+    $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+    $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+    $sundayThreshold = $unit->sunday_threshold ?? '11:00'; // Dynamic with fallback
+
+    // Get day of week (0 = Sunday, 6 = Saturday)
+    $userDayOfWeek = $userTime->dayOfWeek;
+
+    // Parse weekend day configuration - handle both integer and string inputs
+    $weekendDays = [];
+    if (isset($unit->weekend_day)) {
+        $weekendDays = is_array($unit->weekend_day)
+            ? $unit->weekend_day
+            : [$unit->weekend_day];
+    } else {
+        $weekendDays = [Carbon::SATURDAY]; // Default to Saturday
+    }
+
+    // Check if it's a weekend
+    $isWeekend = in_array($userDayOfWeek, $weekendDays);
+
+    // Check if it's a holiday
+    $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+    // Decide which threshold to use
+    if ($userDayOfWeek === Carbon::SUNDAY) {
+        $lateThreshold = $sundayThreshold; // Prefer unit setting, fallback to 11:00
+    } elseif ($isWeekend || $isHoliday) {
+        $lateThreshold = $weekendThreshold;
+    } else {
+        $lateThreshold = $defaultLateThreshold;
+    }
+
+    // Create a Carbon instance for the threshold time on the same day
+    $thresholdTime = Carbon::parse(
+        $userTime->toDateString() . ' ' . $lateThreshold,
+        $unit->timezone
+    )->setTimezone('UTC');
+
+    Log::info('Evaluating lateness', [
+        'clock_in_time_utc' => $clockInTime,
+        'user_time' => $userTime->toDateTimeString(),
+        'is_weekend' => $isWeekend,
+        'is_holiday' => $isHoliday,
+        'threshold_local' => $lateThreshold,
+        'threshold_utc' => $thresholdTime->toDateTimeString(),
+    ]);
+
+    // Determine if the user is late
+    return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+}
 
 
     public function fetchServerTime(): JsonResponse
@@ -473,130 +534,64 @@ class AttendanceApiController extends Controller
     }
 
 
-    // public function syncZkteco(Request $request)
-    // {
-    //     Log::info('syncZkteco called', ['request_data' => $request->all()]);
-
-    //     $records = collect($request->input('records', []));
-    //     Log::info('Records received', ['count' => $records->count()]);
-
-    //     $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
-    //     Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
-
-    //     $grouped = $records->groupBy(function ($item) {
-    //         return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
-    //     });
-
-    //     foreach ($grouped as $groupKey => $userRecords) {
-    //         Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
-    //         $sorted = $userRecords->sortBy('time')->values();
-    //         $zkUserId = explode('_', $groupKey)[0];
-    //         $date = Carbon::parse($sorted->first()['time'])->toDateString();
-
-    //         $user = $users->get($zkUserId);
-    //         if (!$user) {
-    //             Log::warning("User not found for zk_id: $zkUserId");
-    //             continue;
-    //         }
-
-    //         $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
-    //         $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
-    //         $workedHours = Carbon::parse($clockOut)->diffInHours(Carbon::parse($clockIn));
-
-    //         Log::info('Attendance data prepared', [
-    //             'user_id' => $user->id,
-    //             'date' => $date,
-    //             'clock_in' => $clockIn,
-    //             'clock_out' => $clockOut,
-    //             'worked_hours' => $workedHours
-    //         ]);
-
-    //         Attendance::updateOrCreate(
-    //             [
-    //                 'user_id' => $user->id,
-    //                 'attendance_date' => $date,
-    //             ],
-    //             [
-    //                 'clock_in_time' => $clockIn,
-    //                 'clock_out_time' => $clockOut,
-    //                 'hours_worked' => $workedHours,
-    //                 'status' => 'Present',
-    //                 'is_present' => 1,
-    //                 'notes' => 'Auto-synced from ZKTeco',
-    //                 'ip_address' => request()->ip(),
-    //             ]
-    //         );
-
-    //         Log::info("Synced attendance for user", [
-    //             'user_id' => $user->id,
-    //             'user_name' => $user->name ?? ($user->firstname ?? '') . ' ' . ($user->lastname ?? ''),
-    //             'date' => $date
-    //         ]);
-    //     }
-
-    //     Log::info('ZKTeco sync completed');
-    //     return response()->json(['message' => 'ZKTeco records synced']);
-    // }
-
-
 
     public function syncZkteco(Request $request)
-{
-    Log::info('syncZkteco called', ['request_data' => $request->all()]);
+    {
+        Log::info('syncZkteco called', ['request_data' => $request->all()]);
 
-    $records = collect($request->input('records', []));
-    Log::info('Records received', ['count' => $records->count()]);
+        $records = collect($request->input('records', []));
+        Log::info('Records received', ['count' => $records->count()]);
 
-    $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
-    Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
+        $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
+        Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
 
-    $grouped = $records->groupBy(function ($item) {
-        return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
-    });
+        $grouped = $records->groupBy(function ($item) {
+            return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
+        });
 
-    foreach ($grouped as $groupKey => $userRecords) {
-        Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
+        foreach ($grouped as $groupKey => $userRecords) {
+            Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
 
-        $sorted = $userRecords->sortBy('time')->values();
-        $zkUserId = explode('_', $groupKey)[0];
-        $date = Carbon::parse($sorted->first()['time'])->toDateString();
+            $sorted = $userRecords->sortBy('time')->values();
+            $zkUserId = explode('_', $groupKey)[0];
+            $date = Carbon::parse($sorted->first()['time'])->toDateString();
 
-        $user = $users->get($zkUserId);
-        if (!$user) {
-            Log::warning("User not found for zk_id: $zkUserId");
-            continue;
+            $user = $users->get($zkUserId);
+            if (!$user) {
+                Log::warning("User not found for zk_id: $zkUserId");
+                continue;
+            }
+
+            $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
+            $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
+
+            Log::info('Attendance data prepared', [
+                'user_id' => $user->id,
+                'date' => $date,
+                'clock_in' => $clockIn,
+                'clock_out' => $clockOut,
+            ]);
+
+            // Use helper method
+            $this->processAttendanceFromZkteco(
+                $user,
+                $date,
+                $clockIn,
+                $clockOut,
+                $user->unit,
+                'Auto-synced from ZKTeco'
+            );
+
+            Log::info("Synced attendance for user", [
+                'user_id' => $user->id,
+                'user_name' => $user->name ?? ($user->firstname ?? '') . ' ' . ($user->lastname ?? ''),
+                'date' => $date
+            ]);
         }
 
-        $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
-        $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
-
-        Log::info('Attendance data prepared', [
-            'user_id' => $user->id,
-            'date' => $date,
-            'clock_in' => $clockIn,
-            'clock_out' => $clockOut,
-        ]);
-
-        // Use helper method
-        $this->processAttendanceFromZkteco(
-            $user,
-            $date,
-            $clockIn,
-            $clockOut,
-            $user->unit,
-            'Auto-synced from ZKTeco'
-        );
-
-        Log::info("Synced attendance for user", [
-            'user_id' => $user->id,
-            'user_name' => $user->name ?? ($user->firstname ?? '') . ' ' . ($user->lastname ?? ''),
-            'date' => $date
-        ]);
+        Log::info('ZKTeco sync completed');
+        return response()->json(['message' => 'ZKTeco records synced']);
     }
-
-    Log::info('ZKTeco sync completed');
-    return response()->json(['message' => 'ZKTeco records synced']);
-}
 
 
 
@@ -640,39 +635,90 @@ class AttendanceApiController extends Controller
 
 
 
+    // private function isLateFromZkteco($clockInTime, $unit)
+    // {
+    //     if (!$unit) {
+    //         Log::warning('Missing unit for lateness check');
+    //         return false;
+    //     }
+
+    //     $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+
+    //     $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+    //     $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+
+    //     $userDayOfWeek = $userTime->dayOfWeek;
+
+    //     $weekendDays = is_array($unit->weekend_day)
+    //         ? $unit->weekend_day
+    //         : [$unit->weekend_day ?? Carbon::SATURDAY];
+
+
+    //     $isWeekend = in_array($userDayOfWeek, $weekendDays);
+    //     $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+    //     $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
+
+    //     $thresholdTime = Carbon::parse(
+    //         $userTime->toDateString() . ' ' . $lateThreshold,
+    //         $unit->timezone
+    //     )->setTimezone('UTC');
+
+    //     Log::info('Evaluating lateness for ZKTeco', [
+    //         'user_time' => $userTime->toDateTimeString(),
+    //         'threshold' => $thresholdTime->toDateTimeString(),
+    //     ]);
+
+    //     return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+    // }
+
+
+
+
     private function isLateFromZkteco($clockInTime, $unit)
-    {
-        if (!$unit) {
-            Log::warning('Missing unit for lateness check');
-            return false;
-        }
-
-        $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
-
-        $defaultLateThreshold = $unit->late_threshold ?? '08:00';
-        $weekendThreshold = $unit->weekend_threshold ?? '08:30';
-
-        $userDayOfWeek = $userTime->dayOfWeek;
-
-        $weekendDays = is_array($unit->weekend_day)
-            ? $unit->weekend_day
-            : [$unit->weekend_day ?? Carbon::SATURDAY];
-
-        $isWeekend = in_array($userDayOfWeek, $weekendDays);
-        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
-
-        $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
-
-        $thresholdTime = Carbon::parse(
-            $userTime->toDateString() . ' ' . $lateThreshold,
-            $unit->timezone
-        )->setTimezone('UTC');
-
-        Log::info('Evaluating lateness for ZKTeco', [
-            'user_time' => $userTime->toDateTimeString(),
-            'threshold' => $thresholdTime->toDateTimeString(),
-        ]);
-
-        return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+{
+    if (!$unit) {
+        Log::warning('Missing unit for lateness check');
+        return false;
     }
+
+    $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+
+    $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+    $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+    // $sundayThreshold = $unit->sunday_threshold ?? '11:00'; 
+
+        $sundayThreshold = '11:00';
+
+    $userDayOfWeek = $userTime->dayOfWeek;
+
+    $weekendDays = is_array($unit->weekend_day)
+        ? $unit->weekend_day
+        : [$unit->weekend_day ?? Carbon::SATURDAY];
+
+    $isWeekend = in_array($userDayOfWeek, $weekendDays);
+    $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+    // Check for Sunday specifically
+    if ($userDayOfWeek === Carbon::SUNDAY) {
+        $lateThreshold = $sundayThreshold;
+    } elseif ($isWeekend || $isHoliday) {
+        $lateThreshold = $weekendThreshold;
+    } else {
+        $lateThreshold = $defaultLateThreshold;
+    }
+
+    $thresholdTime = Carbon::parse(
+        $userTime->toDateString() . ' ' . $lateThreshold,
+        $unit->timezone
+    )->setTimezone('UTC');
+
+    Log::info('Evaluating lateness for ZKTeco', [
+        'user_time' => $userTime->toDateTimeString(),
+        'threshold' => $thresholdTime->toDateTimeString(),
+    ]);
+
+    return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+}
+
 }

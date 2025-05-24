@@ -99,7 +99,6 @@ class RequisitionApiController extends Controller
         return response()->json(['requisitions' => $requisitions]);
     }
 
-
     public function filter(Request $request)
     {
         Log::info('Filter Requisitions Request Received', ['request_data' => $request->all()]);
@@ -107,25 +106,14 @@ class RequisitionApiController extends Controller
         $query = Requisition::with('items', 'user.department')->withSum('items', 'total_cost');
 
         // Filter by Item Name
-        // if ($request->has('item_names') && !empty($request->item_names)) {
-        //     Log::info('Filtering by Item Names', ['item_names' => $request->item_names]);
-
-        //     $query->whereHas('items', function ($q) use ($request) {
-        //         $q->whereIn('name', $request->item_names);
-        //     });
-        // }
-
-        // Filter by Item Name
         if ($request->has('item_names') && !empty($request->item_names)) {
             Log::info('Filtering by Item Names', ['item_names' => $request->item_names]);
-
             $query->whereHas('items', function ($q) use ($request) {
                 $q->whereIn('name', $request->item_names);
             })->with(['items' => function ($q) use ($request) {
-                $q->whereIn('name', $request->item_names); // Load only matching items
+                $q->whereIn('name', $request->item_names);
             }]);
         }
-
 
         // Filter by Department
         if ($request->has('department_ids') && !empty($request->department_ids)) {
@@ -139,32 +127,45 @@ class RequisitionApiController extends Controller
             $query->whereIn('status', $request->statuses);
         }
 
-        if ($request->has('date_created') && !empty($request->date_created)) {
-            Log::info('Filtering by Date Created', ['date_created' => $request->date_created]);
-            $dates = explode(' - ', $request->date_created);
-
-            if (count($dates) === 2) {
-                // Convert to Carbon instances and ensure correct format
-                $startDate = Carbon::parse($dates[0])->startOfDay();
-                $endDate = Carbon::parse($dates[1])->endOfDay();
-
+        // Filter by Date Created (start/end)
+        $dateCreatedStart = $request->input('date_created_start');
+        $dateCreatedEnd = $request->input('date_created_end');
+        if ($dateCreatedStart || $dateCreatedEnd) {
+            Log::info('Filtering by Date Created Range', [
+                'date_created_start' => $dateCreatedStart,
+                'date_created_end' => $dateCreatedEnd
+            ]);
+            if ($dateCreatedStart && $dateCreatedEnd) {
+                $startDate = Carbon::parse($dateCreatedStart)->startOfDay();
+                $endDate = Carbon::parse($dateCreatedEnd)->endOfDay();
                 $query->whereBetween('created_at', [$startDate, $endDate]);
-            } else {
-                $query->whereDate('created_at', Carbon::parse($request->date_created));
+            } elseif ($dateCreatedStart) {
+                $startDate = Carbon::parse($dateCreatedStart)->startOfDay();
+                $query->where('created_at', '>=', $startDate);
+            } elseif ($dateCreatedEnd) {
+                $endDate = Carbon::parse($dateCreatedEnd)->endOfDay();
+                $query->where('created_at', '<=', $endDate);
             }
         }
 
-        if ($request->has('date_paid') && !empty($request->date_paid)) {
-            Log::info('Filtering by Date Paid', ['date_paid' => $request->date_paid]);
-            $dates = explode(' - ', $request->date_paid);
-
-            if (count($dates) === 2) {
-                $startDate = Carbon::parse($dates[0])->startOfDay();
-                $endDate = Carbon::parse($dates[1])->endOfDay();
-
+        // Filter by Date Paid (start/end)
+        $datePaidStart = $request->input('date_paid_start');
+        $datePaidEnd = $request->input('date_paid_end');
+        if ($datePaidStart || $datePaidEnd) {
+            Log::info('Filtering by Date Paid Range', [
+                'date_paid_start' => $datePaidStart,
+                'date_paid_end' => $datePaidEnd
+            ]);
+            if ($datePaidStart && $datePaidEnd) {
+                $startDate = Carbon::parse($datePaidStart)->startOfDay();
+                $endDate = Carbon::parse($datePaidEnd)->endOfDay();
                 $query->whereBetween('paid_at', [$startDate, $endDate]);
-            } else {
-                $query->whereDate('paid_at', Carbon::parse($request->date_paid));
+            } elseif ($datePaidStart) {
+                $startDate = Carbon::parse($datePaidStart)->startOfDay();
+                $query->where('paid_at', '>=', $startDate);
+            } elseif ($datePaidEnd) {
+                $endDate = Carbon::parse($datePaidEnd)->endOfDay();
+                $query->where('paid_at', '<=', $endDate);
             }
         }
 
@@ -181,7 +182,6 @@ class RequisitionApiController extends Controller
 
         return response()->json(['requisitions' => $requisitions]);
     }
-
     //
 
 
