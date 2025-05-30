@@ -124,7 +124,7 @@ class PerformanceApiEvaluation extends Controller
     //             if ($departmentIds->isNotEmpty()) {
     //                 // Get all users in these departments
     //                 $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
-    //                 // inlcude users of same unit if the manager is does not have any managerDerpartment
+    //                 // include users of same unit if the manager is does not have any managerDerpartment
 
     //                 Log::info('Manager oversees users', ['user_ids' => $userIds]);
 
@@ -184,21 +184,14 @@ class PerformanceApiEvaluation extends Controller
         $evaluations = collect(); // default empty collection
 
         switch (true) {
-            case $user->is_hr:
-                Log::info('Role: HR');
-<<<<<<< Updated upstream
+case $user->is_hr:
+    Log::info('Role: HR');
 
-                // Fetch evaluations with relationships for better frontend rendering
-                $evaluations = PerformanceEvaluation::with('user.department')->get();
+    // Fetch evaluations with relationships for better frontend rendering
+    $evaluations = PerformanceEvaluation::with('user.department')->get();
 
-=======
-    
-                // Fetch evaluations witM{j1Q5%7@OfZh relationships for better frontend rendering
-                $evaluations = PerformanceEvaluation::with('user')->get();
-    
->>>>>>> Stashed changes
-                Log::info('Evaluations fetched', ['count' => $evaluations->count()]);
-                break;
+    Log::info('Evaluations fetched', ['count' => $evaluations->count()]);
+    break;
 
             case ($user->designation_id == 1): // Manager
                 Log::info('Role: Manager');

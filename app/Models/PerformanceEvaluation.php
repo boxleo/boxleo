@@ -13,9 +13,9 @@ class PerformanceEvaluation extends Model
 
     protected $fillable = [
         'user_id',
+        'unit_id',
         'evaluator_id',
         'department_id',
-        'unit_id',
         'evaluation_date',
         'attendance',
         'problems_solved',
