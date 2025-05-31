@@ -69,6 +69,7 @@ return new class extends Migration
             $table->integer('discipline')->default(0);
             $table->integer('quality_of_work')->default(0);
             $table->integer('communication')->default(0);
+            $table->integer('leadership')->default(0);
             $table->float('total_score')->default(0); // Total out of 10
             $table->float('percentage')->default(0);  // Percentage out of 100
 
@@ -80,9 +81,9 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-//     
+    //     
 
-public function down(): void
+    public function down(): void
     {
         Schema::table('performance_evaluations', function (Blueprint $table) {
             if (Schema::hasColumn('performance_evaluations', 'unit_id')) {

@@ -22,6 +22,7 @@ class PerformanceApiEvaluation extends Controller
             // 'evaluator_id' => 'required|integer',
             'unit_id' => 'required|integer',
             'department_id' => 'required|integer',
+            'leadership' => 'required|integer|min:0|max:10',
             // 'evaluation_date' => 'required|date',
             'attendance' => 'required|integer|min:0|max:10',
             'problems_solved' => 'required|integer|min:0|max:10',
@@ -35,10 +36,12 @@ class PerformanceApiEvaluation extends Controller
             'communication' => 'required|integer|min:0|max:10',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
-            'leadership' => 'required|numeric|min:0|max:10',
+
         ]);
 
         // Assuming you have a model named PerformanceEvaluation
+
+        // PerformanceApiEvaluation.php, line 43
         $performance = new PerformanceEvaluation($validatedData);
         $performance->save();
 
@@ -66,7 +69,7 @@ class PerformanceApiEvaluation extends Controller
             'communication' => 'required|integer|min:0|max:10',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
-            'leadership' => 'nullable|numeric|min:0|max:10',
+            'leadership' => 'required|integer|min:0|max:10',
 
         ]);
 

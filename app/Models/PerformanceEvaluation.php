@@ -27,9 +27,10 @@ class PerformanceEvaluation extends Model
         'discipline',
         'quality_of_work',
         'communication',
+        'leadership',
         'total_score',
         'percentage',
-        'leadership'
+        
     ];
 
 

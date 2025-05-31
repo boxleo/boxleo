@@ -219,6 +219,17 @@
           <v-col cols="12" sm="3">
             <v-card class="pa-4" variant="flat">
               <v-row align="center">
+                <v-icon color="blue lighten-1" size="48">mdi-message</v-icon>
+                <v-col>
+                  <div class="text-h6">{{ averageLeadership}}</div>
+                  <div class="subtitle-2">leadership</div>
+                </v-col>
+              </v-row>
+            </v-card>
+          </v-col>
+          <v-col cols="12" sm="3">
+            <v-card class="pa-4" variant="flat">
+              <v-row align="center">
                 <v-icon color="green lighten-1" size="48">mdi-star</v-icon>
                 <v-col>
                   <div class="text-h6">{{ averageTotalScore }}</div>
