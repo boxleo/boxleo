@@ -35,7 +35,7 @@ class PerformanceApiEvaluation extends Controller
             'communication' => 'required|integer|min:0|max:10',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
-            'leadership' => 'nullable|numeric|min:0|max:10',
+            'leadership' => 'required|numeric|min:0|max:10',
         ]);
 
         // Assuming you have a model named PerformanceEvaluation
@@ -184,14 +184,14 @@ class PerformanceApiEvaluation extends Controller
         $evaluations = collect(); // default empty collection
 
         switch (true) {
-case $user->is_hr:
-    Log::info('Role: HR');
+            case $user->is_hr:
+                Log::info('Role: HR');
 
-    // Fetch evaluations with relationships for better frontend rendering
-    $evaluations = PerformanceEvaluation::with('user.department')->get();
+                // Fetch evaluations with relationships for better frontend rendering
+                $evaluations = PerformanceEvaluation::with('user.department')->get();
 
-    Log::info('Evaluations fetched', ['count' => $evaluations->count()]);
-    break;
+                Log::info('Evaluations fetched', ['count' => $evaluations->count()]);
+                break;
 
             case ($user->designation_id == 1): // Manager
                 Log::info('Role: Manager');
@@ -429,5 +429,4 @@ case $user->is_hr:
             'leadership'         => 'required|integer|min:0|max:10',
         ];
     }
-
 }
