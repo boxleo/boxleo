@@ -320,6 +320,7 @@
                     </v-icon>
                     <v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue" v-on="on">
                       mdi-pencil
+                    </v-icon>
                     <v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red" v-on="on">
                       mdi-delete
                     </v-icon>
