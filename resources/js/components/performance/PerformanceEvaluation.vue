@@ -216,17 +216,7 @@
               </v-row>
             </v-card>
           </v-col>
-          <v-col cols="12" sm="3">
-            <v-card class="pa-4" variant="flat">
-              <v-row align="center">
-                <v-icon color="blue lighten-1" size="48">mdi-message</v-icon>
-                <v-col>
-                  <div class="text-h6">{{ averageLeadership}}</div>
-                  <div class="subtitle-2">leadership</div>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-col>
+          <!-- s -->
           <v-col cols="12" sm="3">
             <v-card class="pa-4" variant="flat">
               <v-row align="center">
@@ -328,6 +318,8 @@
                     <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
                       mdi-information
                     </v-icon>
+                    <v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue" v-on="on">
+                      mdi-pencil
                     <v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red" v-on="on">
                       mdi-delete
                     </v-icon>
@@ -339,6 +331,17 @@
           </v-responsive>
         </v-col>
       </v-row>
+
+      <!-- <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
+  mdi-information
+</v-icon>
+<v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue" v-on="on">
+  mdi-pencil
+</v-icon>
+<v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red" v-on="on">
+  mdi-delete
+</v-icon> -->
+
 
       <!-- Delete Confirmation Modal -->
       <v-dialog v-model="deleteDialog" max-width="400">
