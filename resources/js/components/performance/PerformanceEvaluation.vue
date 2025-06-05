@@ -310,12 +310,12 @@
               <template v-slot:item.percentage="{ item }">
                 <span>{{ item.percentage }}%</span>
               </template>
-              <template v-slot:item.actions="{ item }">
+              <!-- <template v-slot:item.actions="{ item }">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <!-- inlcude icon to edit  -->
 
-                    <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
+                    <!-- <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
                       mdi-information
                     </v-icon>
                     <v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue" v-on="on">
@@ -324,10 +324,55 @@
                     <v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red" v-on="on">
                       mdi-delete
                     </v-icon>
-                  </template>
-                  <span>Actions</span>
+                  </template> --> -->
+                  <!-- <span>Actions</span>
                 </v-tooltip>
-              </template>
+              </template> -->
+
+              <template v-slot:item.actions="{ item }">
+  <v-tooltip text="View Evaluation">
+    <template #activator="{ on, attrs }">
+      <v-icon
+        v-bind="attrs"
+        v-on="on"
+        @click="viewEvaluation(item)"
+        class="mx-1"
+        color="black"
+      >
+        mdi-information
+      </v-icon>
+    </template>
+  </v-tooltip>
+
+  <v-tooltip text="Edit Evaluation">
+    <template #activator="{ on, attrs }">
+      <v-icon
+        v-bind="attrs"
+        v-on="on"
+        @click="editEvaluation(item)"
+        class="mx-1"
+        color="blue"
+      >
+        mdi-pencil
+      </v-icon>
+    </template>
+  </v-tooltip>
+
+  <v-tooltip text="Delete Evaluation">
+    <template #activator="{ on, attrs }">
+      <v-icon
+        v-bind="attrs"
+        v-on="on"
+        @click="confirmDelete(item)"
+        class="mx-1"
+        color="red"
+      >
+        mdi-delete
+      </v-icon>
+    </template>
+  </v-tooltip>
+</template>
+
             </v-data-table>
           </v-responsive>
         </v-col>
@@ -356,6 +401,8 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      
 
       <!-- Add Evaluation Modal -->
       <v-dialog v-model="addEvaluationDialog" width="800">
