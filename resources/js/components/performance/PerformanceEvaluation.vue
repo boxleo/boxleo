@@ -310,69 +310,17 @@
               <template v-slot:item.percentage="{ item }">
                 <span>{{ item.percentage }}%</span>
               </template>
-              <!-- <template v-slot:item.actions="{ item }">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <!-- inlcude icon to edit  -->
-
-                    <!-- <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
-                      mdi-information
-                    </v-icon>
-                    <v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue" v-on="on">
-                      mdi-pencil
-                    </v-icon>
-                    <v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red" v-on="on">
-                      mdi-delete
-                    </v-icon>
-                  </template> --> -->
-                  <!-- <span>Actions</span>
-                </v-tooltip>
-              </template> -->
-
               <template v-slot:item.actions="{ item }">
-  <v-tooltip text="View Evaluation">
-    <template #activator="{ on, attrs }">
-      <v-icon
-        v-bind="attrs"
-        v-on="on"
-        @click="viewEvaluation(item)"
-        class="mx-1"
-        color="black"
-      >
-        mdi-information
-      </v-icon>
-    </template>
-  </v-tooltip>
-
-  <v-tooltip text="Edit Evaluation">
-    <template #activator="{ on, attrs }">
-      <v-icon
-        v-bind="attrs"
-        v-on="on"
-        @click="editEvaluation(item)"
-        class="mx-1"
-        color="blue"
-      >
-        mdi-pencil
-      </v-icon>
-    </template>
-  </v-tooltip>
-
-  <v-tooltip text="Delete Evaluation">
-    <template #activator="{ on, attrs }">
-      <v-icon
-        v-bind="attrs"
-        v-on="on"
-        @click="confirmDelete(item)"
-        class="mx-1"
-        color="red"
-      >
-        mdi-delete
-      </v-icon>
-    </template>
-  </v-tooltip>
-</template>
-
+                <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black">
+                  mdi-information
+                </v-icon>
+                <v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue">
+                  mdi-pencil
+                </v-icon>
+                <v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red">
+                  mdi-delete
+                </v-icon>
+              </template>
             </v-data-table>
           </v-responsive>
         </v-col>
@@ -401,6 +349,39 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+
+      <!-- Edit Evaluation Dialog -->
+<v-dialog v-model="editEvaluationDialog" width="800">
+  <v-card>
+    <v-card-title>Edit Performance Evaluation</v-card-title>
+    <v-divider></v-divider>
+    <v-card-text>
+      <v-form ref="editEvaluationForm">
+        <v-row>
+          <!-- Example field -->
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="editedEvaluation.attendance"
+              label="Attendance"
+              type="number"
+              dense
+            />
+          </v-col>
+          <!-- Add all fields similar to newEvaluation -->
+        </v-row>
+      </v-form>
+    </v-card-text>
+    <v-card-actions class="justify-content-end">
+      <v-btn color="grey" @click="editEvaluationDialog = false">
+        <v-icon>mdi-cancel</v-icon> Cancel
+      </v-btn>
+      <v-btn color="primary" @click="saveEditedEvaluation">
+        <v-icon>mdi-content-save</v-icon> Save
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
 
       
 
