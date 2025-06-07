@@ -22,7 +22,6 @@ class PerformanceApiEvaluation extends Controller
             // 'evaluator_id' => 'required|integer',
             'unit_id' => 'required|integer',
             'department_id' => 'required|integer',
-            'leadership' => 'required|integer|min:0|max:10',
             // 'evaluation_date' => 'required|date',
             'attendance' => 'required|integer|min:0|max:10',
             'problems_solved' => 'required|integer|min:0|max:10',
@@ -36,12 +35,10 @@ class PerformanceApiEvaluation extends Controller
             'communication' => 'required|integer|min:0|max:10',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
-
+            'leadership' => 'nullable|numeric|min:0|max:10',
         ]);
 
         // Assuming you have a model named PerformanceEvaluation
-
-        // PerformanceApiEvaluation.php, line 43
         $performance = new PerformanceEvaluation($validatedData);
         $performance->save();
 
@@ -69,7 +66,7 @@ class PerformanceApiEvaluation extends Controller
             'communication' => 'required|integer|min:0|max:10',
             'total_score' => 'required|integer',
             'percentage' => 'required|numeric',
-            'leadership' => 'required|integer|min:0|max:10',
+            'leadership' => 'nullable|numeric|min:0|max:10',
 
         ]);
 
@@ -96,77 +93,77 @@ class PerformanceApiEvaluation extends Controller
 
     // public function index(Request $request)
     // {
-    //     Log::info('Fetching performance evaluations', ['user_id' => $request->user()->id]);
+    // Log::info('Fetching performance evaluations', ['user_id' => $request->user()->id]);
 
-    //     $user = $request->user();
-    //     $roles = $user->getRoleNames(); // Get roles as a collection
+    // $user = $request->user();
+    // $roles = $user->getRoleNames(); // Get roles as a collection
 
-    //     Log::info('Fetching performance evaluations', [
-    //         'user_id' => $user->id,
-    //         'roles' => $roles
-    //     ]);
+    // Log::info('Fetching performance evaluations', [
+    // 'user_id' => $user->id,
+    // 'roles' => $roles
+    // ]);
 
-    //     // Initialize $evaluations as null
-    //     $evaluations = null;
+    // // Initialize $evaluations as null
+    // $evaluations = null;
 
-    //     switch (true) {
-    //         case $user->is_hr:
-    //             Log::info('Role is HR');
-    //             $evaluations = PerformanceEvaluation::with('user')->get();
-    //             break;
+    // switch (true) {
+    // case $user->is_hr:
+    // Log::info('Role is HR');
+    // $evaluations = PerformanceEvaluation::with('user')->get();
+    // break;
 
-    //         case ($user->designation_id == 1):
-    //             Log::info('Role is Manager');
-    //             // fetch only the managerDepartments
-
-
-    //             //    $evaluations = PerformanceEvaluation::with('user.department')->get();
-
-    //             $departmentIds = $user->managerDepartments->pluck('id');
-
-    //             if ($departmentIds->isNotEmpty()) {
-    //                 // Get all users in these departments
-    //                 $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
-    //                 // include users of same unit if the manager is does not have any managerDerpartment
-
-    //                 Log::info('Manager oversees users', ['user_ids' => $userIds]);
-
-    //                 // Fetch evaluations only for users in these departments
-    //                 $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
-    //             } else {
-    //                 Log::warning('Manager has no assigned departments');
-    //                 return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
-    //             }
-
-    //             break;
-
-    //         case $user->is_hod:
-    //             Log::info('Role is HOD');
-    //             $departmentIds = $user->hodDepartments->pluck('id');
-
-    //             $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
-
-    //             // return response()->json($departments);
-    //             if ($departmentIds->isNotEmpty()) {
-    //                 // evaluations of user with department that exist in $departments = $user->hodDepartments->pluck('id');
-    //                 // $evaluations = PerformanceEvaluation::with('user')->get();
-    //                 $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
+    // case ($user->designation_id == 1):
+    // Log::info('Role is Manager');
+    // // fetch only the managerDepartments
 
 
-    //             } else {
-    //                 Log::warning('HOD has no assigned departments');
-    //                 return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
-    //             }
-    //             break;
+    // // $evaluations = PerformanceEvaluation::with('user.department')->get();
 
-    //         default:
-    //             // Default case: authenticated user who is not manager, HR, or HODq
-    //             $evaluations = PerformanceEvaluation::where('user_id', $user->id)->with('user')->get();
-    //             break;
-    //     }
+    // $departmentIds = $user->managerDepartments->pluck('id');
 
-    //     Log::info('Performance evaluations fetched successfully', ['count' => $evaluations->count()]);
-    //     return response()->json(['evaluations' => $evaluations]);
+    // if ($departmentIds->isNotEmpty()) {
+    // // Get all users in these departments
+    // $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
+    // // inlcude users of same unit if the manager is does not have any managerDerpartment
+
+    // Log::info('Manager oversees users', ['user_ids' => $userIds]);
+
+    // // Fetch evaluations only for users in these departments
+    // $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
+    // } else {
+    // Log::warning('Manager has no assigned departments');
+    // return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
+    // }
+
+    // break;
+
+    // case $user->is_hod:
+    // Log::info('Role is HOD');
+    // $departmentIds = $user->hodDepartments->pluck('id');
+
+    // $userIds = User::whereIn('department_id', $departmentIds)->pluck('id');
+
+    // // return response()->json($departments);
+    // if ($departmentIds->isNotEmpty()) {
+    // // evaluations of user with department that exist in $departments = $user->hodDepartments->pluck('id');
+    // // $evaluations = PerformanceEvaluation::with('user')->get();
+    // $evaluations = PerformanceEvaluation::whereIn('user_id', $userIds)->with('user.department')->get();
+
+
+    // } else {
+    // Log::warning('HOD has no assigned departments');
+    // return response()->json(['message' => 'Unauthorized - No departments assigned'], 403);
+    // }
+    // break;
+
+    // default:
+    // // Default case: authenticated user who is not manager, HR, or HODq
+    // $evaluations = PerformanceEvaluation::where('user_id', $user->id)->with('user')->get();
+    // break;
+    // }
+
+    // Log::info('Performance evaluations fetched successfully', ['count' => $evaluations->count()]);
+    // return response()->json(['evaluations' => $evaluations]);
     // }
 
 
@@ -274,7 +271,7 @@ class PerformanceApiEvaluation extends Controller
             ->count();
 
         // 3. Count days the user was present in that period
-        $presentDays =  Attendance::where('user_id', $userId)
+        $presentDays = Attendance::where('user_id', $userId)
             ->whereBetween('attendance_date', [$startOfMonth, $endOfMonth])
             ->where('is_present', 1)
             ->count();
@@ -329,8 +326,8 @@ class PerformanceApiEvaluation extends Controller
 
             // Apply evaluation date filter
             // if ($request->has('evaluation_date') && $request->evaluation_date) {
-            //     Log::info('Applying evaluation date filter', ['evaluation_date' => $request->evaluation_date]);
-            //     $query->whereDate('evaluation_date', $request->evaluation_date);
+            // Log::info('Applying evaluation date filter', ['evaluation_date' => $request->evaluation_date]);
+            // $query->whereDate('evaluation_date', $request->evaluation_date);
             // }
 
             // Apply user filter
@@ -419,17 +416,17 @@ class PerformanceApiEvaluation extends Controller
     public function rules()
     {
         return [
-            'attendance'         => 'required|integer|min:0|max:10',
-            'problems_solved'    => 'required|integer|min:0|max:10',
-            'reports_submitted'  => 'required|integer|min:0|max:10',
-            'knowledge_of_work'  => 'required|integer|min:0|max:10',
-            'team_work'          => 'required|integer|min:0|max:10',
+            'attendance' => 'required|integer|min:0|max:10',
+            'problems_solved' => 'required|integer|min:0|max:10',
+            'reports_submitted' => 'required|integer|min:0|max:10',
+            'knowledge_of_work' => 'required|integer|min:0|max:10',
+            'team_work' => 'required|integer|min:0|max:10',
             'reliability_visibility' => 'required|integer|min:0|max:10',
-            'productivity'       => 'required|integer|min:0|max:10',
-            'discipline'         => 'required|integer|min:0|max:10',
-            'quality_of_work'    => 'required|integer|min:0|max:10',
-            'communication'      => 'required|integer|min:0|max:10',
-            'leadership'         => 'required|integer|min:0|max:10',
+            'productivity' => 'required|integer|min:0|max:10',
+            'discipline' => 'required|integer|min:0|max:10',
+            'quality_of_work' => 'required|integer|min:0|max:10',
+            'communication' => 'required|integer|min:0|max:10',
+            'leadership' => 'required|integer|min:0|max:10',
         ];
     }
 }
