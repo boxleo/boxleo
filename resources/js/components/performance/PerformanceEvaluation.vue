@@ -51,7 +51,7 @@
                 <v-col cols="12">
                   <v-label>Employee:</v-label>
                   <v-combobox :items="users" item-title="fullName" item-value="id" search-input
-                    v-model="filters.user_id" label="Assign to Employee" variant="outlined">
+                    v-model="filters.user_id" label="Select Employee" variant="outlined">
                   </v-combobox>
                 </v-col>
               </v-list-item>
@@ -60,7 +60,7 @@
                 <v-col cols="12">
                   <v-label>Evaluator:</v-label>
                   <v-combobox :items="users" item-title="fullName" item-value="id" search-input
-                    v-model="filters.evaluator_id" label="Assign to Employee" variant="outlined">
+                    v-model="filters.evaluator_id" label="Select Evaluator" variant="outlined">
                   </v-combobox>
                 </v-col>
               </v-list-item>
@@ -172,6 +172,8 @@
               </v-row>
             </v-card>
           </v-col>
+        </v-row>
+        <v-row>
           <v-col cols="12" sm="3">
             <v-card class="pa-4" variant="flat">
               <v-row align="center">
@@ -216,69 +218,37 @@
               </v-row>
             </v-card>
           </v-col>
-          <!-- s -->
-          <v-col cols="12" sm="3">
-            <v-card class="pa-4" variant="flat">
-              <v-row align="center">
-                <v-icon color="green lighten-1" size="48">mdi-star</v-icon>
-                <v-col>
-                  <div class="text-h6">{{ averageTotalScore }}</div>
-                  <div class="subtitle-2">Total Score</div>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-col>
-          <v-col cols="12" sm="3">
-            <v-card class="pa-4" variant="flat">
-              <v-row align="center">
-                <v-icon color="orange lighten-1" size="48">mdi-percent</v-icon>
-                <v-col>
-                  <div class="text-h6">{{ averagePercentage }}%</div>
-                  <div class="subtitle-2">Percentage</div>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-col>
         </v-row>
       </v-col>
+      
       <v-divider></v-divider>
+      
       <v-row align="center" justify="space-between" class="mb-4">
         <!-- Left side (Filter icon + Add button) -->
         <v-col cols="auto" class="d-flex align-center">
           <v-icon size="20" color="primary" class="mx-2" @click.stop="drawer = !drawer">
             mdi-filter
           </v-icon>
-
           <v-btn @click="addEvaluationDialog = true" icon>
             <v-tooltip activator="parent" location="top">Add Evaluation</v-tooltip>
             <v-icon color="primary">mdi-plus</v-icon>
           </v-btn>
         </v-col>
 
-        <!-- Right side (Download button with dropdown) -->
+        <!-- Right side (Download buttons) -->
         <v-col cols="auto">
-
-
           <div class="d-flex">
-            <!-- <v-btn color="primary" class="mr-2" @click="downloadFullReport">
-              <v-icon left>mdi-file-excel</v-icon>
-              Download All Evaluations
-            </v-btn> -->
-
             <v-btn color="primary" class="mr-2" @click="downloadRankingReport">
               <v-icon left>mdi-podium</v-icon>
               Download Employee Rankings
             </v-btn>
-
             <v-btn color="primary" @click="downloadFullReport">
               <v-icon left>mdi-download</v-icon>
               Download Reports
             </v-btn>
           </div>
-
         </v-col>
       </v-row>
-
 
       <!-- Data Table for Performance Evaluations -->
       <v-row no-gutters>
@@ -326,17 +296,6 @@
         </v-col>
       </v-row>
 
-      <!-- <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black" v-on="on">
-  mdi-information
-</v-icon>
-<v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue" v-on="on">
-  mdi-pencil
-</v-icon>
-<v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red" v-on="on">
-  mdi-delete
-</v-icon> -->
-
-
       <!-- Delete Confirmation Modal -->
       <v-dialog v-model="deleteDialog" max-width="400">
         <v-card>
@@ -350,21 +309,97 @@
         </v-card>
       </v-dialog>
 
-
       <!-- Edit Evaluation Modal -->
-      <v-dialog v-model="deleteDialog" max-width="400">
+      <v-dialog v-model="editDialog" width="800">
         <v-card>
-          <v-card-title class="headline">Edit Performance Evaluation</v-card-title>
-          <v-card-text>Are you sure you want to edit this evaluation record?</v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="editDialog = false" color="grey">Cancel</v-btn>
-            <v-btn @click="editEvaluation" color="red">Edit</v-btn>
+          <v-card-title>Edit Performance Evaluation</v-card-title>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-form ref="editEvaluationForm">
+              <v-row>
+                <v-col cols="12">
+                  <v-autocomplete
+                    v-model="editingEvaluation.unit_id"
+                    :items="units"
+                    label="Unit"
+                    variant="outlined"
+                    item-title="name"
+                    item-value="id"
+                    clearable
+                  />
+                </v-col>
+                <v-col cols="12">
+                  <v-autocomplete
+                    v-model="editingEvaluation.department_id"
+                    :items="departments"
+                    label="Department"
+                    variant="outlined"
+                    item-title="name"
+                    item-value="id"
+                    clearable
+                  />
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-autocomplete
+                    v-model="editingEvaluation.user_id"
+                    :items="team"
+                    item-title="fullname"
+                    item-value="id"
+                    label="Employee"
+                    clearable
+                    dense
+                  />
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.attendance" label="Attendance" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.problems_solved" label="Problems Solved" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6" v-if="editingEvaluation.user_id && team.find((user) => user.id === editingEvaluation.user_id)?.designation_id !== 1">
+                  <v-text-field v-model="editingEvaluation.reports_submitted" label="Reports Submitted" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.knowledge_of_work" label="Knowledge of Work" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.team_work" label="Team Work" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.reliability_visibility" label="Reliability & Visibility" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.productivity" label="Productivity" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.discipline" label="Discipline" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.quality_of_work" label="Quality of Work" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.communication" label="Communication" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6" v-if="editingEvaluation.user_id && team.find((user) => user.id === editingEvaluation.user_id)?.designation_id === 1">
+                  <v-text-field v-model="editingEvaluation.leadership" label="Leadership" type="number" dense></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.total_score" label="Total Score" type="number" dense disabled></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="editingEvaluation.percentage" label="Percentage" type="number" dense disabled></v-text-field>
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card-text>
+          <v-card-actions class="justify-content-end">
+            <v-btn @click="editDialog = false" color="error">
+              <v-icon>mdi-cancel</v-icon> Cancel
+            </v-btn>
+            <v-btn @click="updateEvaluation" color="primary">Update</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
-
-      
 
       <!-- Add Evaluation Modal -->
       <v-dialog v-model="addEvaluationDialog" width="800">
@@ -374,7 +409,6 @@
           <v-card-text>
             <v-form ref="evaluationForm">
               <v-row>
-
                 <v-col cols="12">
                   <v-autocomplete
                     v-model="newEvaluation.unit_id"
@@ -386,7 +420,6 @@
                     clearable
                   />
                 </v-col>
-
                 <v-col cols="12">
                   <v-autocomplete
                     v-model="newEvaluation.department_id"
@@ -398,7 +431,6 @@
                     clearable
                   />
                 </v-col>
-
                 <v-col cols="12" sm="6">
                   <v-autocomplete
                     v-model="newEvaluation.user_id"
@@ -410,62 +442,45 @@
                     dense
                   />
                 </v-col>
-
-
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.attendance" label="Attendance" type="number"
-                    dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.attendance" label="Attendance" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number"
-                    dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number" dense></v-text-field>
                 </v-col>
-                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id).designation_id !== 1">
-                  <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted" type="number"
-                    dense></v-text-field>
+                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id)?.designation_id !== 1">
+                  <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.knowledge_of_work" label="Knowledge of Work" type="number"
-                    dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.knowledge_of_work" label="Knowledge of Work" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="newEvaluation.team_work" label="Team Work" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility"
-                    type="number" dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.productivity" label="Productivity" type="number"
-                    dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.productivity" label="Productivity" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.discipline" label="Discipline" type="number"
-                    dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.discipline" label="Discipline" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" type="number"
-                    dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.communication" label="Communication" type="number"
-                    dense></v-text-field>
+                  <v-text-field v-model="newEvaluation.communication" label="Communication" type="number" dense></v-text-field>
                 </v-col>
-
-                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id).designation_id === 1">
-                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number"
-                    dense></v-text-field>
+                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id)?.designation_id === 1">
+                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number" dense></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.total_score" label="Total Score" type="number" dense
-                    disabled></v-text-field>
+                  <v-text-field v-model="newEvaluation.total_score" label="Total Score" type="number" dense disabled></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.percentage" label="Percentage" type="number" dense
-                    disabled></v-text-field>
+                  <v-text-field v-model="newEvaluation.percentage" label="Percentage" type="number" dense disabled></v-text-field>
                 </v-col>
-
-
               </v-row>
             </v-form>
           </v-card-text>
@@ -504,8 +519,6 @@
                   </div>
                 </div>
               </v-timeline-item>
-            </v-timeline>
-            <v-timeline align="start" density="compact">
               <v-timeline-item dot-color="green" size="x-small">
                 <div class="mb-4">
                   <div class="font-weight-normal">
@@ -513,12 +526,24 @@
                   </div>
                 </div>
               </v-timeline-item>
-            </v-timeline>
-            <v-timeline align="start" density="compact">
               <v-timeline-item dot-color="blue" size="x-small">
                 <div class="mb-4">
                   <div class="font-weight-normal">
                     <strong>Evaluator:</strong> {{ selectedEvaluation.evaluatorName }}
+                  </div>
+                </div>
+              </v-timeline-item>
+              <v-timeline-item dot-color="purple" size="x-small">
+                <div class="mb-4">
+                  <div class="font-weight-normal">
+                    <strong>Total Score:</strong> {{ selectedEvaluation.total_score }}
+                  </div>
+                </div>
+              </v-timeline-item>
+              <v-timeline-item dot-color="orange" size="x-small">
+                <div class="mb-4">
+                  <div class="font-weight-normal">
+                    <strong>Percentage:</strong> {{ selectedEvaluation.percentage }}%
                   </div>
                 </div>
               </v-timeline-item>
