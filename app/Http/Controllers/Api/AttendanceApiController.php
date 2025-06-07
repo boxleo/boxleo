@@ -567,6 +567,67 @@ class AttendanceApiController extends Controller
 
 
 
+    // public function syncZkteco(Request $request)
+    // {
+    //     Log::info('syncZkteco called', ['request_data' => $request->all()]);
+
+    //     $records = collect($request->input('records', []));
+    //     Log::info('Records received', ['count' => $records->count()]);
+
+    //     $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
+    //     Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
+
+    //     $grouped = $records->groupBy(function ($item) {
+    //         return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
+    //     });
+
+    //     foreach ($grouped as $groupKey => $userRecords) {
+    //         Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
+
+    //         $sorted = $userRecords->sortBy('time')->values();
+    //         $zkUserId = explode('_', $groupKey)[0];
+    //         $date = Carbon::parse($sorted->first()['time'])->toDateString();
+
+    //         $user = $users->get($zkUserId);
+    //         if (!$user) {
+    //             Log::warning("User not found for zk_id: $zkUserId");
+    //             continue;
+    //         }
+
+    //         $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
+    //         $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
+
+    //         Log::info('Attendance data prepared', [
+    //             'user_id' => $user->id,
+    //             'date' => $date,
+    //             'clock_in' => $clockIn,
+    //             'clock_out' => $clockOut,
+    //         ]);
+
+    //         // Use helper method
+    //         $this->processAttendanceFromZkteco(
+    //             $user,
+    //             $date,
+    //             $clockIn,
+    //             $clockOut,
+    //             $user->unit,
+    //             'Auto-synced from ZKTeco'
+    //         );
+
+    //         Log::info("Synced attendance for user", [
+    //             'user_id' => $user->id,
+    //             'user_name' => $user->name ?? ($user->firstname ?? '') . ' ' . ($user->lastname ?? ''),
+    //             'date' => $date
+    //         ]);
+    //     }
+
+    //     Log::info('ZKTeco sync completed');
+    //     return response()->json(['message' => 'ZKTeco records synced']);
+    // }
+
+
+
+
     public function syncZkteco(Request $request)
     {
         Log::info('syncZkteco called', ['request_data' => $request->all()]);
@@ -574,28 +635,25 @@ class AttendanceApiController extends Controller
         $records = collect($request->input('records', []));
         Log::info('Records received', ['count' => $records->count()]);
 
+        if ($records->isEmpty()) {
+            return response()->json(['message' => 'No records to sync'], 400);
+        }
+
         $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
         Log::info('Users fetched for zk_user_ids', ['user_ids' => $records->pluck('user_id')->unique()->values()->all()]);
 
-        $grouped = $records->groupBy(function ($item) {
-            return $item['user_id'] . '_' . Carbon::parse($item['time'])->toDateString();
-        });
-
-        foreach ($grouped as $groupKey => $userRecords) {
-            Log::info('Processing group', ['groupKey' => $groupKey, 'records' => $userRecords->toArray()]);
-
-            $sorted = $userRecords->sortBy('time')->values();
-            $zkUserId = explode('_', $groupKey)[0];
-            $date = Carbon::parse($sorted->first()['time'])->toDateString();
-
+        foreach ($records as $record) {
+            $zkUserId = $record['user_id'];
             $user = $users->get($zkUserId);
+
             if (!$user) {
-                Log::warning("User not found for zk_id: $zkUserId");
+                Log::warning("User not found for zk_user_id: $zkUserId");
                 continue;
             }
 
-            $clockIn = Carbon::parse($sorted->first()['time'])->format('H:i:s');
-            $clockOut = Carbon::parse($sorted->last()['time'])->format('H:i:s');
+            $date = $record['date'];
+            $clockIn = $record['clock_in'];
+            $clockOut = $record['clock_out'];
 
             Log::info('Attendance data prepared', [
                 'user_id' => $user->id,
@@ -604,7 +662,7 @@ class AttendanceApiController extends Controller
                 'clock_out' => $clockOut,
             ]);
 
-            // Use helper method
+            // Use the helper method
             $this->processAttendanceFromZkteco(
                 $user,
                 $date,
@@ -628,82 +686,83 @@ class AttendanceApiController extends Controller
 
 
 
-    private function processAttendanceFromZkteco($user, $date, $clockIn, $clockOut, $unit, $notes = null)
-    {
-        Log::info('Processing ZKTeco attendance', [
-            'user_id' => $user->id,
-            'date' => $date,
-            'clock_in' => $clockIn,
-            'clock_out' => $clockOut,
-        ]);
 
-        $existingAttendance = Attendance::firstOrNew([
-            'user_id' => $user->id,
-            'attendance_date' => $date,
-        ]);
-
-        if (!$existingAttendance->clock_in_time) {
-            $existingAttendance->clock_in_time = $clockIn;
-            $existingAttendance->status = $this->isLateFromZkteco($clockIn, $unit) ? 'Late' : 'In Time';
-            Log::info('Clock-in set for ZKTeco', [
-                'status' => $existingAttendance->status
-            ]);
-        }
-
-        if (!$existingAttendance->clock_out_time) {
-            $existingAttendance->clock_out_time = $clockOut;
-            Log::info('Clock-out set for ZKTeco');
-        }
-
-        $existingAttendance->hours_worked = Carbon::parse($clockOut)->diffInHours(Carbon::parse($clockIn));
-        $existingAttendance->is_present = true;
-        $existingAttendance->notes = $notes ?? 'Auto-synced from ZKTeco';
-        $existingAttendance->status = $existingAttendance->status ?? 'Present';
-        $existingAttendance->ip_address = request()->ip();
-        $existingAttendance->save();
-
-        Log::info('ZKTeco attendance saved', ['attendance_id' => $existingAttendance->id]);
-    }
-
-
-
-    // private function isLateFromZkteco($clockInTime, $unit)
+    // private function processAttendanceFromZkteco($user, $date, $clockIn, $clockOut, $unit, $notes = null)
     // {
-    //     if (!$unit) {
-    //         Log::warning('Missing unit for lateness check');
-    //         return false;
+    //     Log::info('syncZktecoProcessed called', ['request_data' => $request->all()]);
+
+    //     $records = collect($request->input('records', []));
+    //     Log::info('Processed records received', ['count' => $records->count()]);
+
+    //     $users = User::whereIn('zk_user_id', $records->pluck('user_id'))->get()->keyBy('zk_user_id');
+
+    //     foreach ($records as $record) {
+    //         $user = $users->get($record['user_id']);
+
+    //         if (!$user) {
+    //             Log::warning("User not found for zk_user_id: {$record['user_id']}");
+    //             continue;
+    //         }
+
+    //         $attendance = Attendance::updateOrCreate(
+    //             [
+    //                 'user_id' => $user->id,
+    //                 'attendance_date' => $record['date'],
+    //             ],
+    //             [
+    //                 'clock_in_time' => $record['clock_in'],
+    //                 'clock_out_time' => $record['clock_out'],
+    //                 'final_clock_time' => $record['final_clock'] ?? $record['clock_out'],
+    //                 'raw_punches' => json_encode($record['raw_punches']),
+    //                 'in_out_pairs' => json_encode($record['in_out_pairs']),
+    //                 'is_present' => true,
+    //                 'hours_worked' => Carbon::parse($record['clock_out'])->diffInHours(Carbon::parse($record['clock_in'])),
+    //                 'status' => $this->isLateFromZkteco($record['clock_in'], $user->unit) ? 'Late' : 'In Time',
+    //                 'notes' => 'Processed ZKTeco sync',
+    //                 'ip_address' => request()->ip(),
+    //             ]
+    //         );
+
+    //         Log::info('Processed ZKTeco attendance saved', [
+    //             'attendance_id' => $attendance->id,
+    //             'user_id' => $user->id,
+    //             'date' => $record['date'],
+    //         ]);
     //     }
 
-    //     $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
-
-    //     $defaultLateThreshold = $unit->late_threshold ?? '08:00';
-    //     $weekendThreshold = $unit->weekend_threshold ?? '08:30';
-
-    //     $userDayOfWeek = $userTime->dayOfWeek;
-
-    //     $weekendDays = is_array($unit->weekend_day)
-    //         ? $unit->weekend_day
-    //         : [$unit->weekend_day ?? Carbon::SATURDAY];
-
-
-    //     $isWeekend = in_array($userDayOfWeek, $weekendDays);
-    //     $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
-
-    //     $lateThreshold = ($isWeekend || $isHoliday) ? $weekendThreshold : $defaultLateThreshold;
-
-    //     $thresholdTime = Carbon::parse(
-    //         $userTime->toDateString() . ' ' . $lateThreshold,
-    //         $unit->timezone
-    //     )->setTimezone('UTC');
-
-    //     Log::info('Evaluating lateness for ZKTeco', [
-    //         'user_time' => $userTime->toDateTimeString(),
-    //         'threshold' => $thresholdTime->toDateTimeString(),
-    //     ]);
-
-    //     return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+    //     return response()->json(['message' => 'Processed ZKTeco records synced']);
     // }
 
+
+
+
+    private function processAttendanceFromZkteco($user, $date, $clockIn, $clockOut, $unit, $notes = null)
+    {
+        $attendance = Attendance::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'attendance_date' => $date,
+            ],
+            [
+                'clock_in_time' => $clockIn,
+                'clock_out_time' => $clockOut,
+                'final_clock_time' => $clockOut,
+                'raw_punches' => null, // Optional: fill if available
+                'in_out_pairs' => null, // Optional: fill if available
+                'is_present' => true,
+                'hours_worked' => Carbon::parse($clockOut)->diffInHours(Carbon::parse($clockIn)),
+                'status' => $this->isLateFromZkteco($clockIn, $unit) ? 'Late' : 'In Time',
+                'notes' => $notes ?? 'Processed ZKTeco sync',
+                'ip_address' => request()->ip(),
+            ]
+        );
+
+        Log::info('Processed ZKTeco attendance saved', [
+            'attendance_id' => $attendance->id,
+            'user_id' => $user->id,
+            'date' => $date,
+        ]);
+    }
 
 
 
@@ -752,4 +811,44 @@ class AttendanceApiController extends Controller
 
         return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
     }
+
+
+
+
+    // private function processAttendanceFromZkteco($user, $date, $clockIn, $clockOut, $unit, $notes = null)
+    // {
+    //     Log::info('Processing ZKTeco attendance', [
+    //         'user_id' => $user->id,
+    //         'date' => $date,
+    //         'clock_in' => $clockIn,
+    //         'clock_out' => $clockOut,
+    //     ]);
+
+    //     $existingAttendance = Attendance::firstOrNew([
+    //         'user_id' => $user->id,
+    //         'attendance_date' => $date,
+    //     ]);
+
+    //     if (!$existingAttendance->clock_in_time) {
+    //         $existingAttendance->clock_in_time = $clockIn;
+    //         $existingAttendance->status = $this->isLateFromZkteco($clockIn, $unit) ? 'Late' : 'In Time';
+    //         Log::info('Clock-in set for ZKTeco', [
+    //             'status' => $existingAttendance->status
+    //         ]);
+    //     }
+
+    //     if (!$existingAttendance->clock_out_time) {
+    //         $existingAttendance->clock_out_time = $clockOut;
+    //         Log::info('Clock-out set for ZKTeco');
+    //     }
+
+    //     $existingAttendance->hours_worked = Carbon::parse($clockOut)->diffInHours(Carbon::parse($clockIn));
+    //     $existingAttendance->is_present = true;
+    //     $existingAttendance->notes = $notes ?? 'Auto-synced from ZKTeco';
+    //     $existingAttendance->status = $existingAttendance->status ?? 'Present';
+    //     $existingAttendance->ip_address = request()->ip();
+    //     $existingAttendance->save();
+
+    //     Log::info('ZKTeco attendance saved', ['attendance_id' => $existingAttendance->id]);
+    // }
 }

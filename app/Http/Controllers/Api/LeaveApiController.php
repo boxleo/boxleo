@@ -17,7 +17,8 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
-use App\Notifications\TaskAssignedNotification; 
+use Illuminate\Support\Facades\Storage;
+use App\Notifications\TaskAssignedNotification;
 
 
 class LeaveApiController extends Controller
@@ -30,7 +31,7 @@ class LeaveApiController extends Controller
   {
     Log::info('Fetching leave records', ['user_id' => auth()->id(), 'request_params' => $request->all()]);
 
-    $query = Leave::with('leave_type', 'user.department','user.unit', 'tasks', 'tasks.assignee')
+    $query = Leave::with('leave_type', 'user.department', 'user.unit', 'tasks', 'tasks.assignee')
       ->whereHas('user', function ($query) {
         $query->whereNull('deleted_at');
       });
@@ -111,7 +112,7 @@ class LeaveApiController extends Controller
       $leave->user->name = $leave->user->firstname . ' ' . $leave->user->lastname;
       return $leave;
     });
-    
+
     Log::info('Leaves data fetched', ['leaves' => $leaves]);
     Log::info('Leaves fetched successfully', ['leave_count' => count($leaves)]);
     Log::info('Leaves as array', ['leaves_array' => $leaves->toArray()]);
@@ -656,7 +657,7 @@ class LeaveApiController extends Controller
       'manager' => 'required|exists:users,id',
       'document' => 'nullable|file|mimes:pdf,doc,docx,jpeg,jpg,png',
     ]);
-      
+
 
     // $test=$request->all();
     // dd($test);
@@ -712,27 +713,27 @@ class LeaveApiController extends Controller
 
     // 💡 Save delegated tasks
     if ($request->filled('delegatedTasks')) {
-        try {
-            $tasks = is_string($request->delegatedTasks)
-                ? json_decode($request->delegatedTasks, true)
-                : $request->delegatedTasks;
-    
-            if (is_array($tasks)) {
-                foreach ($tasks as $task) {
-                    if (!empty($task['assignee_id']) && !empty($task['task_description'])) {
-                        $leave->tasks()->create([
-                            'assignee_id' => $task['assignee_id'],
-                            'task_description' => $task['task_description'],
-                        ]);
-                    }
-                }
-                Log::info('Delegated tasks saved', ['task_count' => count($tasks)]);
-            } else {
-                Log::warning('Delegated tasks is not an array', ['value' => $request->delegatedTasks]);
+      try {
+        $tasks = is_string($request->delegatedTasks)
+          ? json_decode($request->delegatedTasks, true)
+          : $request->delegatedTasks;
+
+        if (is_array($tasks)) {
+          foreach ($tasks as $task) {
+            if (!empty($task['assignee_id']) && !empty($task['task_description'])) {
+              $leave->tasks()->create([
+                'assignee_id' => $task['assignee_id'],
+                'task_description' => $task['task_description'],
+              ]);
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to save delegated tasks', ['error' => $e->getMessage()]);
+          }
+          Log::info('Delegated tasks saved', ['task_count' => count($tasks)]);
+        } else {
+          Log::warning('Delegated tasks is not an array', ['value' => $request->delegatedTasks]);
         }
+      } catch (\Exception $e) {
+        Log::error('Failed to save delegated tasks', ['error' => $e->getMessage()]);
+      }
     }
     // if ($request->has('delegatedTasks')) {
     //     foreach ($request->delegatedTasks as $task) {
@@ -916,32 +917,32 @@ class LeaveApiController extends Controller
   }
 
   /**
- * Notify task assignees after leave approval
- */
-private function notifyTaskAssignees(Leave $leave)
-{
+   * Notify task assignees after leave approval
+   */
+  private function notifyTaskAssignees(Leave $leave)
+  {
     // Get the delegated tasks
     $tasks = $leave->tasks ?? [];
-    
+
     foreach ($tasks as $task) {
-        // Skip tasks with no assignee
-        if (empty($task['assignee_id'])) {
-            continue;
-        }
-        
-        // Find the assignee user
-        $assignee = User::find($task['assignee_id']);
-        
-        if ($assignee) {
-            // Notify the assignee through email
-            $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
-            
-            Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
-        } else {
-            Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
-        }
+      // Skip tasks with no assignee
+      if (empty($task['assignee_id'])) {
+        continue;
+      }
+
+      // Find the assignee user
+      $assignee = User::find($task['assignee_id']);
+
+      if ($assignee) {
+        // Notify the assignee through email
+        $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
+
+        Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
+      } else {
+        Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
+      }
     }
-}
+  }
 
 
 
@@ -1100,39 +1101,75 @@ private function notifyTaskAssignees(Leave $leave)
 
   public function update(Request $request, Leave $leave)
   {
+
+
+    // return response($request->all());
+
     // Validate the request data
     $validatedData = $request->validate([
-      'leave_type_id' => 'required',
-      'from' => 'required|date',
-      'to' => 'required|date',
-      'days' => 'required|numeric',
-      'comment' => 'nullable|string',
+      // 'leave_type_id' => 'required',
+      // 'from' => 'required|date',
+      // 'to' => 'required|date',
+      // 'days' => 'required|numeric',
+      // 'comment' => 'nullable|string',
+
+      'document' => 'required|file|mimes:jpg,png,pdf|max:2048', // Example validation
+
     ]);
+
+
+    // log request 
+    Log::info('Update leave request received', [
+      'leave_id' => $leave->id,
+      'request_data' => $request->all(),
+      'user_id' => auth()->id()
+    ]);
+
+
+    // Handle document upload
+    if ($request->hasFile('document')) {
+      try {
+        // Delete old document if exists
+        if ($leave->document) {
+          Storage::disk('public')->delete('leave/documents/' . $leave->document);
+        }
+
+        $file = $request->file('document');
+        $documentName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->atte('leave/documents', $documentName, 'public');
+        $validatedData['document'] = $documentName;
+
+        Log::info('Document updated successfully', ['document' => $documentName]);
+      } catch (\Exception $e) {
+        Log::error('Document upload failed during update', ['error' => $e->getMessage()]);
+        return response()->json(['error' => 'Failed to upload document.'], 500);
+      }
+    }
 
     $leave->update($validatedData);
 
     // 💡 Update delegated tasks
     if ($request->filled('delegatedTasks')) {
-        try {
-            $tasks = is_string($request->delegatedTasks)
-                ? json_decode($request->delegatedTasks, true)
-                : $request->delegatedTasks;
+      try {
+        $tasks = is_string($request->delegatedTasks)
+          ? json_decode($request->delegatedTasks, true)
+          : $request->delegatedTasks;
 
-            $leave->tasks()->delete(); // Remove existing tasks
+        $leave->tasks()->delete(); // Remove existing tasks
 
-            if (is_array($tasks)) {
-                foreach ($tasks as $task) {
-                    if (!empty($task['assignee_id']) && !empty($task['task_description'])) {
-                        $leave->tasks()->create([
-                            'assignee_id' => $task['assignee_id'],
-                            'task_description' => $task['task_description'],
-                        ]);
-                    }
-                }
+        if (is_array($tasks)) {
+          foreach ($tasks as $task) {
+            if (!empty($task['assignee_id']) && !empty($task['task_description'])) {
+              $leave->tasks()->create([
+                'assignee_id' => $task['assignee_id'],
+                'task_description' => $task['task_description'],
+              ]);
             }
-        } catch (\Exception $e) {
-            \Log::error('Failed to update delegated tasks', ['error' => $e->getMessage()]);
+          }
         }
+      } catch (\Exception $e) {
+        Log::error('Failed to update delegated tasks', ['error' => $e->getMessage()]);
+      }
     }
 
     // 🔄 Load tasks and related models
@@ -1181,231 +1218,231 @@ private function notifyTaskAssignees(Leave $leave)
 
 
   public function bulkApprove(Request $request)
-{
+  {
     try {
-        Log::info('Bulk Approve Leave Request', [
-            'userId' => $request->input('userId'),
-            'leaveIds' => $request->input('leaveIds'),
-            'requestData' => $request->all()
-        ]);
+      Log::info('Bulk Approve Leave Request', [
+        'userId' => $request->input('userId'),
+        'leaveIds' => $request->input('leaveIds'),
+        'requestData' => $request->all()
+      ]);
 
-        $userId = $request->input('userId');
-        $leaveIds = $request->input('leaveIds');
-        $approver = User::find($userId);
+      $userId = $request->input('userId');
+      $leaveIds = $request->input('leaveIds');
+      $approver = User::find($userId);
 
-        if (!$approver) {
-            return response()->json(['error' => 'Approver not found'], 404);
+      if (!$approver) {
+        return response()->json(['error' => 'Approver not found'], 404);
+      }
+
+      if (!is_array($leaveIds) || empty($leaveIds)) {
+        return response()->json(['error' => 'No leave IDs provided'], 400);
+      }
+
+      $results = [
+        'success' => [],
+        'failed' => []
+      ];
+
+      foreach ($leaveIds as $leaveId) {
+        $leave = Leave::find($leaveId);
+
+        if (!$leave) {
+          $results['failed'][] = [
+            'id' => $leaveId,
+            'reason' => 'Leave not found'
+          ];
+          continue;
         }
 
-        if (!is_array($leaveIds) || empty($leaveIds)) {
-            return response()->json(['error' => 'No leave IDs provided'], 400);
-        }
-
-        $results = [
-            'success' => [],
-            'failed' => []
-        ];
-
-        foreach ($leaveIds as $leaveId) {
-            $leave = Leave::find($leaveId);
-
-            if (!$leave) {
-                $results['failed'][] = [
-                    'id' => $leaveId,
-                    'reason' => 'Leave not found'
-                ];
-                continue;
-            }
-
-            try {
-                switch ($leave->status) {
-                    case 'Pending':
-                        if ($approver->designation_id === 1 || ($approver->is_hr === 1 && $approver->department_id === 1)) {
-                            $leave->status = 'Manager Approved';
-                            $this->logLeaveAction($leave, 'Manager Approved', $userId);
-                            $this->notifyNextApprover($leave, 'HR');
-                            $leave->save();
-                            $results['success'][] = $leaveId;
-                        } else {
-                            $results['failed'][] = [
-                                'id' => $leaveId,
-                                'reason' => 'Unauthorized'
-                            ];
-                        }
-                        break;
-
-                    case 'Manager Approved':
-                        if ($approver->is_hr === 1) {
-                            $leave->status = 'Hr Approved';
-                            $this->logLeaveAction($leave, 'Hr Approved', $userId);
-                            $this->notifyNextApprover($leave, 'HOD');
-                            $leave->save();
-                            $results['success'][] = $leaveId;
-                        } else {
-                            $results['failed'][] = [
-                                'id' => $leaveId,
-                                'reason' => 'Unauthorized'
-                            ];
-                        }
-                        break;
-
-                    case 'Hr Approved':
-                        if ($approver->is_hod === 1) {
-                            // Check if HOD can approve this leave (belongs to their department)
-                            $canApprove = $approver->hodDepartments()
-                                ->where('departments.id', $leave->user->department_id)
-                                ->exists();
-                                
-                            if ($canApprove) {
-                                $leave->status = 'Approved';
-                                $this->logLeaveAction($leave, 'Approved', $userId);
-                                $this->notifyEmployee($leave);
-                                $leave->save();
-                                $results['success'][] = $leaveId;
-                            } else {
-                                $results['failed'][] = [
-                                    'id' => $leaveId,
-                                    'reason' => 'Not authorized for this department'
-                                ];
-                            }
-                        } else {
-                            $results['failed'][] = [
-                                'id' => $leaveId,
-                                'reason' => 'Unauthorized'
-                            ];
-                        }
-                        break;
-
-                    default:
-                        $results['failed'][] = [
-                            'id' => $leaveId,
-                            'reason' => 'Invalid leave status: ' . $leave->status
-                        ];
-                }
-            } catch (\Exception $e) {
-                Log::error('Error processing leave in bulk approve', [
-                    'leaveId' => $leaveId, 
-                    'exception' => $e
-                ]);
-                
-                $results['failed'][] = [
-                    'id' => $leaveId,
-                    'reason' => 'Processing error'
-                ];
-            }
-        }
-
-        return response()->json([
-            'message' => 'Bulk leave approval processed',
-            'results' => $results
-        ], 200);
-    } catch (\Exception $e) {
-        Log::error('Error in bulk approve leave', ['exception' => $e]);
-        return response()->json(['error' => 'Failed to process bulk leave approval'], 500);
-    }
-}
-
-public function bulkCancel(Request $request)
-{
-    try {
-        Log::info('Bulk Cancel Leave Request', [
-            'userId' => $request->input('userId'),
-            'leaveIds' => $request->input('leaveIds'),
-            'comment' => $request->input('comment'),
-            'requestData' => $request->all()
-        ]);
-
-        $userId = $request->input('userId');
-        $leaveIds = $request->input('leaveIds');
-        $comment = $request->input('comment');
-        $admin = User::find($userId);
-
-        if (!$admin) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
-
-        if (!is_array($leaveIds) || empty($leaveIds)) {
-            return response()->json(['error' => 'No leave IDs provided'], 400);
-        }
-
-        $results = [
-            'success' => [],
-            'failed' => []
-        ];
-
-        foreach ($leaveIds as $leaveId) {
-            $leave = Leave::find($leaveId);
-
-            if (!$leave) {
-                $results['failed'][] = [
-                    'id' => $leaveId,
-                    'reason' => 'Leave not found'
-                ];
-                continue;
-            }
-
-            try {
-                if ($leave->status === 'Cancelled') {
-                    $results['failed'][] = [
-                        'id' => $leaveId,
-                        'reason' => 'Leave is already cancelled'
-                    ];
-                    continue;
-                }
-
-                if (!$leave->user) {
-                    $results['failed'][] = [
-                        'id' => $leaveId,
-                        'reason' => 'Leave has no associated user'
-                    ];
-                    continue;
-                }
-
-                $leave->status = 'Cancelled';
-                $leave->is_active = 0;
-                $leave->comment = $comment;
+        try {
+          switch ($leave->status) {
+            case 'Pending':
+              if ($approver->designation_id === 1 || ($approver->is_hr === 1 && $approver->department_id === 1)) {
+                $leave->status = 'Manager Approved';
+                $this->logLeaveAction($leave, 'Manager Approved', $userId);
+                $this->notifyNextApprover($leave, 'HR');
                 $leave->save();
-
-                $userLeaveBalance = LeaveBalance::where('user_id', $leave->user_id)
-                    ->where('leave_type_id', $leave->leave_type_id)
-                    ->first();
-
-                if ($userLeaveBalance) {
-                    $userLeaveBalance->increment('balance', $leave->days);
-                }
-
-                $this->logLeaveAction($leave, 'Cancelled', $userId);
-
-                $sender_phone = $leave->phone;
-                $employeeName = $leave->user->firstname;
-                $firstName = $admin ? $admin->firstname : 'anonymous';
-
-                $cancelMessage = "Hi $employeeName, Your Leave application from $leave->from to $leave->to has been Cancelled by " . $firstName . ", Reason: " . $comment;
-
-                $sms_util = new SMSUtil();
-                $sms_util->sendSMS($sender_phone, $cancelMessage);
-
                 $results['success'][] = $leaveId;
-            } catch (\Exception $e) {
-                Log::error('Error processing leave in bulk cancel', [
-                    'leaveId' => $leaveId, 
-                    'exception' => $e
-                ]);
-                
+              } else {
                 $results['failed'][] = [
-                    'id' => $leaveId,
-                    'reason' => 'Processing error'
+                  'id' => $leaveId,
+                  'reason' => 'Unauthorized'
                 ];
-            }
+              }
+              break;
+
+            case 'Manager Approved':
+              if ($approver->is_hr === 1) {
+                $leave->status = 'Hr Approved';
+                $this->logLeaveAction($leave, 'Hr Approved', $userId);
+                $this->notifyNextApprover($leave, 'HOD');
+                $leave->save();
+                $results['success'][] = $leaveId;
+              } else {
+                $results['failed'][] = [
+                  'id' => $leaveId,
+                  'reason' => 'Unauthorized'
+                ];
+              }
+              break;
+
+            case 'Hr Approved':
+              if ($approver->is_hod === 1) {
+                // Check if HOD can approve this leave (belongs to their department)
+                $canApprove = $approver->hodDepartments()
+                  ->where('departments.id', $leave->user->department_id)
+                  ->exists();
+
+                if ($canApprove) {
+                  $leave->status = 'Approved';
+                  $this->logLeaveAction($leave, 'Approved', $userId);
+                  $this->notifyEmployee($leave);
+                  $leave->save();
+                  $results['success'][] = $leaveId;
+                } else {
+                  $results['failed'][] = [
+                    'id' => $leaveId,
+                    'reason' => 'Not authorized for this department'
+                  ];
+                }
+              } else {
+                $results['failed'][] = [
+                  'id' => $leaveId,
+                  'reason' => 'Unauthorized'
+                ];
+              }
+              break;
+
+            default:
+              $results['failed'][] = [
+                'id' => $leaveId,
+                'reason' => 'Invalid leave status: ' . $leave->status
+              ];
+          }
+        } catch (\Exception $e) {
+          Log::error('Error processing leave in bulk approve', [
+            'leaveId' => $leaveId,
+            'exception' => $e
+          ]);
+
+          $results['failed'][] = [
+            'id' => $leaveId,
+            'reason' => 'Processing error'
+          ];
+        }
+      }
+
+      return response()->json([
+        'message' => 'Bulk leave approval processed',
+        'results' => $results
+      ], 200);
+    } catch (\Exception $e) {
+      Log::error('Error in bulk approve leave', ['exception' => $e]);
+      return response()->json(['error' => 'Failed to process bulk leave approval'], 500);
+    }
+  }
+
+  public function bulkCancel(Request $request)
+  {
+    try {
+      Log::info('Bulk Cancel Leave Request', [
+        'userId' => $request->input('userId'),
+        'leaveIds' => $request->input('leaveIds'),
+        'comment' => $request->input('comment'),
+        'requestData' => $request->all()
+      ]);
+
+      $userId = $request->input('userId');
+      $leaveIds = $request->input('leaveIds');
+      $comment = $request->input('comment');
+      $admin = User::find($userId);
+
+      if (!$admin) {
+        return response()->json(['error' => 'User not found'], 404);
+      }
+
+      if (!is_array($leaveIds) || empty($leaveIds)) {
+        return response()->json(['error' => 'No leave IDs provided'], 400);
+      }
+
+      $results = [
+        'success' => [],
+        'failed' => []
+      ];
+
+      foreach ($leaveIds as $leaveId) {
+        $leave = Leave::find($leaveId);
+
+        if (!$leave) {
+          $results['failed'][] = [
+            'id' => $leaveId,
+            'reason' => 'Leave not found'
+          ];
+          continue;
         }
 
-        return response()->json([
-            'message' => 'Bulk leave cancellation processed',
-            'results' => $results
-        ], 200);
+        try {
+          if ($leave->status === 'Cancelled') {
+            $results['failed'][] = [
+              'id' => $leaveId,
+              'reason' => 'Leave is already cancelled'
+            ];
+            continue;
+          }
+
+          if (!$leave->user) {
+            $results['failed'][] = [
+              'id' => $leaveId,
+              'reason' => 'Leave has no associated user'
+            ];
+            continue;
+          }
+
+          $leave->status = 'Cancelled';
+          $leave->is_active = 0;
+          $leave->comment = $comment;
+          $leave->save();
+
+          $userLeaveBalance = LeaveBalance::where('user_id', $leave->user_id)
+            ->where('leave_type_id', $leave->leave_type_id)
+            ->first();
+
+          if ($userLeaveBalance) {
+            $userLeaveBalance->increment('balance', $leave->days);
+          }
+
+          $this->logLeaveAction($leave, 'Cancelled', $userId);
+
+          $sender_phone = $leave->phone;
+          $employeeName = $leave->user->firstname;
+          $firstName = $admin ? $admin->firstname : 'anonymous';
+
+          $cancelMessage = "Hi $employeeName, Your Leave application from $leave->from to $leave->to has been Cancelled by " . $firstName . ", Reason: " . $comment;
+
+          $sms_util = new SMSUtil();
+          $sms_util->sendSMS($sender_phone, $cancelMessage);
+
+          $results['success'][] = $leaveId;
+        } catch (\Exception $e) {
+          Log::error('Error processing leave in bulk cancel', [
+            'leaveId' => $leaveId,
+            'exception' => $e
+          ]);
+
+          $results['failed'][] = [
+            'id' => $leaveId,
+            'reason' => 'Processing error'
+          ];
+        }
+      }
+
+      return response()->json([
+        'message' => 'Bulk leave cancellation processed',
+        'results' => $results
+      ], 200);
     } catch (\Exception $e) {
-        Log::error('Error in bulk cancel leave', ['exception' => $e]);
-        return response()->json(['error' => 'Failed to process bulk leave cancellation'], 500);
+      Log::error('Error in bulk cancel leave', ['exception' => $e]);
+      return response()->json(['error' => 'Failed to process bulk leave cancellation'], 500);
     }
-}
+  }
 }
