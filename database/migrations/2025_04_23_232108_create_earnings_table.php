@@ -15,7 +15,8 @@ return new class extends Migration
 
 
             $table->id();
-            $table->foreignId('payslip_id')->constrained()->onDelete('cascade');
+            //$table->foreignId('payslip_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('label');
             $table->decimal('amount', 10, 2);
             $table->timestamps();

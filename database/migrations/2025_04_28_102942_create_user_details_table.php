@@ -39,7 +39,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('user_details', function (Blueprint $table) {
-            // Drop the added columns when rolled back
+        // Drop the added columns when rolled back
             $table->dropColumn([
                 'payment_mode',
                 'date_of_birth',

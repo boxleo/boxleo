@@ -12,8 +12,10 @@ class Earning extends Model
 
 
     protected $fillable = [
-        'payslip_id',
-        'title',
+        // 'payslip_id',
+        // 'title',
+        'user_id',
+        'label',
         'amount',
     ];
 
