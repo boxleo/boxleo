@@ -25,7 +25,7 @@ class PayrollService
     {
         try {
             $this->validateUser();
-            
+
             // Try to get from cache first
             $cacheKey = "payroll_calculation_{$this->user->id}";
             if ($cachedResult = Cache::get($cacheKey)) {
@@ -64,7 +64,7 @@ class PayrollService
 
         return match ($countryCode) {
             'KE' => new KenyaPayroll($this->user),
-            'UG' => new UgandaPayroll($this->user),
+            //'UG' => new UgandaPayroll($this->user),
             // 'TZ' => new TanzaniaPayroll($this->user),
             // 'RW' => new RwandaPayroll($this->user),
             default => throw new Exception("Payroll calculation not supported for country: $countryCode"),
@@ -141,31 +141,317 @@ class PayrollService
         return true;
     }
 
-    public function generatePayslip(array $calculation): array
+    // public function generatePayslip(array $calculation): array
+    // {
+    //     return [
+    //         'employee_name' => $this->user->name,
+    //         'employee_id' => $this->user->employee_id,
+    //         'tax_pin' => $this->user->tax_pin,
+    //         'period' => now()->format('F Y'),
+    //         'calculation_date' => now()->format('Y-m-d H:i:s'),
+    //         'earnings' => [
+    //             'basic_salary' => $calculation['basic_salary'],
+    //             'house_allowance' => $calculation['house_allowance'],
+    //             'transport_allowance' => $calculation['transport_allowance'],
+    //             'bonus' => $calculation['bonus'],
+    //             'gross_pay' => $calculation['gross_pay']
+    //         ],
+    //         'deductions' => [
+    //             'housing_levy' => $calculation['housing_levy'],
+    //             'shif' => $calculation['shif'],
+    //             'paye' => $calculation['paye'],
+    //             'nssf' => $calculation['nssf'],
+    //             'canteen' => $calculation['canteen'],
+    //             'welfare' => $calculatcomputeNetPayion['welfare'],
+    //             'total_deductions' => $calculation['total_deductions']
+    //         ],
+    //         'net_pay' => $calculation['net_pay']
+    //     ];
+    // }
+    // 1. Calculate Gross Pay
+    public function calculateGrossPay(Employee $employee): float
     {
+        return $employee->basic_salary +
+            $employee->allowances +
+            $employee->bonuses +
+            $this->processOvertime($employee);
+    }
+
+    // 2. Calculate Statutory Deductions
+    public function calculateStatutoryDeductions(Employee $employee, float $gross): array
+    {
+        $paye = $this->calculatePAYE($gross);
+        $nssf = min(0.06 * $gross, 1080); // As per NSSF Tier 1+2
+        $nhif = $this->getNHIFRate($gross);
+        $helb = $employee->helb_loan_deduction ?? 0;
+
         return [
-            'employee_name' => $this->user->name,
-            'employee_id' => $this->user->employee_id,
-            'tax_pin' => $this->user->tax_pin,
-            'period' => now()->format('F Y'),
-            'calculation_date' => now()->format('Y-m-d H:i:s'),
-            'earnings' => [
-                'basic_salary' => $calculation['basic_salary'],
-                'house_allowance' => $calculation['house_allowance'],
-                'transport_allowance' => $calculation['transport_allowance'],
-                'bonus' => $calculation['bonus'],
-                'gross_pay' => $calculation['gross_pay']
-            ],
-            'deductions' => [
-                'housing_levy' => $calculation['housing_levy'],
-                'shif' => $calculation['shif'],
-                'paye' => $calculation['paye'],
-                'nssf' => $calculation['nssf'],
-                'canteen' => $calculation['canteen'],
-                'welfare' => $calculation['welfare'],
-                'total_deductions' => $calculation['total_deductions']
-            ],
-            'net_pay' => $calculation['net_pay']
+            'PAYE' => $paye,
+            'NSSF' => $nssf,
+            'NHIF' => $nhif,
+            'HELB' => $helb,
         ];
     }
+
+    // 3. Calculate Custom Deductions
+    public function calculateCustomDeductions(Employee $employee): float
+    {
+        return $employee->insurance_deduction +
+            $employee->salary_advance +
+            $employee->welfare_fund;
+    }
+
+    // 4. Compute Net Pay
+    // This function computes the net pay by subtracting statutory and custom deductions from the gross salary.
+    public function computeNetPay(float $gross, array $statutory, float $custom): float
+    {
+        return $gross - array_sum($statutory) - $custom;
+    }
+
+    // 5. Process Overtime
+    public function processOvertime(Employee $employee): float
+    {
+        $rate = $employee->overtime_rate ?? 500;
+        return $employee->overtime_hours * $rate;
+    }
+
+    // 6. Support Multiple Pay Cycles
+    public function supportMultiplePayCycles(string $cycle): array
+    {
+        switch ($cycle) {
+            case 'monthly':
+                return [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()];
+            case 'weekly':
+                return [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()];
+            default:
+                return [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()];
+        }
+    }
+
+    // 7. Generate Payslip
+    public function generatePayslip(Employee $employee, float $gross, array $deductions, float $net): Payslip
+    {
+        return Payslip::create([
+            'employee_id' => $employee->id,
+            'gross_salary' => $gross,
+            'deductions' => json_encode($deductions),
+            'net_salary' => $net,
+            'period' => Carbon::now()->format('F Y'),
+        ]);
+    }
+
+    // 8. Automate Salary Disbursements
+    public function automateSalaryDisbursement(Payslip $payslip): array
+    {
+        return [
+            'bank_account' => $payslip->employee->bank_account,
+            'amount' => $payslip->net_salary,
+            'reference' => 'Payroll-' . now()->format('Ym'),
+        ];
+    }
+
+    // 9. Roll Back Payroll
+    public function rollbackPayroll(Payroll $payroll): bool
+    {
+        foreach ($payroll->payslips as $payslip) {
+            $payslip->delete();
+        }
+        return $payroll->delete();
+    }
+
+    // 10. Validate Payroll Data
+    public function validatePayrollData(Employee $employee, float $net): bool
+    {
+        return $net >= 0 && $employee->is_active;
+    }
+
+    // Helper: Calculate PAYE
+    // private function calculatePAYE(float $gross): float
+    // {
+    //     $bands = [
+    //         [0, 14298, 0.10],
+    //         [14298, 23885, 0.15],
+    //         [23885, 33472, 0.20],
+    //         [33472, 42059, 0.25],
+    //         [42059, INF, 0.30],
+    //     ];
+    //     $relief = 2400;
+    //     $tax = 0;
+
+    //     foreach ($bands as [$min, $max, $rate]) {
+    //         if ($gross > $min) {
+    //             $taxable = min($gross, $max) - $min;
+    //             $tax +=calculatePAYE $taxable * $rate;
+    //         }
+    //     }
+
+    //     return max(0, $tax - $relief);
+    // }
+
+    // Helper: NHIF Rate (simplified)
+    // private function getNHIFRate(float $gross): float
+    // {
+    //     if ($gross <= 5999)
+    //         return 150;
+    //     if ($gross <= 7999)
+    //         return 300;
+    //     if ($gross <= 11999)
+    //         return 400;
+    //     if ($gross <= 14999)
+    //         return 500;
+    //     if ($gross <= 19999)
+    //         return 600;
+    //     return 1700; // max for over ~100,000
+    // }
+    public function getEarningsBreakdown(User $user): array
+    {
+        $earnings = $user->earnings()
+            ->selectRaw('label, SUM(amount) as total')
+            ->groupBy('label')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->get();
+
+
+        $formatted = [];
+        $total = 0;
+
+        foreach ($earnings as $earning) {
+            $formatted[$earning->label] = (float) $earning->total;
+            $total += $earning->total;
+        }
+
+        $formatted['Total Earnings'] = $total;
+
+        return $formatted;
+    }
+
+
+
+public function getDeductionsBreakdown(User $user): array
+{
+    $deductions = $user->deductions()
+        ->whereNull('deleted_at') // exclude soft-deleted records
+        ->selectRaw('name, SUM(CAST(amount AS DECIMAL(10,2))) as total')
+        ->groupBy('name')
+        ->get();
+
+    $formatted = [];
+    $total = 0;
+
+    foreach ($deductions as $deduction) {
+        $formatted[$deduction->name] = (float) $deduction->total;
+        $total += $deduction->total;
+    }
+
+    $formatted['Total Deductions'] = $total;
+
+    return $formatted;
 }
+
+
+public function calculateNSSF(float $gross): float
+{
+    $lel = 8000; // Lower Earnings Limit (KES 8,000)
+    $uel = 72000; // Upper Earnings Limit (KES 72,000)
+    $rate = 0.06; // 6% contribution rate
+    $min_contribution = 480; // Minimum contribution (6% of LEL)
+    $max_contribution = 4320; // Maximum contribution (6% of UEL)
+
+    // Calculate Tier I contribution (up to LEL)
+    $tier1 = min($gross, $lel);
+    $nssf_tier1 = $tier1 * $rate; // 6% of Tier I earnings
+
+    // Calculate Tier II contribution (between LEL and UEL)
+    $tier2 = max(min($gross, $uel) - $lel, 0);
+    $nssf_tier2 = $tier2 * $rate; // 6% of Tier II earnings
+
+    // Total employee contribution
+    $total_nssf = round($nssf_tier1 + $nssf_tier2, 2);
+
+    // Ensure contribution is within min and max limits
+    return max($min_contribution, min($total_nssf, $max_contribution));
+}
+private function getSHIFRate(float $gross): float
+{
+    $shif_rate = 0.0275; // 2.75% contribution rate
+    $min_contribution = 300.00; // Minimum contribution in KES
+
+    // Calculate SHIF contribution: 2.75% of gross salary, minimum KES 300
+    $shif_contribution = max($gross * $shif_rate, $min_contribution);
+
+    // Round to 2 decimal places for financial precision
+    return round($shif_contribution, 2);
+}
+public function calculateHousingLevy(float $gross): float
+{
+    return round($gross * 0.015, 2); // Employee contribution only
+}
+
+public function calculatePAYE(float $gross, float $insuranceRelief = 0): float
+{
+    // Tax bands per KRA 2023 (unchanged as of 2025)
+    $bands = [
+        ['limit' => 24000, 'rate' => 0.10],    // First 24,000
+        ['limit' => 32333, 'rate' => 0.25],    // Next 8,333
+        ['limit' => 500000, 'rate' => 0.30],   // Next 467,667
+        ['limit' => 800000, 'rate' => 0.325],  // Next 300,000
+        ['limit' => PHP_INT_MAX, 'rate' => 0.35], // Above 800,000
+    ];
+
+    // Deduct NSSF contributions from gross salary to get taxable income
+    $nssf = $this->calculateNSSF($gross);
+    $taxable = max($gross - $nssf, 0);
+
+    $tax = 0;
+    $previous_limit = 0;
+
+    // Calculate tax for each band
+    foreach ($bands as $band) {
+        if ($taxable > $previous_limit) {
+            $taxable_in_band = min($taxable, $band['limit']) - $previous_limit;
+            if ($taxable_in_band > 0) {
+                $tax += $taxable_in_band * $band['rate'];
+            }
+            $previous_limit = $band['limit'];
+        } else {
+            break;
+        }
+    }
+
+    // Apply monthly personal relief and insurance relief (max KES 5,000)
+    $personalRelief = 2400;
+    $insuranceRelief = min($insuranceRelief, 5000);
+
+    $totalRelief = $personalRelief + $insuranceRelief;
+
+    // Ensure PAYE is non-negative
+    $paye = max($tax - $totalRelief, 0);
+
+    return round($paye, 2);
+}
+
+
+public function getInsurancePremiums(User $user): array
+{
+    return $user->deductions()
+        ->where('type', 'insurance')
+        ->whereMonth('created_at', now()->month)
+        ->whereYear('created_at', now()->year)
+        ->pluck('amount')
+        // ->map(fn($amount) => (float) $amount)
+        // ->toArray();
+           ->sum('amount');
+}
+
+public function calcullateInsuranceRelief(float $gross, float $insuranceAmount): float
+{
+    // Insurance relief is 15% of the insurance premium paid, capped at KES 5,000
+    $relief = min($insuranceAmount * 0.15, 5000);
+    return round($relief, 2)
+
+    ;
+}
+
+}
+
