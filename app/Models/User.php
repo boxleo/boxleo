@@ -266,4 +266,30 @@ class User extends Authenticatable
 }
 
 
+  public function deductions()
+  {
+      return $this->hasMany(Deduction::class);
+  }
+
+  public function payslips()
+  {
+      return $this->hasMany(Payslip::class);
+  }
+
+  public function payslip()
+  {
+      return $this->hasOne(Payslip::class);
+  }
+
+  public function userDetails()
+  {
+      return $this->hasMany(UseDetails::class);
+  }
+
+  // public function userNotifications()
+  // {
+  //     return $this->hasMany(UserNotification::class);
+  // }
+
+
 }
