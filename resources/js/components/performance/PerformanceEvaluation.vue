@@ -284,7 +284,7 @@
                 <v-icon @click="viewEvaluation(item)" class="mx-1" title="View Evaluation" color="black">
                   mdi-information
                 </v-icon>
-                <v-icon @click="editEvaluation(item)" class="mx-1" title="Edit Evaluation" color="blue">
+                <v-icon @click="openEditDialog(item)" class="mx-1" title="Edit Evaluation" color="blue">
                   mdi-pencil
                 </v-icon>
                 <v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Evaluation" color="red">
