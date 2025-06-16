@@ -372,12 +372,14 @@
                   <v-select
                     v-model="payrollForm.user_id"
                     :items="employeeItems"
-                      item-title="fullName"
+                      item-value="id" 
+                    item-title="fullName"
                     label="Employee"
                     variant="outlined"
                     :rules="[v => !!v || 'Employee is required']"
                     required
-                  ></v-select>
+                    @update:model-value="onEmployeeSelect"
+                  />
                 </v-col>
                 <v-col cols="12" md="3">
                   <v-select
@@ -1258,6 +1260,33 @@ export default {
   },
   
   methods: {
+
+
+  // Function to populate payroll form when an employee is selected
+  // Function to populate payroll form when an employee is selected
+  async onEmployeeSelect() {
+    const userId = this.payrollForm.user_id;
+    if (!userId) return;
+
+    try {
+      // Fetch payslip with user details for the selected employee
+      const response = await axios.get(`/api/v1/payslips/${userId}/with-user`);
+      const data = response.data;
+
+      console.log('payslip', data);
+
+      // Example: populate payrollForm fields with user info if needed
+      // this.payrollForm.department = data.user.department;
+      // this.payrollForm.designation = data.user.job_title;
+      // You can extend this as needed based on your API response
+
+    } catch (error) {
+      console.error('Error fetching payslip with user:', error);
+      this.showNotification('Failed to fetch employee details', 'error');
+    }
+  },
+
+
     // Filter methods
     applyFilters() {
       this.currentPage = 1;

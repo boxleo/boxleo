@@ -12,5 +12,6 @@ class Deduction extends Model
         "user_id",
         "deduction_type",
         "amount",
+        "type",
     ] ;
 }

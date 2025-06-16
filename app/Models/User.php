@@ -283,7 +283,7 @@ class User extends Authenticatable
 
   public function userDetails()
   {
-      return $this->hasMany(UseDetails::class);
+      return $this->hasMany(UserDetails::class);
   }
 
   // public function userNotifications()

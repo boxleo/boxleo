@@ -431,26 +431,27 @@ public function calculatePAYE(float $gross, float $insuranceRelief = 0): float
     return round($paye, 2);
 }
 
-
-public function getInsurancePremiums(User $user): array
+public function getTotalInsurancePremiums(User $user): float
 {
-    return $user->deductions()
+    // Retrieve and sum insurance premiums for the current month/year
+    $totalPremium = $user->deductions()
         ->where('type', 'insurance')
         ->whereMonth('created_at', now()->month)
         ->whereYear('created_at', now()->year)
         ->pluck('amount')
-        // ->map(fn($amount) => (float) $amount)
-        // ->toArray();
-           ->sum('amount');
-}
+        ->filter(fn($amount) => is_numeric($amount) && $amount >= 0)
+        ->sum();
 
-public function calcullateInsuranceRelief(float $gross, float $insuranceAmount): float
+    return (float) $totalPremium;
+}
+public function calcullateInsuranceRelief(User $user, float $gross): float
 {
+    // Get total insurance premiums for the user for the current month/year
+    $insuranceAmount = $this->getTotalInsurancePremiums($user);
+
     // Insurance relief is 15% of the insurance premium paid, capped at KES 5,000
     $relief = min($insuranceAmount * 0.15, 5000);
-    return round($relief, 2)
-
-    ;
+    return round($relief, 2);
 }
 
 }
