@@ -17,6 +17,9 @@ class Earning extends Model
         'user_id',
         'label',
         'amount',
+        'is_taxable',
+        'is_recurring',
+        'frequency',
     ];
 
     public function payslip()

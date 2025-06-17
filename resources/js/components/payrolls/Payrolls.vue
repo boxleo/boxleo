@@ -1206,7 +1206,7 @@ export default {
         filtered = filtered.filter(p => p.month === this.filters.month);
       }
       
-      if (this.filters.year) {
+      if (this.filters.year) {http://127.0.0.1:8000/api/v1/payslips/1/with-user
         filtered = filtered.filter(p => p.year === this.filters.year);
       }
       
@@ -1262,29 +1262,33 @@ export default {
   methods: {
 
 
-  // Function to populate payroll form when an employee is selected
-  // Function to populate payroll form when an employee is selected
   async onEmployeeSelect() {
-    const userId = this.payrollForm.user_id;
-    if (!userId) return;
+  const userId = this.payrollForm.user_id;
+  if (!userId) return;
 
-    try {
-      // Fetch payslip with user details for the selected employee
-      const response = await axios.get(`/api/v1/payslips/${userId}/with-user`);
-      const data = response.data;
+  try {
+    const response = await axios.get(`/api/v1/payslips/${userId}/with-user`);
+    const data = response.data;
 
-      console.log('payslip', data);
+    const user = data; // root level
+    const userDetails = user.userdetails?.[0] || {};
 
-      // Example: populate payrollForm fields with user info if needed
-      // this.payrollForm.department = data.user.department;
-      // this.payrollForm.designation = data.user.job_title;
-      // You can extend this as needed based on your API response
+    this.payrollForm.full_name = `${user.firstname} ${user.lastname}`;
+    this.payrollForm.employment_date = user.employment_date;
 
-    } catch (error) {
-      console.error('Error fetching payslip with user:', error);
-      this.showNotification('Failed to fetch employee details', 'error');
-    }
-  },
+    this.payrollForm.bank = userDetails.bank_name;
+    this.payrollForm.bank_branch = userDetails.bank_branch;
+    this.payrollForm.bank_account = userDetails.bank_account;
+    this.payrollForm.basic_pay = userDetails.basic_pay || 0;
+
+    this.payrollForm.earnings = data.earnings || [];
+    this.payrollForm.deductions = data.deductions || [];
+  } catch (error) {
+    console.error('Error fetching payslip with user:', error);
+    this.showNotification('Failed to fetch employee details', 'error');
+  }
+}
+,
 
 
     // Filter methods
