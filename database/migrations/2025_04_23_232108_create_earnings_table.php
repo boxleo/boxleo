@@ -22,13 +22,13 @@ return new class extends Migration {
             $table->enum('frequency', ['monthly', 'weekly']);
             $table->boolean('is_taxable')->default(true);
             $table->timestamps();
+             $table->softDeletes();
+
 
             //  affects_nhif BOOLEAN DEFAULT TRUE,
             // affects_nssf BOOLEAN DEFAULT TRUE,
             // affects_paye BOOLEAN DEFAULT TRUE,
             // description TEXT,                
-
-
 
 
         });
