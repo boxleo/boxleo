@@ -309,6 +309,12 @@
         </v-card>
       </v-dialog>
 
+      <!-- Edit Button -->
+      <!-- <v-btn @click="editEvaluation(item)" color="primary" icon>
+        <v-icon>mdi-pencil</v-icon>
+      </v-btn> -->
+
+
       <!-- Edit Evaluation Modal -->
       <v-dialog v-model="editDialog" width="800">
         <v-card>
@@ -401,97 +407,111 @@
         </v-card>
       </v-dialog>
 
-      <!-- Add Evaluation Modal -->
-      <v-dialog v-model="addEvaluationDialog" width="800">
-        <v-card>
-          <v-card-title>Add Performance Evaluation</v-card-title>
-          <v-divider></v-divider>
-          <v-card-text>
-            <v-form ref="evaluationForm">
-              <v-row>
-                <v-col cols="12">
-                  <v-autocomplete
-                    v-model="newEvaluation.unit_id"
-                    :items="units"
-                    label="Unit"
-                    variant="outlined"
-                    item-title="name"
-                    item-value="id"
-                    clearable
-                  />
-                </v-col>
-                <v-col cols="12">
-                  <v-autocomplete
-                    v-model="newEvaluation.department_id"
-                    :items="departments"
-                    label="Department"
-                    variant="outlined"
-                    item-title="name"
-                    item-value="id"
-                    clearable
-                  />
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-autocomplete
-                    v-model="newEvaluation.user_id"
-                    :items="team"
-                    item-title="fullname"
-                    item-value="id"
-                    label="Employee"
-                    clearable
-                    dense
-                  />
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.attendance" label="Attendance" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id)?.designation_id !== 1">
-                  <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.knowledge_of_work" label="Knowledge of Work" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.team_work" label="Team Work" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.productivity" label="Productivity" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.discipline" label="Discipline" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.communication" label="Communication" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id)?.designation_id === 1">
-                  <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number" dense></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.total_score" label="Total Score" type="number" dense disabled></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="newEvaluation.percentage" label="Percentage" type="number" dense disabled></v-text-field>
-                </v-col>
-              </v-row>
-            </v-form>
-          </v-card-text>
-          <v-card-actions class="justify-content-end">
-            <v-btn @click="addEvaluationDialog = false" color="error">
-              <v-icon>mdi-cancel</v-icon> Cancel
-            </v-btn>
-            <v-btn @click="addEvaluation" color="primary">Submit</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <!-- Add Evaluation Trigger Button -->
+<!-- <v-btn @click="addEvaluationDialog = true" color="primary">
+  <v-icon>mdi-plus</v-icon>
+  Add Evaluation
+</v-btn> -->
+
+<!-- Add Evaluation Modal -->
+<v-dialog v-model="addEvaluationDialog" width="800">
+  <v-card>
+    <v-card-title>Add Performance Evaluation</v-card-title>
+    <v-divider></v-divider>
+    <v-card-text>
+      <v-form ref="evaluationForm">
+        <v-row>
+          <v-col cols="12">
+            <v-autocomplete
+              v-model="newEvaluation.unit_id"
+              :items="units"
+              label="Unit"
+              variant="outlined"
+              item-title="name"
+              item-value="id"
+              clearable
+            />
+          </v-col>
+          <v-col cols="12">
+            <v-autocomplete
+              v-model="newEvaluation.department_id"
+              :items="departments"
+              label="Department"
+              variant="outlined"
+              item-title="name"
+              item-value="id"
+              clearable
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-autocomplete
+              v-model="newEvaluation.user_id"
+              :items="team"
+              item-title="fullname"
+              item-value="id"
+              label="Employee"
+              clearable
+              dense
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.attendance" label="Attendance" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.problems_solved" label="Problems Solved" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id)?.designation_id !== 1">
+            <v-text-field v-model="newEvaluation.reports_submitted" label="Reports Submitted" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.knowledge_of_work" label="Knowledge of Work" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.team_work" label="Team Work" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.reliability_visibility" label="Reliability & Visibility" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.productivity" label="Productivity" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.discipline" label="Discipline" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.quality_of_work" label="Quality of Work" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.communication" label="Communication" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" v-if="newEvaluation.user_id && team.find((user) => user.id === newEvaluation.user_id)?.designation_id === 1">
+            <v-text-field v-model="newEvaluation.leadership" label="Leadership" type="number" dense></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.total_score" label="Total Score" type="number" dense disabled></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="newEvaluation.percentage" label="Percentage" type="number" dense disabled></v-text-field>
+          </v-col>
+        </v-row>
+      </v-form>
+    </v-card-text>
+    <v-card-actions class="justify-content-end">
+      <v-btn @click="addEvaluationDialog = false" color="error">
+        <v-icon>mdi-cancel</v-icon> Cancel
+      </v-btn>
+      <v-btn @click="addEvaluation" color="primary">Submit</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+
+
+
+      <!-- View Evaluation Trigger Button -->
+      <!-- <v-btn @click="viewEvaluationDialog = true" color="info">
+        <v-icon>mdi-eye</v-icon>
+        View Evaluation
+      </v-btn> -->
 
       <!-- View Evaluation Modal -->
       <v-dialog v-model="viewEvaluationModal" max-width="600">
@@ -930,7 +950,7 @@ export default {
         })
         .catch(error => {
           console.error('Error adding evaluation:', error);
-          this.$toastr.error('Failed to add evaluation.');
+          this.$toastr.error('Failed to add ebvaluation.');
         });
     },
 

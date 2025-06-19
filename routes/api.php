@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\PayrollApiController;
+use App\Http\Controllers\PayrollController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TicketApiController;
 use App\Http\Controllers\Api\RoleApiController;
@@ -279,3 +281,10 @@ Route::get('v1/performance-evaluations/filter-options', [PerformanceApiEvaluatio
 // Performance report routes
 Route::post('v1/performance-reports/export', [PerformanceApiReportController::class, 'exportPerformanceEvaluations']);
 Route::post('v1/performance-reports/ranked-employees', [PerformanceApiReportController::class, 'exportRankedEmployees']);
+
+
+Route::get('v1/payslips/{id}/with-user', [PayrollController::class, 'payslipWithUser']);
+
+
+
+

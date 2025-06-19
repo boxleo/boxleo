@@ -7,6 +7,18 @@ use Illuminate\Http\Request;
 
 class PayrollApiController extends Controller
 {
+
+
+
+    // // fetch user payslip with user info
+
+    // public function payslipWithUser($id)
+    // {
+    //     return Payslip::with('user')->findOrFail($id);
+    // }   
+
+
+    
     /**
      * Display a listing of the resource.
      */

@@ -133,33 +133,38 @@
           <template v-slot:item.employee="{ item }">
             <div class="d-flex align-center">
               <v-avatar size="36" class="mr-2">
-                <v-img :src="item.raw.user.avatar || '/images/default-avatar.png'" alt="avatar"></v-img>
+
+                <v-img :src="item?.raw?.user?.avatar || '/images/default-avatar.png'" alt="avatar"></v-img>
               </v-avatar>
               <div>
-                <div class="font-weight-medium">{{ item.raw.user.firstname }} {{ item.raw.user.lastname }}</div>
-                <div class="text-caption text-medium-emphasis">{{ item.raw.user.job_title }}</div>
+
+                <div class="font-weight-medium">
+                  {{ item?.raw?.user?.firstname || '' }} {{ item?.raw?.user?.lastname || '' }}
+                </div>
+
+                <div class="text-caption text-medium-emphasis">{{ item?.raw?.user?.job_title || '' }}</div>
               </div>
             </div>
           </template>
           
           <template #item.basic_pay="{ item }">
-            {{ formatCurrency(item.raw.basic_pay) }}
+            {{ formatCurrency(item?.raw?.basic_pay ?? 0) }}
           </template>
           
           <template v-slot:item.allowances="{ item }">
-            {{ formatCurrency(calculateTotalAllowances(item.raw)) }}
+            {{ formatCurrency(calculateTotalAllowances(item?.raw ?? {})) }}
           </template>
           
           <template v-slot:item.gross_pay="{ item }">
-            {{ formatCurrency(item.raw.gross_pay) }}
+            {{ formatCurrency(item?.raw?.gross_pay ?? 0) }}
           </template>
           
           <template v-slot:item.deductions="{ item }">
-            {{ formatCurrency(item.raw.deductions) }}
+            {{ formatCurrency(item?.raw?.deductions ?? 0) }}
           </template>
           
           <template v-slot:item.net_pay="{ item }">
-            <span class="font-weight-bold">{{ formatCurrency(item.raw.net_pay) }}</span>
+            <span class="font-weight-bold">{{ formatCurrency(item?.raw?.net_pay ?? 0) }}</span>
           </template>
           
           <template v-slot:item.actions="{ item }">
@@ -173,21 +178,21 @@
                 ></v-btn>
               </template>
               <v-list>
-                <v-list-item @click="viewPayslip(item.raw.id)">
+                <v-list-item v-if="item?.raw?.id" @click="viewPayslip(item.raw.id)">
                   <template v-slot:prepend>
                     <v-icon color="info">mdi-eye</v-icon>
                   </template>
                   <v-list-item-title>View</v-list-item-title>
                 </v-list-item>
                 
-                <v-list-item @click="printPayslip(item.raw.id)">
+                <v-list-item v-if="item?.raw?.id" @click="printPayslip(item.raw.id)">
                   <template v-slot:prepend>
                     <v-icon color="primary">mdi-printer</v-icon>
                   </template>
                   <v-list-item-title>Print</v-list-item-title>
                 </v-list-item>
                 
-                <v-list-item @click="emailPayslip(item.raw.id)">
+                <v-list-item v-if="item?.raw?.id" @click="emailPayslip(item.raw.id)">
                   <template v-slot:prepend>
                     <v-icon color="success">mdi-email</v-icon>
                   </template>
@@ -196,14 +201,14 @@
                 
                 <v-divider v-if="isAdmin"></v-divider>
                 
-                <v-list-item v-if="isAdmin" @click="editPayroll(item.raw.id)">
+                <v-list-item v-if="isAdmin && item?.raw?.id" @click="editPayroll(item.raw.id)">
                   <template v-slot:prepend>
                     <v-icon color="warning">mdi-pencil</v-icon>
                   </template>
                   <v-list-item-title>Edit</v-list-item-title>
                 </v-list-item>
                 
-                <v-list-item v-if="isAdmin" @click="confirmDeletePayroll(item.raw.id)">
+                <v-list-item v-if="isAdmin && item?.raw?.id" @click="confirmDeletePayroll(item.raw.id)">
                   <template v-slot:prepend>
                     <v-icon color="error">mdi-delete</v-icon>
                   </template>
@@ -367,11 +372,14 @@
                   <v-select
                     v-model="payrollForm.user_id"
                     :items="employeeItems"
+                      item-value="id" 
+                    item-title="fullName"
                     label="Employee"
                     variant="outlined"
                     :rules="[v => !!v || 'Employee is required']"
                     required
-                  ></v-select>
+                    @update:model-value="onEmployeeSelect"
+                  />
                 </v-col>
                 <v-col cols="12" md="3">
                   <v-select
@@ -1049,11 +1057,11 @@ export default {
         { title: 'Germany', value: 'DE' },
       ],
       employeeItems: [
-        { title: 'John Doe (IT)', value: 1 },
-        { title: 'Jane Smith (HR)', value: 2 },
-        { title: 'Robert Johnson (Finance)', value: 3 },
-        { title: 'Emily Davis (Marketing)', value: 4 },
-        { title: 'Michael Wilson (Operations)', value: 5 },
+        // { title: 'John Doe (IT)', value: 1 },
+        // { title: 'Jane Smith (HR)', value: 2 },
+        // { title: 'Robert Johnson (Finance)', value: 3 },
+        // { title: 'Emily Davis (Marketing)', value: 4 },
+        // { title: 'Michael Wilson (Operations)', value: 5 },
       ],
       
       // Table headers
@@ -1198,7 +1206,7 @@ export default {
         filtered = filtered.filter(p => p.month === this.filters.month);
       }
       
-      if (this.filters.year) {
+      if (this.filters.year) {http://127.0.0.1:8000/api/v1/payslips/1/with-user
         filtered = filtered.filter(p => p.year === this.filters.year);
       }
       
@@ -1252,6 +1260,37 @@ export default {
   },
   
   methods: {
+
+
+  async onEmployeeSelect() {
+  const userId = this.payrollForm.user_id;
+  if (!userId) return;
+
+  try {
+    const response = await axios.get(`/api/v1/payslips/${userId}/with-user`);
+    const data = response.data;
+
+    const user = data; // root level
+    const userDetails = user.userdetails?.[0] || {};
+
+    this.payrollForm.full_name = `${user.firstname} ${user.lastname}`;
+    this.payrollForm.employment_date = user.employment_date;
+
+    this.payrollForm.bank = userDetails.bank_name;
+    this.payrollForm.bank_branch = userDetails.bank_branch;
+    this.payrollForm.bank_account = userDetails.bank_account;
+    this.payrollForm.basic_pay = userDetails.basic_pay || 0;
+
+    this.payrollForm.earnings = data.earnings || [];
+    this.payrollForm.deductions = data.deductions || [];
+  } catch (error) {
+    console.error('Error fetching payslip with user:', error);
+    this.showNotification('Failed to fetch employee details', 'error');
+  }
+}
+,
+
+
     // Filter methods
     applyFilters() {
       this.currentPage = 1;
@@ -1557,6 +1596,23 @@ export default {
         color
       };
     },
+
+
+    async fetchEmployees() {
+      const apiUrl = 'api/v1/users';
+
+      try {
+        const response = await axios.get(apiUrl);
+        this.employeeItems = response.data.users.filter(employee => !employee.super_admin)
+          .map(employee => ({
+            id: employee.id,
+            fullName: `${employee.firstname} ${employee.lastname}`,
+          }));
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    },
+
     
     resetFilters() {
       this.filters = {
@@ -1573,6 +1629,7 @@ export default {
   mounted() {
     // Fetch initial data
     this.isLoading = true;
+    this.fetchEmployees();
     
     // Simulate API call
     setTimeout(() => {

@@ -18,4 +18,7 @@ class PayslipController extends Controller
         return view('employee.payslips.index',['user_id' => $this->getUserId()]);
     }
 
+
+    
+
 }

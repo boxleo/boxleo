@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,6 +15,7 @@ return new class extends Migration
             $table->string('name');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('amount');
+            $table->string('typtypee')->default('custom'); // e.g. 'insurance', 'loan', 'statutory'
             $table->boolean('is_recurring')->default(false);
             $table->timestamps();
             $table->softDeletes();
@@ -29,5 +29,5 @@ return new class extends Migration
     {
         Schema::dropIfExists('deductions');
     }
-    
+
 };

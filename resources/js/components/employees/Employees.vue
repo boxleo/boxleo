@@ -61,6 +61,16 @@
             <v-icon @click="impersonateUser(item)" title="Impersonate User"  color="purple">
               mdi-account
             </v-icon>
+
+            <!-- add salaryinfo button and appropriate function to salarydialog -->
+
+            <v-icon
+              @click="openSalaryDialog(item)"
+              title="Salary Info"
+              color="primary"
+            >
+              mdi-cash
+            </v-icon>
           </template>
         </v-data-table>
       </v-responsive>
@@ -381,6 +391,95 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+
+    <!-- salary infor -->
+
+    <!-- Salary Information Dialog -->
+    <v-dialog v-model="salaryDialog" max-width="500px" persistent>
+      <v-card>
+        <v-card-title class="headline font-weight-bold">Employee Salary Information</v-card-title>
+        <v-card-text>
+          <v-form ref="salaryForm" @submit.prevent="submitSalaryInfo">
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="salaryInfo.basic_salary"
+                  label="Basic Salary"
+                  prefix="KES"
+                  type="number"
+                  :rules="[v => !!v || 'Basic Salary is required']"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="salaryInfo.housing_allowance"
+                  label="Housing Allowance"
+                  prefix="KES"
+                  type="number"
+                  :rules="[v => !!v || 'Housing Allowance is required']"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="salaryInfo.transport_allowance"
+                  label="Transport Allowance"
+                  prefix="KES"
+                  type="number"
+                  :rules="[v => !!v || 'Transport Allowance is required']"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="salaryInfo.overtime"
+                  label="Overtime (hours x rate)"
+                  prefix="KES"
+                  type="number"
+                  :rules="[v => !!v || 'Overtime is required']"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="salaryInfo.performance_bonus"
+                  label="Performance Bonus"
+                  prefix="KES"
+                  type="number"
+                  :rules="[v => !!v || 'Performance Bonus is required']"
+                  required
+                ></v-text-field>
+
+
+                <!-- add frequency of payment -->
+                <v-select
+                  v-model="salaryInfo.frequency"
+                  :items="[
+                    { text: 'Monthly', value: 'monthly' },
+                    { text: 'Bi-Weekly', value: 'biweekly' },
+                    { text: 'Weekly', value: 'weekly' },
+                    { text: 'Daily', value: 'daily' }
+                  ]"
+                  label="Frequency of Payment"
+                  item-text="text"
+                  item-value="value"
+                  :rules="[v => !!v || 'Frequency of Payment is required']"
+                  required
+                ></v-select>
+              </v-col>
+            </v-row>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <!-- <v-btn color="red" @click="salaryDialog = false">Close</v-btn> -->
+              <v-btn color="primary" type="submit">Save</v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
   </v-container-fluid>
 </template>
 
@@ -417,6 +516,7 @@ export default {
       filterDialog: false,
       deleteModal: false,
       permissionsDialog: false,
+      salaryDialog: false,
       formData: {
         first_name: '',
         last_name: '',
@@ -472,20 +572,10 @@ export default {
   methods: {
 
 
-   
-  //   impersonateUser(user) {
-
-  //     user.id =filter(this.users where user_id == user.id)
-
-  //   if (user.impersonate_url) {
-  //     window.location.href = user.impersonate_url;
-  //   } else {
-  //     console.error('Impersonation URL not available for this user.');
-  //     // Optionally, display a user-friendly message
-  //     this.$toastr.error('Impersonation URL is missing. Please contact support.');
-  //   }
-  // },
-
+   openSalaryDialog(item
+    console.log('Opening Salary Dialog');
+    this.salaryDialog = true;
+   },
 
    impersonateUser(user) {
   // Validate the user object and its ID
