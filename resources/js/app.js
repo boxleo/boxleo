@@ -57,6 +57,7 @@ import EmployeeLeaves from './components/leaves/EmployeeLeaves.vue'
 import Policies from './components/policies/Policies.vue'
 import Resources from './components/resources/Resources.vue'
 import Payrolls from './components/payrolls/Payrolls.vue'
+import PayrollSettings from './components/payrolls/PayrollSettings.vue';
 import Tasks from './components/tasks/Tasks.vue'
 import Disciplinary from './components/disciplinaries/Disciplinary.vue'
 import Settings from './components/settings/Settings.vue'
@@ -109,6 +110,7 @@ app.component('leave-assign', LeaveAssign)
 app.component('leave-balances', LeaveBalances)
 app.component('holidays', Holidays)
 app.component('payrolls', Payrolls)
+app.component('payroll-settings', PayrollSettings)
 app.component('tasks', Tasks)
 app.component('resources', Resources)
 app.component('disciplinary', Disciplinary)

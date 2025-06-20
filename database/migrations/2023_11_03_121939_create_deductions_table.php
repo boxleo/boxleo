@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('deductions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            // $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('amount');
             $table->string('typtypee')->default('custom'); // e.g. 'insurance', 'loan', 'statutory'
             $table->boolean('is_recurring')->default(false);
