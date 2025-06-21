@@ -1,5 +1,5 @@
 @extends('layouts.app')
 
 @section('content')
-    <payrolls>
-@endsection 
+    <Payroll-Settings>
+@endsection

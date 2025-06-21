@@ -148,7 +148,7 @@
                         <!-- <li><a href="/payroll/earnings">Earnings</a></li>
                         <li><a href="/payroll/deductions">Deductions</a></li>
                         <li><a href="/payroll/payslips">Payslips</a></li> -->
-                        <li><a href="/payroll/settings">Payroll Settings</a></li>
+                        <li><a href="/payroll-settings">Payroll Settings</a></li>
                     </ul>
                 </li>
 

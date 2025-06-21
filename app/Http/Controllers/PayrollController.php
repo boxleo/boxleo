@@ -13,6 +13,10 @@ class PayrollController extends Controller
     }
 
 
+    public function settings(){
+        return view('payroll.settings');}
+
+
      // fetch user payslip with user info
 
     public function payslipWithUser($id)

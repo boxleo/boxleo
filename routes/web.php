@@ -76,6 +76,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/performance', [PolicyController::class, 'index']);
     Route::get('/disciplinaries', [DisciplinaryController::class, 'index']);
     Route::get('/payroll', [PayrollController::class, 'index']);
+    Route::get('/payroll-settings', [PayrollController::class, 'settings']);
     Route::get('/salarys', [SalaryController::class, 'index']);
     Route::get('/taxes', [TaxesController::class, 'index']);
     Route::get('/employees/basic-info/{id}', [UserController::class, 'basicInfo']);
@@ -88,7 +89,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::put('/employees/personal-info/{id}', [UserController::class, 'UpdatepersonalInfo'])->name('employee-info.update');
     Route::put('/employees/contact-info/{id}', [UserController::class, 'UpdateContactInfo']);
     Route::put('/employees/job-info/{id}', [UserController::class, 'UpdateJobInfo']);
-    Route::put('/employees/salary-info/{id}', [UserController::class, 'UpdateSalaryInfo']);
+        Route::put('/employees/salary-info/{id}', action: [UserController::class, 'UpdateSalaryInfo']);
     Route::get('/employees', [UserController::class, 'index']);
     Route::get('/attendances', [AttendanceController::class, 'index']);
     Route::get('/tickets', [TicketController::class, 'index']);

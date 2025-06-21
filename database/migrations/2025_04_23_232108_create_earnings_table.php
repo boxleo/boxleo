@@ -20,7 +20,8 @@ return new class extends Migration {
             $table->decimal('amount', 10, 2);
             $table->boolean('is_recurring')->default(false);
             $table->enum('frequency', ['monthly', 'weekly']);
-            $table->boolean('is_taxable')->default(true);
+            $table->boolean(
+'is_taxable')->default(true);
             $table->timestamps();
              $table->softDeletes();
 

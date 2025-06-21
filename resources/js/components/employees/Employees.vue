@@ -411,6 +411,7 @@
                   :rules="[v => !!v || 'Basic Salary is required']"
                   required
                 ></v-text-field>
+               
               </v-col>
               <v-col cols="12">
                 <v-text-field
@@ -472,8 +473,8 @@
             </v-row>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <!-- <v-btn color="red" @click="salaryDialog = false">Close</v-btn> -->
-              <v-btn color="primary" type="submit">Save</v-btn>
+              <v-btn color="red" @click="salaryDialog = false">Close</v-btn>
+              <v-btn color="primary" @click="submitSalaryInfo" type="submit">Save</v-btn>
             </v-card-actions>
           </v-form>
         </v-card-text>
@@ -557,6 +558,16 @@ export default {
       selectedPermissions: [],
       selectedRole: null,
 
+
+      salaryInfo: {
+        basic_salary: '',
+        housing_allowance: '',
+        transport_allowance: '',
+        overtime: '',
+        performance_bonus: '',
+        frequency: 'monthly', // Default frequency
+      },
+
     };
   },
 
@@ -572,10 +583,24 @@ export default {
   methods: {
 
 
-   openSalaryDialog(item
+   openSalaryDialog(item){
     console.log('Opening Salary Dialog');
     this.salaryDialog = true;
    },
+
+
+   submitSalaryInfo() {
+  const payload = {
+    ...this.salaryInfo,
+    basic_salary: parseFloat(this.salaryInfo.basic_salary),
+    housing_allowance: parseFloat(this.salaryInfo.housing_allowance),
+    transport_allowance: parseFloat(this.salaryInfo.transport_allowance),
+    overtime: parseFloat(this.salaryInfo.overtime),
+    performance_bonus: parseFloat(this.salaryInfo.performance_bonus),
+  };
+  // submit payload to API
+},
+
 
    impersonateUser(user) {
   // Validate the user object and its ID
