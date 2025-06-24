@@ -5,6 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Earning;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreEarningRequest;
+use App\Http\Requests\UpdateEarningRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\Rule;
+
+
 
 class EarningsController extends Controller
 {
@@ -18,7 +24,7 @@ class EarningsController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $earnings = Earning::orderBy('name')->get();
+            $earnings = Earning::orderBy('label')->get();
             
             return response()->json([
                 'success' => true,
@@ -36,44 +42,30 @@ class EarningsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreEarningRequest $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|min:2|max:255|unique:earnings,name',
-                'description' => 'nullable|string|max:1000',
-                'type' => 'required|in:fixed,percentage',
-                'amount' => 'required|numeric|min:0',
-                'taxable' => 'boolean',
-                'pensionable' => 'boolean',
-                'active' => 'boolean'
-            ]);
+            \Log::info('Creating earning with data:', $request->validated());
 
-            // Set defaults for boolean fields if not provided
-            $validated['taxable'] = $validated['taxable'] ?? true;
-            $validated['pensionable'] = $validated['pensionable'] ?? true;
-            $validated['active'] = $validated['active'] ?? true;
+            $earning = Earning::create($request->validated());
 
-            $earning = Earning::create($validated);
+            \Log::info('Earning created successfully:', ['id' => $earning->id]);
 
             return response()->json([
                 'success' => true,
                 'data' => $earning,
                 'message' => 'Earning created successfully'
             ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
+            \Log::error('Error creating earning:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error creating earning: ' . $e->getMessage()
             ], 500);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -97,45 +89,29 @@ class EarningsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Earning $earning): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'name' => [
-                    'required',
-                    'string',
-                    'min:2',
-                    'max:255',
-                    Rule::unique('earnings', 'name')->ignore($earning->id)
-                ],
-                'description' => 'nullable|string|max:1000',
-                'type' => 'required|in:fixed,percentage',
-                'amount' => 'required|numeric|min:0',
-                'taxable' => 'boolean',
-                'pensionable' => 'boolean',
-                'active' => 'boolean'
-            ]);
+   public function update(UpdateEarningRequest $request, Earning $earning): JsonResponse
+{
+    try {
+        $earning->update($request->validated());
 
-            $earning->update($validated);
+        return response()->json([
+            'success' => true,
+            'data' => $earning->fresh(),
+            'message' => 'Earning updated successfully',
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Earning update failed', [
+            'id' => $earning->id,
+            'error' => $e->getMessage(),
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'data' => $earning->fresh(),
-                'message' => 'Earning updated successfully'
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating earning: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating earning',
+        ], 500);
     }
+}
+
 
     /**
      * Remove the specified resource from storage.
@@ -240,8 +216,6 @@ class EarningsController extends Controller
             ], 500);
         }
     }
-
-
 
 
 }

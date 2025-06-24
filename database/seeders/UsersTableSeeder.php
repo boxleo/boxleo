@@ -19,7 +19,7 @@ class UsersTableSeeder extends Seeder
         $user = User::create([
             'firstname' => 'IT',
             'lastname' => 'Admin',
-            'email' => 'test@gmailcom',
+            'email' => 'test@gmail.com',
             'phone' => '+25412345678',
             'unit_id' => 1,
             'office_id' => 1,
