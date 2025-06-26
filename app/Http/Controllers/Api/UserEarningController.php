@@ -1,10 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\StoreEarningRequest;
 use App\Http\Requests\StoreUserEarningRequest;
 use App\Http\Requests\UpdateUserEarningRequest;
 use App\Models\UserEarning;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Log;
 
 class UserEarningController extends Controller
 {
@@ -24,13 +28,33 @@ class UserEarningController extends Controller
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreUserEarningRequest $request)
+    public function store(StoreUserEarningRequest $request): JsonResponse
     {
-        //
+        $userId = auth()->user()->id;
+        Log::info('User ID: ' . $userId);
+
+        // Process earnings
+        foreach ($request->input('earnings', []) as $earning) {
+            UserEarning::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'earning_id' => $earning['earning_id']
+                ],
+                [
+                    'amount' => $earning['amount'],
+                    // 'type' => $earning['type']
+                ]
+            );
+        }
+
+   
+        return response()->json([
+            'success' => true,
+            'message' => 'Salary information saved successfully.'
+        ]);
     }
+
+
 
     /**
      * Display the specified resource.

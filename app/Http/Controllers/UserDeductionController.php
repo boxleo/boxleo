@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDeductionRequest;
 use App\Http\Requests\StoreUserDeductionRequest;
 use App\Http\Requests\UpdateUserDeductionRequest;
 use App\Models\UserDeduction;
+use Illuminate\Http\JsonResponse;
 
 class UserDeductionController extends Controller
 {
@@ -27,10 +29,32 @@ class UserDeductionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreUserDeductionRequest $request)
+    public function store(StoreDeductionRequest $request): JsonResponse
     {
-        //
+        $userId = $request->input('user_id');
+       
+        // Process deductions
+        foreach ($request->input('deductions', []) as $deduction) {
+            UserDeduction::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'deduction_id' => $deduction['deduction_id']
+                ],
+                [
+                    'amount' => $deduction['amount'],
+                    'type' => $deduction['type']
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salary information saved successfully.'
+        ]);
     }
+
+
+
 
     /**
      * Display the specified resource.

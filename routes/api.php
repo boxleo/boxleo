@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Api\DeductionsController;
 use App\Http\Controllers\Api\EarningsController;
+use App\Http\Controllers\Api\UserEarningController;
 use App\Http\Controllers\PayrollApiController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\UserDeductionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TicketApiController;
 use App\Http\Controllers\Api\RoleApiController;
@@ -53,12 +55,12 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('v1/telesale-agents', [UserApiController::class, 'telesaleAgents']);
   Route::get('v1/team', [UserApiController::class, 'getTeam']);
 
-//   User details
-    Route::get('v1/user-details', [UserDetailApiController::class, 'index']);
-    Route::post('v1/user-details', [UserDetailApiController::class, 'store']);
-    Route::delete('v1/user-details/{user}', [UserDetailApiController::class, 'destroy']);
-    Route::put('v1/user-details/{user}', [UserDetailApiController::class, 'update']);
-    Route::get('v1/user-details/{id}', [UserDetailApiController::class, 'show']);
+  //   User details
+  Route::get('v1/user-details', [UserDetailApiController::class, 'index']);
+  Route::post('v1/user-details', [UserDetailApiController::class, 'store']);
+  Route::delete('v1/user-details/{user}', [UserDetailApiController::class, 'destroy']);
+  Route::put('v1/user-details/{user}', [UserDetailApiController::class, 'update']);
+  Route::get('v1/user-details/{id}', [UserDetailApiController::class, 'show']);
 
 
 
@@ -265,7 +267,7 @@ Route::get('v1/requisitions-logs/{id}', [RequisitionApiController::class, 'requi
 Route::get('v1/requisitions/{id}/pdf', [RequisitionApiController::class, 'generatePdf']);
 Route::post('v1/filter-requisitions', [RequisitionApiController::class, 'filter']);
 Route::post('/v1/download-requisitions-report', [RequisitionApiController::class, 'downloadRequisitionsReport']);
-Route::post('/v1/accounts', [RequisitionApiController::class, 'saveAccount']);
+Route::post('/v1/accounts', [RequisitionApiController::class, 'saveAount']);
 Route::get('/v1/accounts', [RequisitionApiController::class, 'fetchAccounts']);
 
 
@@ -291,39 +293,48 @@ Route::get('v1/payslips/{id}/with-user', [PayrollController::class, 'payslipWith
 
 // Earnings Routes
 Route::prefix('v1/earnings')->group(function () {
-    // Standard CRUD routes
-    Route::get('/', [EarningsController::class, 'index'])->name('earnings.index');
-    Route::post('/', [EarningsController::class, 'store'])->name('earnings.store');
-    Route::get('/earning}', [EarningsController::class, 'show'])->name('earnings.show');
-    Route::put('/{earning}', [EarningsController::class, 'update'])->name('earnings.update');
-    Route::patch('/{earning}', [EarningsController::class, 'update'])->name('earnings.patch');
-    Route::delete('/{earning}', [EarningsController::class, 'destroy'])->name('earnings.destroy');
-    
-    // Additional filter routes
-    Route::get('/filter/active', [EarningsController::class, 'active'])->name('earnings.active');
-    Route::get('/filter/type/{type}', [EarningsController::class, 'getByType'])->name('earnings.by-type');
-    Route::patch('/{earning}/toggle-status', [EarningsController::class, 'toggleStatus'])->name('earnings.toggle-status');
+  // Standard CRUD routes
+  Route::get('/', [EarningsController::class, 'index'])->name('earnings.index');
+  Route::post('/', [EarningsController::class, 'store'])->name('earnings.store');
+  Route::get('/earning}', [EarningsController::class, 'show'])->name('earnings.show');
+  Route::put('/{earning}', [EarningsController::class, 'update'])->name('earnings.update');
+  Route::patch('/{earning}', [EarningsController::class, 'update'])->name('earnings.patch');
+  Route::delete('/{earning}', [EarningsController::class, 'destroy'])->name('earnings.destroy');
+
+  // Additional filter routes
+  Route::get('/filter/active', [EarningsController::class, 'active'])->name('earnings.active');
+  Route::get('/filter/type/{type}', [EarningsController::class, 'getByType'])->name('earnings.by-type');
+  Route::patch('/{earning}/toggle-status', [EarningsController::class, 'toggleStatus'])->name('earnings.toggle-status');
+
+
+
+  Route::post('/user-earnings', [UserEarningController::class, 'store']);
+
 });
 
 
 
 // Deductions Routes
 Route::prefix('v1/deductions')->group(function () {
-    // Standard CRUD routes
-    Route::get('/', [DeductionsController::class, 'index'])->name('deductions.index');
-    Route::post('/', [DeductionsController::class, 'store'])->name('deductions.store');
-    Route::get('/{deduction}', [DeductionsController::class, 'show'])->name('deductions.show');
-    Route::put('/{deduction}', [DeductionsController::class, 'update'])->name('deductions.update');
-    Route::patch('/{deduction}', [DeductionsController::class, 'update'])->name('deductions.patch');
-    Route::delete('/{deduction}', [DeductionsController::class, 'destroy'])->name('deductions.destroy');
-    
-    // Additional filter routes
-    Route::get('/filter/active', [DeductionsController::class, 'active'])->name('deductions.active');
-    Route::get('/filter/mandatory', [DeductionsController::class, 'mandatory'])->name('deductions.mandatory');
-    Route::get('/filter/optional', [DeductionsController::class, 'optional'])->name('deductions.optional');
-    Route::get('/filter/tax-deductible', [DeductionsController::class, 'taxDeductible'])->name('deductions.tax-deductible');
-    Route::get('/filter/type/{type}', [DeductionsController::class, 'getByType'])->name('deductions.by-type');
-    Route::patch('/{deduction}/toggle-status', [DeductionsController::class, 'toggleStatus'])->name('deductions.toggle-status');
+  // Standard CRUD routes
+  Route::get('/', [DeductionsController::class, 'index'])->name('deductions.index');
+  Route::post('/', [DeductionsController::class, 'store'])->name('deductions.store');
+  Route::get('/{deduction}', [DeductionsController::class, 'show'])->name('deductions.show');
+  Route::put('/{deduction}', [DeductionsController::class, 'update'])->name('deductions.update');
+  Route::patch('/{deduction}', [DeductionsController::class, 'update'])->name('deductions.patch');
+  Route::delete('/{deduction}', [DeductionsController::class, 'destroy'])->name('deductions.destroy');
+
+  // Additional filter routes
+  Route::get('/filter/active', [DeductionsController::class, 'active'])->name('deductions.active');
+  Route::get('/filter/mandatory', [DeductionsController::class, 'mandatory'])->name('deductions.mandatory');
+  Route::get('/filter/optional', [DeductionsController::class, 'optional'])->name('deductions.optional');
+  Route::get('/filter/tax-deductible', [DeductionsController::class, 'taxDeductible'])->name('deductions.tax-deductible');
+  Route::get('/filter/type/{type}', [DeductionsController::class, 'getByType'])->name('deductions.by-type');
+  Route::patch('/{deduction}/toggle-status', [DeductionsController::class, 'toggleStatus'])->name('deductions.toggle-status');
+
+
+  Route::post('/user-deductions', [UserDeductionController::class, 'store']);
+
 });
 
 

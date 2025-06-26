@@ -11,18 +11,25 @@ class UpdateUserEarningRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true; // Allow request
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+     */    
+
+
+      public function rules(): array
     {
         return [
-            //
+            'user_id' => 'required|exists:users,id',
+
+            'earnings' => 'required|array|min:1',
+            'earnings.*.earning_id' => 'required|exists:earnings,id',
+            'earnings.*.amount' => 'required|numeric|min:0'
         ];
     }
+
 }

@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('deductions', function (Blueprint $table) {
             $table->id();
             $table->string('label');
-            $table->string('deduction_type')->default('custom'); // e.g. 'insurance', 'loan', 'statutory'
+            $table->string('deduction_type')->default('custom'); // e.g. 'insurance', 'loan', 'statutory' 
             $table->boolean(column: 'is_recurring')->default(false);
             $table->timestamps();
             $table->softDeletes();
@@ -34,4 +34,3 @@ return new class extends Migration {
         return (bool) $value;
     }
 }
-
