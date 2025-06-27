@@ -29,7 +29,7 @@ class UserDeductionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreDeductionRequest $request): JsonResponse
+    public function store(StoreUserDeductionRequest $request): JsonResponse
     {
         $userId = $request->input('user_id');
        
@@ -42,7 +42,7 @@ class UserDeductionController extends Controller
                 ],
                 [
                     'amount' => $deduction['amount'],
-                    'type' => $deduction['type']
+                    'type' => $deduction['type'] ?? null
                 ]
             );
         }

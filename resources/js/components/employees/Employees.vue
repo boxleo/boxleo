@@ -464,7 +464,7 @@ export default {
      props: {
     user: Object,
     roles: Array,
-    permissions: Array
+    // permissions: Array
   },
   computed: {
     userId() {
@@ -492,6 +492,9 @@ export default {
       users: [],
       earnings: [],
       deductions: [],
+
+    allEarnings: [],    // from /api/v1/earnings
+    allDeductions: [], 
       filters: {
         unit_id: null,
         office_id: null,
@@ -547,12 +550,8 @@ export default {
 
 
       salaryInfo: {
-        basic_salary: '',
-        housing_allowance: '',
-        transport_allowance: '',
-        overtime: '',
-        performance_bonus: '',
-        frequency: 'monthly', // Default frequency
+      earnings: [],
+      deductions: [],
       },
 
     };
@@ -576,13 +575,10 @@ export default {
       const apiUrl = 'api/v1/deductions';
       axios.get(apiUrl)
         .then(response => {
-          console.log('Deductions fetched:', response.data.deductions);
+          console.log('Deductions fetched:', response.data.data);
           this.salaryInfo.deductions = response.data.data
-          // .map(deduction => ({
-          //   label: deduction.label,
-          //   amount: deduction.amount,
-          //   type: deduction.type, // 'amount' or 'percentage'
-          // }));
+              // this.allDeductions = deductionsRes.data.data;
+     
         })
         .catch(error => {
           console.error('Error fetching deductions:', error);
@@ -597,13 +593,10 @@ export default {
       const apiUrl = 'api/v1/earnings';
       axios.get(apiUrl)
         .then(response => {
-          console.log('Earnings fetched:', response.data.earnings);
+          console.log('Earnings fetched:', response.data.data);
           this.salaryInfo.earnings = response.data.data
-          // .map(earning => ({
-          //   label: earning.label,
-          //   amount: earning.amount,
-          //   type: earning.type, // 'amount' or 'percentage'
-          // }));
+              // this.allEarnings = earningsRes.data.data;
+    
         })
         .catch(error => {
           console.error('Error fetching earnings:', error);
@@ -611,10 +604,10 @@ export default {
     },
 
 
-    openSalaryDialog(item) {
-      console.log('Opening Salary Dialog');
-      this.salaryDialog = true;
-    },
+    // openSalaryDialog(item) {
+    //   console.log('Opening Salary Dialog');
+    //   this.salaryDialog = true;
+    // },
 
 
    async submitSalaryInfo() {
@@ -662,6 +655,47 @@ export default {
   }
     ,
 
+     openSalaryDialog(item) {
+    console.log('Opening Salary Dialog for User:', item);
+        this.selectedUserId = item.id;
+    this.selectedUser = this.users.find(u => u.id === item.id);
+        console.log('Opening Salary Dialog for User ID:', this.selectedUserId);
+
+
+    console.log('Earnings:', this.earnings);
+    console.log('Selected User:', this.selectedUser);
+
+
+
+     // Check if earnings exist
+  if (!this.selectedUser.earnings || this.selectedUser.earnings.length === 0) {
+    console.warn('⚠️ No earnings found for this user.');
+  }
+
+    this.salaryInfo.earnings = this.earnings.map(e => {
+      const assigned = this.selectedUser.earnings?.find(ue => ue.earning_id === e.id);
+      return {
+      earning_id: e.id,
+      label: e.label,
+      amount: assigned ? assigned.amount : '',
+      type: 'fixed'
+      };
+    });
+
+    this.salaryInfo.deductions = this.deductions.map(d => {
+      const assigned = this.selectedUser.deductions?.find(ud => ud.deduction_id === d.id);
+      return {
+        deduction_id: d.id,
+        label: d.label,
+        amount: assigned ? assigned.amount : '',
+        type: 'fixed'
+      };
+    });
+
+    this.salaryDialog = true;
+  }
+,
+
 
     impersonateUser(user) {
       // Validate the user object and its ID
@@ -680,7 +714,7 @@ export default {
 
       // Redirect to the impersonation URL
       if (impersonateUrl) {
-        Earnings
+        
         window.location.href = impersonateUrl;
       } else {
         console.error('Impersonation URL could not be determined.');
@@ -895,7 +929,7 @@ export default {
       }
 
 
-      console.log("Selected User:" + item)
+      console.log("Selected User:", item);
       const apiUrl = `${this.base_url}api/v1/users/${item.id}`;
 
       axios.get(apiUrl)

@@ -214,7 +214,7 @@ class UserApiController extends Controller
 {
     $departmentId = $request->query('department_id');
 
-    $query = User::with('department', 'unit', 'office', 'designation', 'roles','hodDepartments','managerDepartments')
+    $query = User::with('department', 'unit', 'office', 'designation', 'roles','hodDepartments','managerDepartments','earnings')
         ->orderBy('created_at');
 
     if ($departmentId) {
