@@ -9,9 +9,14 @@ class Deduction extends Model
 {
     use SoftDeletes;
     protected $fillable = [
-        "user_id",
         "deduction_type",
-        "amount",
-        "type",
+        "is_recurring",
+        'label',
     ] ;
+
+
+    protected $casts = [
+    'is_recurring' => 'boolean',
+];
+
 }

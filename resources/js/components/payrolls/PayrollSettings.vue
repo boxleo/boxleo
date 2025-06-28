@@ -120,21 +120,14 @@
                 <v-row>
                   <v-col cols="12">
                     <v-text-field
-                      v-model="editedItem.name"
+                      v-model="editedItem.label"
                       label="Name"
                       :rules="nameRules"
                       required
                     ></v-text-field>
                   </v-col>
-                  
-                  <v-col cols="12">
-                    <v-textarea
-                      v-model="editedItem.description"
-                      label="Description"
-                      rows="2"
-                    ></v-textarea>
-                  </v-col>
-                  
+            
+                 
                  
                   <!-- Earnings specific fields -->
                   <template v-if="currentType === 'earnings'">
@@ -163,6 +156,23 @@
                         label="Mandatory"
                         color="primary"
                       ></v-switch>
+                    </v-col>
+
+
+                    <v-col cols="6">
+                      <v-select
+                        v-model="editedItem.deduction_type"
+                        :items="[
+                          { title: 'NHIF', value: 'NHIF' },
+                          { title: 'NSSF', value: 'NSSF' },
+                          { title: 'PAYE', value: 'PAYE' },
+                          { title: 'Other', value: 'Other' }
+                        ]"
+                        label="Deduction Type"
+                        :rules="[v => !!v || 'Deduction type is required']"
+                        required
+                        clearable
+                      ></v-select>
                     </v-col>
                     
                     <v-col cols="6">
@@ -251,7 +261,7 @@ export default {
     // Default item structure
     const defaultEarning = () => ({
       id: null,
-      name: '',
+      label: '',
       description: '',
       type: 'fixed',
       amount: 0,
@@ -262,8 +272,9 @@ export default {
 
     const defaultDeduction = () => ({
       id: null,
-      name: '',
-      description: '',
+      label: '',
+      deduction_type: '',
+      // is_recurring: '',
       type: 'fixed',
       amount: 0,
       mandatory: false,
@@ -279,18 +290,16 @@ export default {
 
     // Table headers
     const earningsHeaders = [
-      { title: 'Name', key: 'name', sortable: true },
-      { title: 'Description', key: 'description', sortable: false },
-      // { title: 'Amount', key: 'amount', sortable: true },
-      { title: 'Taxable', key: 'taxable', sortable: true },
-      { title: 'Pensionable', key: 'pensionable', sortable: true },
+      { title: 'Name', key: 'label', sortable: true },
+      { title: 'Taxable', key: 'is_taxable', sortable: true },
+      { title: 'Frequency', key: 'frequency', sortable: true },
       { title: 'Actions', key: 'actions', sortable: false }
     ]
 
     const deductionsHeaders = [
-      { title: 'Name', key: 'name', sortable: true },
-      { title: 'Description', key: 'description', sortable: false },
-      { title: 'Type', key: 'mandatory', sortable: true },
+      { title: 'Name', key: 'label', sortable: true },
+      { title: 'Recurring', key: 'is_recurring', sortable: false },
+      { title: 'Type', key: 'deduction_type', sortable: true },
       { title: 'Tax Deductible', key: 'taxDeductible', sortable: true },
       { title: 'Actions', key: 'actions', sortable: false }
     ]

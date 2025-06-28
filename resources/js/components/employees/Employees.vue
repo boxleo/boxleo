@@ -3,7 +3,7 @@
     <v-row justify="end" class="text-right">
       <v-col>
         <v-text-field prepend-icon="mdi-magnify" variant="underlined" v-model="search" label="Search" clearable
-         @clear="clearSearch"></v-text-field>
+          @clear="clearSearch"></v-text-field>
       </v-col>
       <v-col cols="auto">
         <v-icon @click="addUserModal = true" color="warning" x-small>mdi-account-plus</v-icon>
@@ -58,17 +58,13 @@
             <v-icon @click="deleteUser(item)" title="Delete" class="mx-2 text-danger">mdi-delete
             </v-icon>
 
-            <v-icon @click="impersonateUser(item)" title="Impersonate User"  color="purple">
+            <v-icon @click="impersonateUser(item)" title="Impersonate User" color="purple">
               mdi-account
             </v-icon>
 
             <!-- add salaryinfo button and appropriate function to salarydialog -->
 
-            <v-icon
-              @click="openSalaryDialog(item)"
-              title="Salary Info"
-              color="primary"
-            >
+            <v-icon @click="openSalaryDialog(item)" title="Salary Info" color="primary">
               mdi-cash
             </v-icon>
           </template>
@@ -205,114 +201,114 @@
     <!-- Edit User Dialog -->
     <v-dialog v-model="editUserDialog" max-width="650px" persistent>
       <v-card>
-      <v-card-title>Edit User</v-card-title>
-      <v-card-text>
-        <v-form ref="editForm" @submit.prevent="submitEditUserForm">
-        <v-row>
-          <v-col cols="12" md="6">
-          <v-text-field variant="outlined" v-model="editedUser.first_name" label="First Name"
-            prepend-icon="mdi-account" :rules="[v => !!v || 'First name is required']">
-          </v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-          <v-text-field variant="outlined" v-model="editedUser.last_name" label="Last Name"
-            prepend-icon="mdi-account" :rules="[v => !!v || 'Last name is required']">
-          </v-text-field>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" md="6">
-          <v-text-field variant="outlined" v-model="editedUser.phone" label="Phone" prepend-icon="mdi-phone"
-            :rules="[v => !!v || 'Phone number is required']">
-          </v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-          <v-text-field variant="outlined" v-model="editedUser.email" label="Email" prepend-icon="mdi-email"
-            :rules="[v => !!v || 'Email is required', v => /.+@.+\..+/.test(v) || 'E-mail must be valid']">
-          </v-text-field>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" md="6">
-          <v-select variant="outlined" v-model="editedUser.unit_id" :items="branches" label="Branch"
-            item-value="id" item-title="name" prepend-icon="mdi-domain"
-            :rules="[v => !!v || 'Branch is required']">
-          </v-select>
-          </v-col>
-          <v-col cols="12" md="6">
-          <v-select variant="outlined" v-model="editedUser.office_id" :items="offices" label="Office"
-            item-value="id" item-title="name" prepend-icon="mdi-briefcase"
-            :rules="[v => !!v || 'Office is required']">
-          </v-select>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" md="6">
-          <v-combobox variant="outlined" v-model="editedUser.department_id" :items="departments" label="Department"
-            item-value="id" item-title="name" prepend-icon="mdi-office-building"
-            :rules="[v => !!v || 'Department is required']">
-          </v-combobox>
-          </v-col>
-          <v-col cols="12" md="6">
-          <v-select variant="outlined" v-model="editedUser.designation_id" :items="designations"
-            label="Designation" item-value="id" item-title="name" prepend-icon="mdi-account-tie"
-            :rules="[v => !!v || 'Designation is required']">
-          </v-select>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" md="6">
-          <v-text-field variant="outlined" v-model="editedUser.zk_user_id" label="ZK User ID"
-            prepend-icon="mdi-numeric" :rules="[v => !!v || 'ZK User ID is required']">
-          </v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-          <v-text-field variant="outlined" v-model="editedUser.zk_username" label="ZK Username"
-            prepend-icon="mdi-account" :rules="[v => !!v || 'ZK Username is required']">
-          </v-text-field>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-          <v-subheader class="font-weight-bold">Gender</v-subheader>
-          </v-col>
-          <v-col cols="12">
-          <v-radio-group v-model="editedUser.gender" :rules="[v => !!v || 'Gender is required']">
+        <v-card-title>Edit User</v-card-title>
+        <v-card-text>
+          <v-form ref="editForm" @submit.prevent="submitEditUserForm">
             <v-row>
-            <v-col>
-              <v-radio label="Male" value="Male"></v-radio>
-            </v-col>
-            <v-col>
-              <v-radio label="Female" value="Female"></v-radio>
-            </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="editedUser.first_name" label="First Name"
+                  prepend-icon="mdi-account" :rules="[v => !!v || 'First name is required']">
+                </v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="editedUser.last_name" label="Last Name"
+                  prepend-icon="mdi-account" :rules="[v => !!v || 'Last name is required']">
+                </v-text-field>
+              </v-col>
             </v-row>
-          </v-radio-group>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-          <v-subheader class="font-weight-bold">Role</v-subheader>
-          </v-col>
-          <v-col cols="12">
-          <v-radio-group v-model="editedUser.role" :rules="[v => !!v || 'Role is required']">
             <v-row>
-            <v-col>
-              <v-radio label="Admin" value="admin"></v-radio>
-            </v-col>
-            <v-col>
-              <v-radio label="Employee" value="employee"></v-radio>
-            </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="editedUser.phone" label="Phone" prepend-icon="mdi-phone"
+                  :rules="[v => !!v || 'Phone number is required']">
+                </v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="editedUser.email" label="Email" prepend-icon="mdi-email"
+                  :rules="[v => !!v || 'Email is required', v => /.+@.+\..+/.test(v) || 'E-mail must be valid']">
+                </v-text-field>
+              </v-col>
             </v-row>
-          </v-radio-group>
-          </v-col>
-        </v-row>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="red" @click="editUserDialog = false">Close</v-btn>
-          <v-btn color="primary" type="submit">Update</v-btn>
-        </v-card-actions>
-        </v-form>
-      </v-card-text>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-select variant="outlined" v-model="editedUser.unit_id" :items="branches" label="Branch"
+                  item-value="id" item-title="name" prepend-icon="mdi-domain"
+                  :rules="[v => !!v || 'Branch is required']">
+                </v-select>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select variant="outlined" v-model="editedUser.office_id" :items="offices" label="Office"
+                  item-value="id" item-title="name" prepend-icon="mdi-briefcase"
+                  :rules="[v => !!v || 'Office is required']">
+                </v-select>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-combobox variant="outlined" v-model="editedUser.department_id" :items="departments"
+                  label="Department" item-value="id" item-title="name" prepend-icon="mdi-office-building"
+                  :rules="[v => !!v || 'Department is required']">
+                </v-combobox>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select variant="outlined" v-model="editedUser.designation_id" :items="designations"
+                  label="Designation" item-value="id" item-title="name" prepend-icon="mdi-account-tie"
+                  :rules="[v => !!v || 'Designation is required']">
+                </v-select>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="editedUser.zk_user_id" label="ZK User ID"
+                  prepend-icon="mdi-numeric" :rules="[v => !!v || 'ZK User ID is required']">
+                </v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field variant="outlined" v-model="editedUser.zk_username" label="ZK Username"
+                  prepend-icon="mdi-account" :rules="[v => !!v || 'ZK Username is required']">
+                </v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <v-subheader class="font-weight-bold">Gender</v-subheader>
+              </v-col>
+              <v-col cols="12">
+                <v-radio-group v-model="editedUser.gender" :rules="[v => !!v || 'Gender is required']">
+                  <v-row>
+                    <v-col>
+                      <v-radio label="Male" value="Male"></v-radio>
+                    </v-col>
+                    <v-col>
+                      <v-radio label="Female" value="Female"></v-radio>
+                    </v-col>
+                  </v-row>
+                </v-radio-group>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <v-subheader class="font-weight-bold">Role</v-subheader>
+              </v-col>
+              <v-col cols="12">
+                <v-radio-group v-model="editedUser.role" :rules="[v => !!v || 'Role is required']">
+                  <v-row>
+                    <v-col>
+                      <v-radio label="Admin" value="admin"></v-radio>
+                    </v-col>
+                    <v-col>
+                      <v-radio label="Employee" value="employee"></v-radio>
+                    </v-col>
+                  </v-row>
+                </v-radio-group>
+              </v-col>
+            </v-row>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="red" @click="editUserDialog = false">Close</v-btn>
+              <v-btn color="primary" type="submit">Update</v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card-text>
       </v-card>
     </v-dialog>
     <!-- Permissions Modal -->
@@ -377,7 +373,7 @@
           </v-select>
           <v-select v-model="filters.office_id" :items="offices" item-value="id" item-title="name" label="Office" dense>
           </v-select>
-         
+
           <v-autocomplete v-model="filters.department_id" :items="departments" item-value="id" item-title="name" mutiple
             label="Department" dense>
           </v-autocomplete>
@@ -393,93 +389,70 @@
     </v-dialog>
 
 
-    <!-- salary infor -->
-
     <!-- Salary Information Dialog -->
     <v-dialog v-model="salaryDialog" max-width="500px" persistent>
       <v-card>
-        <v-card-title class="headline font-weight-bold">Employee Salary Information</v-card-title>
+        <v-card-title class="headline font-weight-bold">
+          Salary Information
+        </v-card-title>
+
         <v-card-text>
           <v-form ref="salaryForm" @submit.prevent="submitSalaryInfo">
-            <v-row>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="salaryInfo.basic_salary"
-                  label="Basic Salary"
-                  prefix="KES"
-                  type="number"
-                  :rules="[v => !!v || 'Basic Salary is required']"
-                  required
-                ></v-text-field>
-               
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="salaryInfo.housing_allowance"
-                  label="Housing Allowance"
-                  prefix="KES"
-                  type="number"
-                  :rules="[v => !!v || 'Housing Allowance is required']"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="salaryInfo.transport_allowance"
-                  label="Transport Allowance"
-                  prefix="KES"
-                  type="number"
-                  :rules="[v => !!v || 'Transport Allowance is required']"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="salaryInfo.overtime"
-                  label="Overtime (hours x rate)"
-                  prefix="KES"
-                  type="number"
-                  :rules="[v => !!v || 'Overtime is required']"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="salaryInfo.performance_bonus"
-                  label="Performance Bonus"
-                  prefix="KES"
-                  type="number"
-                  :rules="[v => !!v || 'Performance Bonus is required']"
-                  required
-                ></v-text-field>
 
+            <!-- Earnings Section -->
+            <div class="mb-4">
+              <h3 class="subtitle-1 font-weight-medium mb-2">Earnings</h3>
+              <v-row v-for="(earning, index) in salaryInfo.earnings" :key="`earning-${index}`" class="mb-2">
+                <v-col cols="7">
+                  <v-text-field :label="earning.label" :value="earning.label" readonly dense
+                    hide-details></v-text-field>
+                </v-col>
+                <v-col cols="5">
+                  <v-text-field v-model="earning.amount"
+                    :label="earning.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                    :prefix="earning.type === 'percentage' ? '' : 'KES'"
+                    :suffix="earning.type === 'percentage' ? '%' : ''" type="number"
+                    :rules="[v => !!v || (earning.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                    dense required hide-details></v-text-field>
+                </v-col>
+              </v-row>
+            </div>
 
-                <!-- add frequency of payment -->
-                <v-select
-                  v-model="salaryInfo.frequency"
-                  :items="[
-                    { text: 'Monthly', value: 'monthly' },
-                    { text: 'Bi-Weekly', value: 'biweekly' },
-                    { text: 'Weekly', value: 'weekly' },
-                    { text: 'Daily', value: 'daily' }
-                  ]"
-                  label="Frequency of Payment"
-                  item-text="text"
-                  item-value="value"
-                  :rules="[v => !!v || 'Frequency of Payment is required']"
-                  required
-                ></v-select>
-              </v-col>
-            </v-row>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="red" @click="salaryDialog = false">Close</v-btn>
-              <v-btn color="primary" @click="submitSalaryInfo" type="submit">Save</v-btn>
-            </v-card-actions>
+            <!-- Deductions Section -->
+            <div class="mb-4">
+              <h3 class="subtitle-1 font-weight-medium mb-2">Deductions</h3>
+              <v-row v-for="(deduction, index) in salaryInfo.deductions" :key="`deduction-${index}`" class="mb-2">
+                <v-col cols="7">
+                  <v-text-field :label="deduction.label" :value="deduction.label" readonly dense
+                    hide-details></v-text-field>
+                </v-col>
+                <v-col cols="5">
+                  <v-text-field v-model="deduction.amount"
+                    :label="deduction.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                    :prefix="deduction.type === 'percentage' ? '' : 'KES'"
+                    :suffix="deduction.type === 'percentage' ? '%' : ''" type="number"
+                    :rules="[v => !!v || (deduction.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                    dense required hide-details></v-text-field>
+                </v-col>
+              </v-row>
+            </div>
+
           </v-form>
         </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="red" text @click="salaryDialog = false">
+            Close
+          </v-btn>
+          <v-btn color="primary" @click="submitSalaryInfo">
+            Save
+          </v-btn>
+        </v-card-actions>
+
       </v-card>
     </v-dialog>
+
 
   </v-container-fluid>
 </template>
@@ -487,6 +460,18 @@
 <script>
 
 export default {
+
+     props: {
+    user: Object,
+    roles: Array,
+    // permissions: Array
+  },
+  computed: {
+    userId() {
+      return this.user?.id   
+    }
+  },
+
   data() {
     return {
       selected: [],
@@ -505,6 +490,11 @@ export default {
         { title: 'Action', key: 'actions' },
       ],
       users: [],
+      earnings: [],
+      deductions: [],
+
+    allEarnings: [],    // from /api/v1/earnings
+    allDeductions: [], 
       filters: {
         unit_id: null,
         office_id: null,
@@ -560,12 +550,8 @@ export default {
 
 
       salaryInfo: {
-        basic_salary: '',
-        housing_allowance: '',
-        transport_allowance: '',
-        overtime: '',
-        performance_bonus: '',
-        frequency: 'monthly', // Default frequency
+      earnings: [],
+      deductions: [],
       },
 
     };
@@ -579,53 +565,163 @@ export default {
     this.fetchDesignations();
     this.fetchPermissions();
     this.fetchRoles();
+    this.fetchEarnings();
+    this.fetchDeductions();
   },
   methods: {
 
+    fetchDeductions() {
+      // Fetch deductions data from the API
+      const apiUrl = 'api/v1/deductions';
+      axios.get(apiUrl)
+        .then(response => {
+          console.log('Deductions fetched:', response.data.data);
+          this.salaryInfo.deductions = response.data.data
+              // this.allDeductions = deductionsRes.data.data;
+     
+        })
+        .catch(error => {
+          console.error('Error fetching deductions:', error);
+        });
 
-   openSalaryDialog(item){
-    console.log('Opening Salary Dialog');
+    }
+
+    ,
+
+    fetchEarnings() {
+      // Fetch earnings data from the API
+      const apiUrl = 'api/v1/earnings';
+      axios.get(apiUrl)
+        .then(response => {
+          console.log('Earnings fetched:', response.data.data);
+          this.salaryInfo.earnings = response.data.data
+              // this.allEarnings = earningsRes.data.data;
+    
+        })
+        .catch(error => {
+          console.error('Error fetching earnings:', error);
+        });
+    },
+
+
+    // openSalaryDialog(item) {
+    //   console.log('Opening Salary Dialog');
+    //   this.salaryDialog = true;
+    // },
+
+
+   async submitSalaryInfo() {
+    // const userId = this.salaryInfo.user_id;
+
+  const userId = this.user.id; // assume this is already available
+
+
+    const earningsPayload = {
+      user_id: userId,
+      earnings: this.salaryInfo.earnings.map(e => ({
+        earning_id: e.id,
+        amount: e.amount,
+        type: e.type
+      }))
+    };
+
+    const deductionsPayload = {
+      user_id: userId,
+      deductions: this.salaryInfo.deductions.map(d => ({
+        deduction_id: d.id,
+        amount: d.amount,
+        type: d.type
+      }))
+    };
+
+    try {
+      // Axios calls with Sanctum: assumes you've already hit /sanctum/csrf-cookie at login
+      const [earningsRes, deductionsRes] = await Promise.all([
+        axios.post('/api/v1/earnings/user-earnings', earningsPayload),
+        axios.post('/api/v1/deductions/user-deductions', deductionsPayload)
+      ]);
+
+      if (earningsRes.data.success && deductionsRes.data.success) {
+        this.$emit('salary-saved');
+        this.salaryDialog = false;
+        this.$toast?.success?.('Salary details saved successfully.');
+      } else {
+        this.$toast?.error?.('Error saving data. Please review your inputs.');
+      }
+    } catch (error) {
+      console.error(error);
+      this.$toast?.error?.('Something went wrong. Try again later.');
+    }
+  }
+    ,
+
+     openSalaryDialog(item) {
+    console.log('Opening Salary Dialog for User:', item);
+        this.selectedUserId = item.id;
+    this.selectedUser = this.users.find(u => u.id === item.id);
+        console.log('Opening Salary Dialog for User ID:', this.selectedUserId);
+
+
+    console.log('Earnings:', this.earnings);
+    console.log('Selected User:', this.selectedUser);
+
+
+
+     // Check if earnings exist
+  if (!this.selectedUser.earnings || this.selectedUser.earnings.length === 0) {
+    console.warn('⚠️ No earnings found for this user.');
+  }
+
+    this.salaryInfo.earnings = this.earnings.map(e => {
+      const assigned = this.selectedUser.earnings?.find(ue => ue.earning_id === e.id);
+      return {
+      earning_id: e.id,
+      label: e.label,
+      amount: assigned ? assigned.amount : '',
+      type: 'fixed'
+      };
+    });
+
+    this.salaryInfo.deductions = this.deductions.map(d => {
+      const assigned = this.selectedUser.deductions?.find(ud => ud.deduction_id === d.id);
+      return {
+        deduction_id: d.id,
+        label: d.label,
+        amount: assigned ? assigned.amount : '',
+        type: 'fixed'
+      };
+    });
+
     this.salaryDialog = true;
-   },
-
-
-   submitSalaryInfo() {
-  const payload = {
-    ...this.salaryInfo,
-    basic_salary: parseFloat(this.salaryInfo.basic_salary),
-    housing_allowance: parseFloat(this.salaryInfo.housing_allowance),
-    transport_allowance: parseFloat(this.salaryInfo.transport_allowance),
-    overtime: parseFloat(this.salaryInfo.overtime),
-    performance_bonus: parseFloat(this.salaryInfo.performance_bonus),
-  };
-  // submit payload to API
-},
-
-
-   impersonateUser(user) {
-  // Validate the user object and its ID
-  if (!user || !user.id) {
-    console.error('Invalid user object or missing user ID.');
-    this.$toastr.error('User information is incomplete. Please contact support.');
-    return;
   }
-
-  // Attempt to retrieve or construct the impersonation URL
-  let impersonateUrl = user.impersonate_url;
-  if (!impersonateUrl) {
-    // Construct the URL based on the user's ID, adjust the URL pattern as needed
-    impersonateUrl = `/impersonate/${user.id}`;
-  }
-
-  // Redirect to the impersonation URL
-  if (impersonateUrl) {
-    window.location.href = impersonateUrl;
-  } else {
-    console.error('Impersonation URL could not be determined.');
-    this.$toastr.error('Unable to determine impersonation URL. Please contact support.');
-  }
-}
 ,
+
+
+    impersonateUser(user) {
+      // Validate the user object and its ID
+      if (!user || !user.id) {
+        console.error('Invalid user object or missing user ID.');
+        this.$toastr.error('User information is incomplete. Please contact support.');
+        return;
+      }
+
+      // Attempt to retrieve or construct the impersonation URL
+      let impersonateUrl = user.impersonate_url;
+      if (!impersonateUrl) {
+        // Construct the URL based on the user's ID, adjust the URL pattern as needed
+        impersonateUrl = `/impersonate/${user.id}`;
+      }
+
+      // Redirect to the impersonation URL
+      if (impersonateUrl) {
+        
+        window.location.href = impersonateUrl;
+      } else {
+        console.error('Impersonation URL could not be determined.');
+        this.$toastr.error('Unable to determine impersonation URL. Please contact support.');
+      }
+    }
+    ,
 
     formatPermissionName(name) {
       return name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
@@ -833,7 +929,7 @@ export default {
       }
 
 
-      console.log("Selected User:" + item)
+      console.log("Selected User:", item);
       const apiUrl = `${this.base_url}api/v1/users/${item.id}`;
 
       axios.get(apiUrl)
@@ -1031,5 +1127,3 @@ export default {
 };
 
 </script>
-
-

@@ -3,7 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Deduction;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use App\Http\Requests\StoreDeductionRequest;
+use App\Http\Requests\UpdateDeductionRequest;
+use Illuminate\Validation\Rule;
 
 class DeductionsController extends Controller
 {
@@ -16,7 +22,7 @@ class DeductionsController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $deductions = Deduction::orderBy('name')->get();
+            $deductions = Deduction::orderBy('label')->get();
             
             return response()->json([
                 'success' => true,
@@ -34,44 +40,31 @@ class DeductionsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|min:2|max:255|unique:deductions,name',
-                'description' => 'nullable|string|max:1000',
-                'type' => 'required|in:fixed,percentage',
-                'amount' => 'required|numeric|min:0',
-                'mandatory' => 'boolean',
-                'tax_deductible' => 'boolean',
-                'active' => 'boolean'
-            ]);
+    
+    public function store(StoreDeductionRequest $request): JsonResponse
+{
+    try {
+        $deduction = Deduction::create($request->validated());
 
-            // Set defaults for boolean fields if not provided
-            $validated['mandatory'] = $validated['mandatory'] ?? false;
-            $validated['tax_deductible'] = $validated['tax_deductible'] ?? false;
-            $validated['active'] = $validated['active'] ?? true;
+        return response()->json([
+            'success' => true,
+            'data' => $deduction,
+            'message' => 'Deduction created successfully'
+        ], 201);
 
-            $deduction = Deduction::create($validated);
+    } catch (\Exception $e) {
+        \Log::error('Deduction creation failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'data' => $deduction,
-                'message' => 'Deduction created successfully'
-            ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error creating deduction: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Error creating deduction'
+        ], 500);
     }
+}
+
 
     /**
      * Display the specified resource.
@@ -95,45 +88,25 @@ class DeductionsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Deduction $deduction): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'name' => [
-                    'required',
-                    'string',
-                    'min:2',
-                    'max:255',
-                    Rule::unique('deductions', 'name')->ignore($deduction->id)
-                ],
-                'description' => 'nullable|string|max:1000',
-                'type' => 'required|in:fixed,percentage',
-                'amount' => 'required|numeric|min:0',
-                'mandatory' => 'boolean',
-                'tax_deductible' => 'boolean',
-                'active' => 'boolean'
-            ]);
+public function update(UpdateDeductionRequest $request, Deduction $deduction): JsonResponse
+{
+    try {
+        $validated = $request->validated();
+        $deduction->update($validated);
 
-            $deduction->update($validated);
-
-            return response()->json([
-                'success' => true,
-                'data' => $deduction->fresh(),
-                'message' => 'Deduction updated successfully'
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating deduction: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $deduction,
+            'message' => 'Deduction updated successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating deduction: ' . $e->getMessage()
+        ], 500);
     }
+}
+
 
     /**
      * Remove the specified resource from storage.
@@ -179,7 +152,7 @@ class DeductionsController extends Controller
     {
         try {
             $deductions = Deduction::where('active', true)
-                ->orderBy('name')
+                ->orderBy('label')
                 ->get();
 
             return response()->json([
@@ -203,7 +176,7 @@ class DeductionsController extends Controller
         try {
             $deductions = Deduction::where('mandatory', true)
                 ->where('active', true)
-                ->orderBy('name')
+                ->orderBy('label')
                 ->get();
 
             return response()->json([
@@ -227,7 +200,7 @@ class DeductionsController extends Controller
         try {
             $deductions = Deduction::where('mandatory', false)
                 ->where('active', true)
-                ->orderBy('name')
+                ->orderBy('label')
                 ->get();
 
             return response()->json([
@@ -251,7 +224,7 @@ class DeductionsController extends Controller
         try {
             $deductions = Deduction::where('tax_deductible', true)
                 ->where('active', true)
-                ->orderBy('name')
+                ->orderBy('label')
                 ->get();
 
             return response()->json([
@@ -303,7 +276,7 @@ class DeductionsController extends Controller
 
             $deductions = Deduction::where('type', $type)
                 ->where('active', true)
-                ->orderBy('name')
+                ->orderBy('label')
                 ->get();
 
             return response()->json([

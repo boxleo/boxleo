@@ -15,9 +15,9 @@ return new class extends Migration {
 
             $table->id();
             //$table->foreignId('payslip_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('label');
-            $table->decimal('amount', 10, 2);
+            // $table->decimal('amount', 10, 2);
             $table->boolean('is_recurring')->default(false);
             $table->enum('frequency', ['monthly', 'weekly']);
             $table->boolean(

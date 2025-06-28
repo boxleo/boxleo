@@ -262,7 +262,7 @@ class User extends Authenticatable
 
     public function earnings()
 {
-    return $this->hasMany(Earning::class);
+    return $this->hasMany(UserEarning::class);
 }
 
 
