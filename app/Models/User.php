@@ -268,7 +268,7 @@ class User extends Authenticatable
 
   public function deductions()
   {
-      return $this->hasMany(Deduction::class);
+      return $this->hasMany(UserDeduction::class);
   }
 
   public function payslips()

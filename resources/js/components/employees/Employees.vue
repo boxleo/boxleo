@@ -390,93 +390,209 @@
 
 
     <!-- Salary Information Dialog -->
-    <v-dialog v-model="salaryDialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title class="headline font-weight-bold">
-          Salary Information
-        </v-card-title>
+    <!-- Salary Information Dialog -->
+<v-dialog v-model="salaryDialog" max-width="500px" persistent>
+  <v-card>
+    <v-card-title class="headline font-weight-bold">
+      Salary Information
+    </v-card-title>
+    <v-card-text>
+      <v-form ref="salaryForm" @submit.prevent="submitSalaryInfo">
+        <!-- Earnings Section -->
+        <div class="mb-4">
+          <h3 class="subtitle-1 font-weight-medium mb-2">Earnings</h3>
+          
+          <!-- Show user's existing earnings if assigned -->
+          <div v-if="hasExistingEarnings">
+            <v-row v-for="(earning, index) in userEarnings" :key="`user-earning-${index}`" class="mb-2">
+              <v-col cols="7">
+                <v-text-field 
+                  :label="earning.label || 'Earning'" 
+                  :value="earning.label || `Earning ${index + 1}`" 
+                  readonly 
+                  dense
+                  hide-details>
+                </v-text-field>
+              </v-col>
+              <v-col cols="5">
+                <v-text-field 
+                  v-model="earning.amount"
+                  :label="earning.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                  :prefix="earning.type === 'percentage' ? '' : 'KES'"
+                  :suffix="earning.type === 'percentage' ? '%' : ''" 
+                  type="number"
+                  :rules="[v => !!v || (earning.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                  dense 
+                  required 
+                  hide-details>
+                </v-text-field>
+              </v-col>
+            </v-row>
+          </div>
+          
+          <!-- Show default earnings form if no existing earnings -->
+          <div v-else>
+            <v-row v-for="(earning, index) in salaryInfo.earnings" :key="`earning-${index}`" class="mb-2">
+              <v-col cols="7">
+                <v-text-field 
+                  :label="earning.label" 
+                  :value="earning.label" 
+                  readonly 
+                  dense
+                  hide-details>
+                </v-text-field>
+              </v-col>
+              <v-col cols="5">
+                <v-text-field 
+                  v-model="earning.amount"
+                  :label="earning.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                  :prefix="earning.type === 'percentage' ? '' : 'KES'"
+                  :suffix="earning.type === 'percentage' ? '%' : ''" 
+                  type="number"
+                  :rules="[v => !!v || (earning.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                  dense 
+                  required 
+                  hide-details>
+                </v-text-field>
+              </v-col>
+            </v-row>
+          </div>
+        </div>
 
-        <v-card-text>
-          <v-form ref="salaryForm" @submit.prevent="submitSalaryInfo">
-
-            <!-- Earnings Section -->
-            <div class="mb-4">
-              <h3 class="subtitle-1 font-weight-medium mb-2">Earnings</h3>
-              <v-row v-for="(earning, index) in salaryInfo.earnings" :key="`earning-${index}`" class="mb-2">
-                <v-col cols="7">
-                  <v-text-field :label="earning.label" :value="earning.label" readonly dense
-                    hide-details></v-text-field>
-                </v-col>
-                <v-col cols="5">
-                  <v-text-field v-model="earning.amount"
-                    :label="earning.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
-                    :prefix="earning.type === 'percentage' ? '' : 'KES'"
-                    :suffix="earning.type === 'percentage' ? '%' : ''" type="number"
-                    :rules="[v => !!v || (earning.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
-                    dense required hide-details></v-text-field>
-                </v-col>
-              </v-row>
-            </div>
-
-            <!-- Deductions Section -->
-            <div class="mb-4">
-              <h3 class="subtitle-1 font-weight-medium mb-2">Deductions</h3>
-              <v-row v-for="(deduction, index) in salaryInfo.deductions" :key="`deduction-${index}`" class="mb-2">
-                <v-col cols="7">
-                  <v-text-field :label="deduction.label" :value="deduction.label" readonly dense
-                    hide-details></v-text-field>
-                </v-col>
-                <v-col cols="5">
-                  <v-text-field v-model="deduction.amount"
-                    :label="deduction.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
-                    :prefix="deduction.type === 'percentage' ? '' : 'KES'"
-                    :suffix="deduction.type === 'percentage' ? '%' : ''" type="number"
-                    :rules="[v => !!v || (deduction.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
-                    dense required hide-details></v-text-field>
-                </v-col>
-              </v-row>
-            </div>
-
-          </v-form>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="red" text @click="salaryDialog = false">
-            Close
-          </v-btn>
-          <v-btn color="primary" @click="submitSalaryInfo">
-            Save
-          </v-btn>
-        </v-card-actions>
-
-      </v-card>
-    </v-dialog>
-
-
+        <!-- Deductions Section -->
+        <div class="mb-4">
+          <h3 class="subtitle-1 font-weight-medium mb-2">Deductions</h3>
+          
+          <!-- Show user's existing deductions if assigned -->
+          <div v-if="hasExistingDeductions">
+            <v-row v-for="(deduction, index) in userDeductions" :key="`user-deduction-${index}`" class="mb-2">
+              <v-col cols="7">
+                <v-text-field 
+                  :label="deduction.label || 'Deduction'" 
+                  :value="deduction.label || `Deduction ${index + 1}`" 
+                  readonly 
+                  dense
+                  hide-details>
+                </v-text-field>
+              </v-col>
+              <v-col cols="5">
+                <v-text-field 
+                  v-model="deduction.amount"
+                  :label="deduction.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                  :prefix="deduction.type === 'percentage' ? '' : 'KES'"
+                  :suffix="deduction.type === 'percentage' ? '%' : ''" 
+                  type="number"
+                  :rules="[v => !!v || (deduction.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                  dense 
+                  required 
+                  hide-details>
+                </v-text-field>
+              </v-col>
+            </v-row>
+          </div>
+          
+          <!-- Show default deductions form if no existing deductions -->
+          <div v-else>
+            <v-row v-for="(deduction, index) in salaryInfo.deductions" :key="`deduction-${index}`" class="mb-2">
+              <v-col cols="7">
+                <v-text-field 
+                  :label="deduction.label" 
+                  :value="deduction.label" 
+                  readonly 
+                  dense
+                  hide-details>
+                </v-text-field>
+              </v-col>
+              <v-col cols="5">
+                <v-text-field 
+                  v-model="deduction.amount"
+                  :label="deduction.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                  :prefix="deduction.type === 'percentage' ? '' : 'KES'"
+                  :suffix="deduction.type === 'percentage' ? '%' : ''" 
+                  type="number"
+                  :rules="[v => !!v || (deduction.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                  dense 
+                  required 
+                  hide-details>
+                </v-text-field>
+              </v-col>
+            </v-row>
+          </div>
+        </div>
+      </v-form>
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn color="red" text @click="salaryDialog = false">
+        Close
+      </v-btn>
+      <v-btn color="primary" @click="submitSalaryInfo">
+        {{ hasExistingEarnings || hasExistingDeductions ? 'Update' : 'Save' }}
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
   </v-container-fluid>
 </template>
 
 <script>
-
 export default {
-
-     props: {
+  props: {
     user: Object,
     roles: Array,
-    // permissions: Array
   },
+  
   computed: {
     userId() {
-      return this.user?.id   
+      return this.user?.id;
+    },
+    
+    hasExistingEarnings() {
+      return this.selectedUser && 
+             this.selectedUser.earnings && 
+             this.selectedUser.earnings.length > 0;
+    },
+
+    hasExistingDeductions() {
+      return this.selectedUser && 
+             this.selectedUser.deductions && 
+             this.selectedUser.deductions.length > 0;
+    },
+    
+    filteredUsers() {
+      if (!this.search) return this.users;
+      return this.users.filter(user => 
+        user.fullName.toLowerCase().includes(this.search.toLowerCase()) ||
+        user.email.toLowerCase().includes(this.search.toLowerCase())
+      );
     }
   },
 
   data() {
     return {
-      selected: [],
-      base_url: '/',
+      // Dialog states
+      salaryDialog: false,
+      switchRoleDialog: false,
+      addUserModal: false,
+      editUserDialog: false,
+      filterDialog: false,
+      deleteModal: false,
+      permissionsDialog: false,
+      
+      // User management
+      selectedUser: null,
+      users: [],
       search: '',
+      base_url: '/',
+      selected: [],
+      
+      // Salary management
+      userEarnings: [],
+      userDeductions: [],
+      allEarnings: [],
+      allDeductions: [],
+      
+      // Table headers
       headers: [
         { title: 'Employee', key: 'fullName' },
         { title: 'Email', key: 'email' },
@@ -489,25 +605,8 @@ export default {
         { title: 'Status', key: 'is_enabled' },
         { title: 'Action', key: 'actions' },
       ],
-      users: [],
-      earnings: [],
-      deductions: [],
-
-    allEarnings: [],    // from /api/v1/earnings
-    allDeductions: [], 
-      filters: {
-        unit_id: null,
-        office_id: null,
-        department_id: null,
-        designation_id: null,
-      },
-      switchRoleDialog: false,
-      addUserModal: false,
-      editUserDialog: false,
-      filterDialog: false,
-      deleteModal: false,
-      permissionsDialog: false,
-      salaryDialog: false,
+      
+      // Form data
       formData: {
         first_name: '',
         last_name: '',
@@ -524,6 +623,7 @@ export default {
         zk_user_id: '',
         zk_username: '',
       },
+      
       editedUser: {
         id: null,
         first_name: '',
@@ -539,591 +639,661 @@ export default {
         zk_user_id: '',
         zk_username: '',
       },
+      
+      // Master data
       branches: [],
       offices: [],
       departments: [],
       designations: [],
-      userPermissions: [],
       roles: [],
-      selectedPermissions: [],
-      selectedRole: null,
-
-
-      salaryInfo: {
-      earnings: [],
-      deductions: [],
+      permissions: [],
+      
+      // Filters
+      filters: {
+        unit_id: null,
+        office_id: null,
+        department_id: null,
+        designation_id: null,
       },
-
+      
+      // Permissions
+      userPermissions: [],
+      selectedPermissions: [],
+      currentUserIdForPermissions: null,
+      
+      // Role switching
+      selectedRole: null,
+      
+      // Delete
+      deletingItem: null,
+      
+      // Loading states
+      loading: {
+        users: false,
+        salary: false,
+        delete: false,
+      }
     };
   },
 
   created() {
-    this.fetchUsers();
-    this.fetchUnits();
-    this.fetchOffices();
-    this.fetchDepartments();
-    this.fetchDesignations();
-    this.fetchPermissions();
-    this.fetchRoles();
-    this.fetchEarnings();
-    this.fetchDeductions();
+    this.initializeComponent();
   },
+
   methods: {
-
-    fetchDeductions() {
-      // Fetch deductions data from the API
-      const apiUrl = 'api/v1/deductions';
-      axios.get(apiUrl)
-        .then(response => {
-          console.log('Deductions fetched:', response.data.data);
-          this.salaryInfo.deductions = response.data.data
-              // this.allDeductions = deductionsRes.data.data;
-     
-        })
-        .catch(error => {
-          console.error('Error fetching deductions:', error);
-        });
-
-    }
-
-    ,
-
-    fetchEarnings() {
-      // Fetch earnings data from the API
-      const apiUrl = 'api/v1/earnings';
-      axios.get(apiUrl)
-        .then(response => {
-          console.log('Earnings fetched:', response.data.data);
-          this.salaryInfo.earnings = response.data.data
-              // this.allEarnings = earningsRes.data.data;
-    
-        })
-        .catch(error => {
-          console.error('Error fetching earnings:', error);
-        });
+    // Initialization
+    async initializeComponent() {
+      this.loading.users = true;
+      try {
+        await Promise.all([
+          this.fetchUsers(),
+          this.fetchUnits(),
+          this.fetchOffices(),
+          this.fetchDepartments(),
+          this.fetchDesignations(),
+          this.fetchPermissions(),
+          this.fetchRoles(),
+          this.fetchAllEarnings(),
+          this.fetchAllDeductions(),
+        ]);
+      } catch (error) {
+        console.error('Error initializing component:', error);
+        this.$toast?.error?.('Failed to load data. Please refresh the page.');
+      } finally {
+        this.loading.users = false;
+      }
     },
 
+    // Salary Management
+    async fetchAllEarnings() {
+      try {
+        const response = await axios.get('api/v1/earnings');
+        this.allEarnings = response.data.data;
+      } catch (error) {
+        console.error('Error fetching earnings:', error);
+        this.$toast?.error?.('Failed to load earnings data.');
+      }
+    },
 
-    // openSalaryDialog(item) {
-    //   console.log('Opening Salary Dialog');
-    //   this.salaryDialog = true;
-    // },
+    async fetchAllDeductions() {
+      try {
+        const response = await axios.get('api/v1/deductions');
+        this.allDeductions = response.data.data;
+      } catch (error) {
+        console.error('Error fetching deductions:', error);
+        this.$toast?.error?.('Failed to load deductions data.');
+      }
+    },
 
+    openSalaryDialog(user) {
+      this.selectedUser = user;
+      this.prepareSalaryData();
+      this.salaryDialog = true;
+    },
 
-   async submitSalaryInfo() {
-    // const userId = this.salaryInfo.user_id;
+    prepareSalaryData() {
+      // Initialize earnings data
+      if (this.hasExistingEarnings) {
+        this.userEarnings = this.selectedUser.earnings.map(earning => ({
+          id: earning.id,
+          earning_id: earning.earning_id,
+          amount: earning.amount || '',
+          label: this.getEarningLabel(earning.earning_id),
+          type: this.getEarningType(earning.earning_id)
+        }));
+      } else {
+        // Create empty entries for all available earnings
+        this.userEarnings = this.allEarnings.map(earning => ({
+          earning_id: earning.id,
+          amount: '',
+          label: earning.label || earning.name,
+          type: earning.type || 'amount'
+        }));
+      }
 
-  const userId = this.user.id; // assume this is already available
+      // Initialize deductions data
+      if (this.hasExistingDeductions) {
+        this.userDeductions = this.selectedUser.deductions.map(deduction => ({
+          id: deduction.id,
+          deduction_id: deduction.deduction_id,
+          amount: deduction.amount || '',
+          label: this.getDeductionLabel(deduction.deduction_id),
+          type: this.getDeductionType(deduction.deduction_id)
+        }));
+      } else {
+        // Create empty entries for all available deductions
+        this.userDeductions = this.allDeductions.map(deduction => ({
+          deduction_id: deduction.id,
+          amount: '',
+          label: deduction.label || deduction.name,
+          type: deduction.type || 'amount'
+        }));
+      }
+    },
 
+    getEarningLabel(earningId) {
+      const earning = this.allEarnings.find(e => e.id === earningId);
+      return earning ? (earning.label || earning.name) : `Earning ${earningId}`;
+    },
 
-    const earningsPayload = {
-      user_id: userId,
-      earnings: this.salaryInfo.earnings.map(e => ({
-        earning_id: e.id,
-        amount: e.amount,
-        type: e.type
-      }))
-    };
+    getEarningType(earningId) {
+      const earning = this.allEarnings.find(e => e.id === earningId);
+      return earning ? (earning.type || 'amount') : 'amount';
+    },
 
-    const deductionsPayload = {
-      user_id: userId,
-      deductions: this.salaryInfo.deductions.map(d => ({
-        deduction_id: d.id,
-        amount: d.amount,
-        type: d.type
-      }))
-    };
+    getDeductionLabel(deductionId) {
+      const deduction = this.allDeductions.find(d => d.id === deductionId);
+      return deduction ? (deduction.label || deduction.name) : `Deduction ${deductionId}`;
+    },
 
-    try {
-      // Axios calls with Sanctum: assumes you've already hit /sanctum/csrf-cookie at login
+    getDeductionType(deductionId) {
+      const deduction = this.allDeductions.find(d => d.id === deductionId);
+      return deduction ? (deduction.type || 'amount') : 'amount';
+    },
+
+    async submitSalaryInfo() {
+      if (!this.selectedUser?.id) {
+        this.$toast?.error?.('No user selected.');
+        return;
+      }
+
+      this.loading.salary = true;
+      
+      try {
+        if (this.hasExistingEarnings || this.hasExistingDeductions) {
+          await this.updateUserSalaryInfo();
+        } else {
+          await this.createUserSalaryInfo();
+        }
+        
+        this.$emit('salary-saved');
+        this.salaryDialog = false;
+        this.$toast?.success?.('Salary details saved successfully.');
+        
+        // Refresh user data to show updated information
+        await this.fetchUsers();
+        
+      } catch (error) {
+        console.error('Error saving salary info:', error);
+        this.$toast?.error?.('Failed to save salary information. Please try again.');
+      } finally {
+        this.loading.salary = false;
+      }
+    },
+
+    async updateUserSalaryInfo() {
+      const payload = {
+        user_id: this.selectedUser.id,
+        earnings: this.userEarnings.filter(e => e.amount && parseFloat(e.amount) > 0),
+        deductions: this.userDeductions.filter(d => d.amount && parseFloat(d.amount) > 0)
+      };
+
+      const [earningsRes, deductionsRes] = await Promise.all([
+        axios.put(`/api/v1/earnings/user-earnings/${this.selectedUser.id}`, {
+          earnings: payload.earnings
+        }),
+        axios.put(`/api/v1/deductions/user-deductions/${this.selectedUser.id}`, {
+          deductions: payload.deductions
+        })
+      ]);
+
+      if (!earningsRes.data.success || !deductionsRes.data.success) {
+        throw new Error('API returned error status');
+      }
+    },
+
+    async createUserSalaryInfo() {
+      const earningsPayload = {
+        user_id: this.selectedUser.id,
+        earnings: this.userEarnings
+          .filter(e => e.amount && parseFloat(e.amount) > 0)
+          .map(e => ({
+            earning_id: e.earning_id,
+            amount: parseFloat(e.amount),
+            type: e.type
+          }))
+      };
+
+      const deductionsPayload = {
+        user_id: this.selectedUser.id,
+        deductions: this.userDeductions
+          .filter(d => d.amount && parseFloat(d.amount) > 0)
+          .map(d => ({
+            deduction_id: d.deduction_id,
+            amount: parseFloat(d.amount),
+            type: d.type
+          }))
+      };
+
       const [earningsRes, deductionsRes] = await Promise.all([
         axios.post('/api/v1/earnings/user-earnings', earningsPayload),
         axios.post('/api/v1/deductions/user-deductions', deductionsPayload)
       ]);
 
-      if (earningsRes.data.success && deductionsRes.data.success) {
-        this.$emit('salary-saved');
-        this.salaryDialog = false;
-        this.$toast?.success?.('Salary details saved successfully.');
-      } else {
-        this.$toast?.error?.('Error saving data. Please review your inputs.');
+      if (!earningsRes.data.success || !deductionsRes.data.success) {
+        throw new Error('API returned error status');
       }
-    } catch (error) {
-      console.error(error);
-      this.$toast?.error?.('Something went wrong. Try again later.');
-    }
-  }
-    ,
+    },
 
-     openSalaryDialog(item) {
-    console.log('Opening Salary Dialog for User:', item);
-        this.selectedUserId = item.id;
-    this.selectedUser = this.users.find(u => u.id === item.id);
-        console.log('Opening Salary Dialog for User ID:', this.selectedUserId);
+    // User Management
+    async fetchUsers() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/users`);
+        this.users = response.data.users.map(user => ({
+          id: user.id,
+          fullName: `${user.firstname} ${user.lastname}`,
+          super_admin: user.super_admin,
+          email: user.email,
+          phone: user.phone,
+          unit: user.unit,
+          department: user.department,
+          designation: user.designation,
+          is_enabled: user.is_enabled,
+          has_biometrics: user.has_biometrics,
+          office: user.office,
+          gender: user.gender,
+          role: user.role,
+          zk_user_id: user.zk_user_id,
+          zk_username: user.zk_username,
+          earnings: user.earnings || [],
+          deductions: user.deductions || [],
+        }));
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
+    },
 
+    async filterUsers() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/users`, {
+          params: this.filters
+        });
+        this.users = response.data.users.map(user => ({
+          id: user.id,
+          fullName: `${user.firstname} ${user.lastname}`,
+          email: user.email,
+          phone: user.phone,
+          unit: user.unit,
+          department: user.department,
+          designation: user.designation,
+          is_enabled: user.is_enabled,
+          office: user.office,
+          gender: user.gender,
+          role: user.role
+        }));
+      } catch (error) {
+        console.error('Error filtering users:', error);
+        this.$toast?.error?.('Failed to filter users.');
+      }
+    },
 
-    console.log('Earnings:', this.earnings);
-    console.log('Selected User:', this.selectedUser);
+    // Master Data Fetching
+    async fetchUnits() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/branches`);
+        this.branches = response.data.branches;
+      } catch (error) {
+        console.error('Error fetching branches:', error);
+        throw error;
+      }
+    },
 
+    async fetchOffices() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/offices`);
+        this.offices = response.data.offices;
+      } catch (error) {
+        console.error('Error fetching offices:', error);
+        throw error;
+      }
+    },
 
+    async fetchDepartments() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/departments`);
+        this.departments = response.data.departments;
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        throw error;
+      }
+    },
 
-     // Check if earnings exist
-  if (!this.selectedUser.earnings || this.selectedUser.earnings.length === 0) {
-    console.warn('⚠️ No earnings found for this user.');
-  }
+    async fetchDesignations() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/designations`);
+        this.designations = response.data.designations;
+      } catch (error) {
+        console.error('Error fetching designations:', error);
+        throw error;
+      }
+    },
 
-    this.salaryInfo.earnings = this.earnings.map(e => {
-      const assigned = this.selectedUser.earnings?.find(ue => ue.earning_id === e.id);
-      return {
-      earning_id: e.id,
-      label: e.label,
-      amount: assigned ? assigned.amount : '',
-      type: 'fixed'
-      };
-    });
+    async fetchPermissions() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/permissions`);
+        this.permissions = response.data.permissions;
+      } catch (error) {
+        console.error('Error fetching permissions:', error);
+        throw error;
+      }
+    },
 
-    this.salaryInfo.deductions = this.deductions.map(d => {
-      const assigned = this.selectedUser.deductions?.find(ud => ud.deduction_id === d.id);
-      return {
-        deduction_id: d.id,
-        label: d.label,
-        amount: assigned ? assigned.amount : '',
-        type: 'fixed'
-      };
-    });
+    async fetchRoles() {
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/roles`);
+        this.roles = response.data.roles;
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        throw error;
+      }
+    },
 
-    this.salaryDialog = true;
-  }
-,
+    // User Actions
+    async submitAddUserForm() {
+      try {
+        const response = await axios.post(`${this.base_url}api/v1/users`, this.formData);
+        this.$toast?.success?.('Employee created successfully');
+        await this.fetchUsers();
+        this.addUserModal = false;
+        this.resetFormData();
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        this.$toast?.error?.('Error creating employee. Please try again.');
+      }
+    },
 
-
-    impersonateUser(user) {
-      // Validate the user object and its ID
-      if (!user || !user.id) {
-        console.error('Invalid user object or missing user ID.');
-        this.$toastr.error('User information is incomplete. Please contact support.');
+    async editUser(item) {
+      if (item.super_admin) {
+        this.$toast?.error?.('This User is read only');
         return;
       }
 
-      // Attempt to retrieve or construct the impersonation URL
-      let impersonateUrl = user.impersonate_url;
-      if (!impersonateUrl) {
-        // Construct the URL based on the user's ID, adjust the URL pattern as needed
-        impersonateUrl = `/impersonate/${user.id}`;
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/users/${item.id}`);
+        const userData = response.data.user;
+        
+        this.editedUser = {
+          id: userData.id,
+          first_name: userData.firstname,
+          last_name: userData.lastname,
+          phone: userData.phone,
+          email: userData.email,
+          unit_id: userData.unit_id,
+          office_id: userData.office_id,
+          department_id: userData.department_id,
+          designation_id: userData.designation_id,
+          role: userData.role[0],
+          gender: userData.gender,
+          zk_user_id: userData.zk_user_id,
+          zk_username: userData.zk_username,
+        };
+
+        this.editUserDialog = true;
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        this.$toast?.error?.('Failed to load user data.');
+      }
+    },
+
+    async submitEditUserForm() {
+      try {
+        const updatedUserData = {
+          firstname: this.editedUser.first_name,
+          lastname: this.editedUser.last_name,
+          phone: this.editedUser.phone,
+          email: this.editedUser.email,
+          unit_id: this.editedUser.unit_id,
+          office_id: this.editedUser.office_id,
+          department_id: typeof this.editedUser.department_id === 'object' 
+            ? this.editedUser.department_id.id 
+            : this.editedUser.department_id,
+          designation_id: this.editedUser.designation_id,
+          role: this.editedUser.role,
+          gender: this.editedUser.gender,
+          zk_user_id: this.editedUser.zk_user_id,
+          zk_username: this.editedUser.zk_username,
+        };
+
+        const response = await axios.put(
+          `${this.base_url}api/v1/users/update/${this.editedUser.id}`, 
+          updatedUserData
+        );
+        
+        this.editUserDialog = false;
+        this.$toast?.success?.(response.data.message);
+        await this.fetchUsers();
+      } catch (error) {
+        console.error('Error updating user data:', error);
+        this.$toast?.error?.('Error updating user data. Please try again.');
+      }
+    },
+
+    async deleteUser(user) {
+      if (user.super_admin) {
+        this.$toast?.error?.('This User is read only');
+        return;
       }
 
-      // Redirect to the impersonation URL
+      if (!confirm('Are you sure you want to delete this user?')) {
+        return;
+      }
+
+      this.loading.delete = true;
+      try {
+        const response = await axios.delete(`${this.base_url}api/v1/users/${user.id}`);
+        await this.fetchUsers();
+        this.$toast?.success?.(response.data.message);
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        this.$toast?.error?.('Failed to delete User');
+      } finally {
+        this.loading.delete = false;
+      }
+    },
+
+    async toggleAccount(user) {
+      const originalStatus = user.is_enabled;
+      user.is_enabled = !user.is_enabled;
+
+      try {
+        await axios.put(`${this.base_url}api/v1/users/${user.id}/toggle-status`, {
+          is_enabled: user.is_enabled
+        });
+        this.$toast?.success?.('Account status toggled successfully');
+      } catch (error) {
+        console.error('Error toggling account status:', error);
+        user.is_enabled = originalStatus; // Rollback
+        this.$toast?.error?.('Error toggling account status');
+      }
+    },
+
+    // Role Management
+    openRoleSwitchModal(user) {
+      this.user = user;
+      this.selectedRole = null;
+      this.switchRoleDialog = true;
+    },
+
+    async submitRole() {
+      if (!this.selectedRole) {
+        this.$toast?.error?.('Please select a role');
+        return;
+      }
+
+      try {
+        await axios.put(`${this.base_url}api/v1/users/${this.user.id}/switch-role`, {
+          role: this.selectedRole
+        });
+        this.$toast?.success?.('Role switched successfully');
+        this.switchRoleDialog = false;
+        await this.fetchUsers();
+      } catch (error) {
+        console.error('Error switching role:', error);
+        this.$toast?.error?.('Failed to switch role. Please try again.');
+      }
+    },
+
+    // Permissions Management
+    async openPermissionsModal(userId) {
+      this.currentUserIdForPermissions = userId;
+      
+      try {
+        const response = await axios.get(`${this.base_url}api/v1/permissions/${userId}`);
+        this.userPermissions = response.data.userPermissions;
+        this.selectedPermissions = this.userPermissions
+          .filter(permission => permission.selected)
+          .map(permission => permission.id);
+        this.permissionsDialog = true;
+      } catch (error) {
+        console.error('Error fetching user permissions:', error);
+        this.$toast?.error?.('Failed to load permissions.');
+      }
+    },
+
+    async submitPermissions() {
+      try {
+        await axios.put(
+          `${this.base_url}api/v1/users/${this.currentUserIdForPermissions}/update-permissions`,
+          { permissions: this.selectedPermissions }
+        );
+        this.$toast?.success?.('Permissions updated successfully!');
+        this.permissionsDialog = false;
+      } catch (error) {
+        console.error('Error updating permissions:', error);
+        this.$toast?.error?.('Error updating permissions!');
+      }
+    },
+
+    // Utility Methods
+    impersonateUser(user) {
+      if (!user || !user.id) {
+        console.error('Invalid user object or missing user ID.');
+        this.$toast?.error?.('User information is incomplete. Please contact support.');
+        return;
+      }
+
+      const impersonateUrl = user.impersonate_url || `/impersonate/${user.id}`;
+      
       if (impersonateUrl) {
-        
         window.location.href = impersonateUrl;
       } else {
         console.error('Impersonation URL could not be determined.');
-        this.$toastr.error('Unable to determine impersonation URL. Please contact support.');
+        this.$toast?.error?.('Unable to determine impersonation URL. Please contact support.');
       }
-    }
-    ,
+    },
 
     formatPermissionName(name) {
       return name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
     },
-    fetchUsers() {
-      const apiUrl = this.base_url + 'api/v1/users';
-      axios.get(apiUrl)
-        .then(response => {
-          this.users = response.data.users.map(user => ({
-            id: user.id,
-            fullName: `${user.firstname} ${user.lastname}`,
-            super_admin: user.super_admin,
-            email: user.email,
-            phone: user.phone,
-            unit: user.unit,
-            department: user.department,
-            designation: user.designation,
-            is_enabled: user.is_enabled,
-            has_biometrics: user.has_biometrics,
-            office: user.office,
-            gender: user.gender,
-            role: user.role,
-            zk_user_id: user.zk_user_id,
-            zk_username: user.zk_username
-          }));
-        })
-        .catch(error => {
-          console.error('Error fetching users:', error);
-        });
+
+    getAvatar(user) {
+      const avatarMap = {
+        'Male': '/assets/img/male-avatar.svg',
+        'Female': '/assets/img/female-avatar.png'
+      };
+      return avatarMap[user.gender] || '/assets/img/user.jpg';
     },
-    filterUsers() {
-      const filterOptions = this.filterOptions;
-      const uri = this.base_url + 'api/v1/users';
-      axios.get(uri, filterOptions)
-        .then(response => {
-          this.users = response.data.users.map(user => ({
-            id: user.id,
-            fullName: user.firstname + user.lastname,
-            email: user.email,
-            phone: user.phone,
-            unit: user.unit,
-            department: user.department,
-            designation: user.designation,
-            is_enabled: user.is_enabled,
-            office: user.office,
-            gender: user.gender,
-            role: user.role
-          }));
-        })
-        .catch(error => {
-          console.log(error);
-        })
+
+    getStatusColor(value) {
+      return value ? 'green' : 'red';
+    },
+
+    getStatusIcon(value) {
+      return value ? 'mdi-check-circle' : 'mdi-alert-circle';
     },
 
     getIconName(title) {
-      switch (title) {
-        case 'Total Employees':
-          return 'account-group';
-        case 'Total Departments':
-          return 'office-building';
-        case 'Total Offices':
-          return 'gate';
-        case 'Total Designations':
-          return 'briefcase';
-        default:
-          return '';
-      }
+      const iconMap = {
+        'Total Employees': 'account-group',
+        'Total Departments': 'office-building',
+        'Total Offices': 'gate',
+        'Total Designations': 'briefcase'
+      };
+      return iconMap[title] || '';
     },
 
     getIconColor(color) {
-      switch (color) {
-        case 'warning':
-          return 'yellow darken-2';
-        case 'primary':
-          return 'blue darken-2';
-        case 'info':
-          return 'teal darken-2';
-        case 'success':
-          return 'green darken-2';
-        default:
-          return '';
-      }
+      const colorMap = {
+        'warning': 'yellow darken-2',
+        'primary': 'blue darken-2',
+        'info': 'teal darken-2',
+        'success': 'green darken-2'
+      };
+      return colorMap[color] || '';
     },
-    getAvatar(user) {
-      if (user.gender == 'Male') {
-        return '/assets/img/male-avatar.svg';
-      }
 
-      else if (user.gender == 'Female') {
-        return '/assets/img/female-avatar.png';
-      }
-      else {
-        return '/assets/img/user.jpg';
-      }
-
+    // Form Reset
+    resetFormData() {
+      this.formData = {
+        first_name: '',
+        last_name: '',
+        phone: '',
+        email: '',
+        gender: null,
+        unit_id: null,
+        office_id: null,
+        department_id: null,
+        designation_id: null,
+        enable_login: false,
+        send_logins: false,
+        role: null,
+        zk_user_id: '',
+        zk_username: '',
+      };
     },
+
+    // Dialog Management
     clearSearch() {
-      this.fetchUsers();
-
       this.search = '';
-
-    },
-    fetchUnits() {
-      const apiUrl = this.base_url + 'api/v1/branches';
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.branches = response.data.branches;
-        })
-        .catch(error => {
-          console.error('Error fetching branches:', error);
-        });
+      this.fetchUsers();
     },
 
-    fetchPermissions() {
-      const apiUrl = this.base_url + 'api/v1/permissions';
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.permissions = response.data.permissions;
-        })
-        .catch(error => {
-          console.error('Error fetching permissions:', error);
-        });
-    },
-
-    fetchRoles() {
-      const apiUrl = this.base_url + 'api/v1/roles';
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.roles = response.data.roles;
-        })
-        .catch(error => {
-          console.error('Error fetching roles:', error);
-        });
-    },
-    fetchOffices() {
-      const apiUrl = this.base_url + 'api/v1/offices';
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.offices = response.data.offices;
-        })
-        .catch(error => {
-          console.error('Error fetching offices:', error);
-        });
-    },
-    fetchDepartments() {
-      const apiUrl = this.base_url + 'api/v1/departments';
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.departments = response.data.departments;
-        })
-        .catch(error => {
-          console.error('Error fetching departments:', error);
-        });
-    },
-
-    fetchDesignations() {
-      const apiUrl = this.base_url + 'api/v1/designations';
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.designations = response.data.designations;
-        })
-        .catch(error => {
-          console.error('Error fetching designations:', error);
-        });
-    },
-    submitAddUserForm() {
-      console.log('Form submitted:', this.formData);
-      const apiUrl = this.base_url + 'api/v1/users';
-
-      axios.post(apiUrl, this.formData)
-        .then(response => {
-          console.log('Form submission successful:', response.data);
-
-          this.$toastr.success('Employee created successfully');
-
-          this.fetchUsers();
-          this.addUserModal = false;
-        })
-        .catch(error => {
-          console.error('Error submitting form:', error);
-          this.$toastr.error('Error creating employee. Please try again.');
-        });
-    },
     refreshUsers() {
       this.fetchUsers();
-      this.$toastr.success('Success')
+      this.$toast?.success?.('Data refreshed successfully');
     },
-    downloadExcel() {
-
-    },
-    canEditUser(user) {
-    },
-    canDeleteResource() {
-    },
-    editUser(item) {
-      if (item.super_admin == true) {
-        this.$toastr.error('This User is read only');
-        return;
-      }
-
-
-      console.log("Selected User:", item);
-      const apiUrl = `${this.base_url}api/v1/users/${item.id}`;
-
-      axios.get(apiUrl)
-        .then(response => {
-          const userData = response.data.user;
-          this.editedUser = {
-            id: userData.id,
-            first_name: userData.firstname,
-            last_name: userData.lastname,
-            phone: userData.phone,
-            email: userData.email,
-            unit_id: userData.unit_id,
-            office_id: userData.office_id,
-            department_id: userData.department_id,
-            designation_id: userData.designation_id,
-            role: userData.role[0],
-            gender: userData.gender,
-            zk_user_id: userData.zk_user_id,
-            zk_username: userData.zk_username,
-          };
-
-          this.editUserDialog = true;
-        })
-        .catch(error => {
-          console.error('Error fetching user data:', error);
-        });
-    },
-
-
-
-    submitEditUserForm() {
-      const apiUrl = `${this.base_url}api/v1/users/update/${this.editedUser.id}`;
-
-      const updatedUserData = {
-        firstname: this.editedUser.first_name,
-        lastname: this.editedUser.last_name,
-        phone: this.editedUser.phone,
-        email: this.editedUser.email,
-        unit_id: this.editedUser.unit_id,
-        office_id: this.editedUser.office_id,
-        // department_id: this.editedUser.department_id,
-        department_id: typeof this.editedUser.department_id === 'object' ? this.editedUser.department_id.id : this.editedUser.department_id,
-        designation_id: this.editedUser.designation_id,
-        role: this.editedUser.role,
-        gender: this.editedUser.gender,
-        zk_user_id: this.editedUser.zk_user_id,
-        zk_username: this.editedUser.zk_username,
-      };
-
-      axios.put(apiUrl, updatedUserData)
-        .then(response => {
-          console.log('User data updated successfully:', response.data);
-          this.editUserDialog = false;
-          this.$toastr.success(response.data.message);
-          this.fetchUsers();
-        })
-        .catch(error => {
-          console.error('Error updating user data:', error);
-
-          this.$toastr.error('Error updating user data. Please try again.');
-        });
-    },
-    openRoleSwitchModal(user) {
-
-      console.log('User object:', user);
-      this.$nextTick(() => {
-        this.user = user;
-        this.switchRoleDialog = true;
-      });
-    },
-
 
     closeSwitchRoleDialog() {
       this.switchRoleDialog = false;
+      this.selectedRole = null;
     },
 
-    submitRole() {
-
-      if (!this.selectedRole) {
-        this.$toastr.error('Please select a role');
-        return;
-      }
-
-      const apiUrl = `${this.base_url}api/v1/users/${this.user.id}/switch-role`;
-
-      axios.put(apiUrl, { role: this.selectedRole })
-        .then(response => {
-          this.$toastr.success('Role switched successfully');
-          this.switchRoleDialog = false;
-        })
-        .catch(error => {
-          console.error('Error switching role:', error);
-          this.$toastr.error('Failed to switch role. Please try again.');
-        });
-    },
-
-    openPermissionsModal(userId) {
-      this.currentUserIdForPermissions = userId;
-      const apiUrl = `${this.base_url}api/v1/permissions/${userId}`;
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.userPermissions = response.data.userPermissions;
-          this.selectedPermissions = this.userPermissions.filter(permission => permission.selected).map(permission => permission.id);
-
-          this.permissionsDialog = true;
-        })
-        .catch(error => {
-          console.error('Error fetching user permissions:', error);
-        });
-    },
     closePermissionsDialog() {
       this.permissionsDialog = false;
-    },
-    submitPermissions() {
-      const apiUrl = `${this.base_url}api/v1/users/${this.currentUserIdForPermissions}/update-permissions`;
-
-      const data = {
-        permissions: this.selectedPermissions,
-      };
-
-      axios.put(apiUrl, data)
-        .then(response => {
-          this.$toastr.success('Permissions updated successfully!');
-          this.permissionsDialog = false;
-        })
-        .catch(error => {
-          this.$toastr.error('Error updating permissions!');
-          this.permissionsDialog = false;
-        });
-    },
-    toggleAccount(user) {
-
-      user.is_enabled = !user.is_enabled;
-      const apiUrl = this.base_url + 'api/v1/users/' + user.id + '/toggle-status';
-
-      axios
-        .put(apiUrl, { is_enabled: user.is_enabled })
-        .then((response) => {
-          // Handle success
-          this.$toastr.success('Account status toggled successfully');
-        })
-        .catch((error) => {
-          // Handle error, rollback the toggle if necessary
-          console.error('Error toggling account status:', error);
-          user.is_enabled = !user.is_enabled;
-
-          // Display an error toastr
-          this.$toastr.error('Error toggling account status');
-        });
+      this.selectedPermissions = [];
     },
 
     openDeleteModal(item) {
       this.deletingItem = item;
       this.deleteModal = true;
     },
+
     closeDeleteModal() {
       this.deletingItem = null;
       this.deleteModal = false;
     },
-    deleteUser(user) {
-      if (user.super_admin == true) {
-        this.$toastr.error('This User is read only');
-        return;
-      }
 
-
-      const apiUrl = this.base_url + `api/v1/users/${user.id}`;
-      if (confirm('Are you sure you want to delete this user?')) {
-        axios.delete(apiUrl)
-          .then(response => {
-            this.fetchUsers();
-            this.$toastr.success(response.data.message);
-          })
-          .catch(error => {
-            console.error('Error deleting user:', error);
-            this.$toastr.error("Failed to delete User");
-          });
-      }
+    // Placeholder methods
+    downloadExcel() {
+      // Implementation for Excel download
+      console.log('Excel download functionality to be implemented');
     },
 
-    getStatusColor(value) {
-      console.log('valuse is:' + value)
-      return value ? 'green' : 'red';
+    canEditUser(user) {
+      // Implementation for user edit permissions
+      return !user.super_admin;
     },
 
-    getStatusIcon(value) {
-      console.log('valuse is:' + value)
-      return value ? 'mdi-check-circle' : 'mdi-alert-circle';
+    canDeleteResource() {
+      // Implementation for delete permissions
+      return true;
     },
+
     biometricsModal(user) {
-
+      // Implementation for biometrics management
+      console.log('Biometrics modal functionality to be implemented');
     }
-  },
+  }
 };
-
 </script>
