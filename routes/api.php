@@ -167,7 +167,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
   Route::get('v1/holidays', [HolidayApiController::class, 'index']);
   Route::post('v1/holidays', [HolidayApiController::class, 'store']);
-  Route::put('v1/holidays', [HolidayApiController::class, 'update']);
+  Route::put('v1/holidays/{id}', [HolidayApiController::class, 'update']);
   Route::delete('v1/holidays/{id}', [HolidayApiController::class, 'destroy']);
 
   //leave types

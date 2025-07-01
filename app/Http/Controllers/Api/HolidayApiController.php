@@ -22,7 +22,7 @@ class HolidayApiController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string',
             'date' => 'required|date',
-            // 'unit_id' => 'required|exists:units,id',
+            'unit_id' => 'required',
         ]);
 
 
@@ -30,7 +30,7 @@ class HolidayApiController extends Controller
         $holiday = Holiday::create([
             'name' => $validatedData['name'],
             'date' => $validatedData['date'],
-            // 'unit_id' => $validatedData['unit_id'],
+            'unit_id' => $validatedData['unit_id'],
             'is_recurring' => 1
         ]);
 
@@ -39,9 +39,24 @@ class HolidayApiController extends Controller
 
     public function update(Request $request, string $id)
     {
-        //
-    }
+        $validatedData = $request->validate([
+            'name' => 'sometimes|required|string',
+            'date' => 'sometimes|required|date',
+            'unit_id' => 'sometimes|required',
+            'is_recurring' => 'sometimes|boolean',
+        ]);
 
+        try {
+            $holiday = Holiday::findOrFail($id);
+            $holiday->update($validatedData);
+
+            Log::info("Holiday with ID {$id} updated successfully.");
+            return response()->json(['holiday' => $holiday]);
+        } catch (\Exception $e) {
+            Log::error("Failed to update holiday with ID {$id}: " . $e->getMessage());
+            return response()->json(['error' => 'Failed to update holiday.'], 500);
+        }
+    }
 
     public function destroy(string $id)
     {
