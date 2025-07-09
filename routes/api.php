@@ -309,6 +309,7 @@ Route::prefix('v1/earnings')->group(function () {
 
 
   Route::post('/user-earnings', [UserEarningController::class, 'store']);
+  Route::put('/user-earnings/{userEarning}', [UserEarningController::class, 'update']);
 
 });
 
@@ -334,6 +335,7 @@ Route::prefix('v1/deductions')->group(function () {
 
 
   Route::post('/user-deductions', [UserDeductionController::class, 'store']);
+  Route::put('/user-deductions/{userDeduction}', [UserDeductionController::class, 'update']);
 
 });
 

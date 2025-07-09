@@ -426,37 +426,46 @@
                   required 
                   hide-details>
                 </v-text-field>
+                
               </v-col>
             </v-row>
           </div>
           
           <!-- Show default earnings form if no existing earnings -->
-          <div v-else>
-            <v-row v-for="(earning, index) in salaryInfo.earnings" :key="`earning-${index}`" class="mb-2">
+            <div v-else>
+            <v-row v-for="(earning, index) in allEarnings" :key="`earning-${index}`" class="mb-2">
               <v-col cols="7">
-                <v-text-field 
-                  :label="earning.label" 
-                  :value="earning.label" 
-                  readonly 
-                  dense
-                  hide-details>
-                </v-text-field>
+              <v-text-field 
+                :label="earning.label || earning.name" 
+                :value="earning.label || earning.name" 
+                readonly 
+                dense
+                hide-details>
+              </v-text-field>
               </v-col>
               <v-col cols="5">
-                <v-text-field 
-                  v-model="earning.amount"
-                  :label="earning.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
-                  :prefix="earning.type === 'percentage' ? '' : 'KES'"
-                  :suffix="earning.type === 'percentage' ? '%' : ''" 
-                  type="number"
-                  :rules="[v => !!v || (earning.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
-                  dense 
-                  required 
-                  hide-details>
-                </v-text-field>
+              <v-text-field 
+                v-model="userEarnings[index].amount"
+                :label="earning.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                :prefix="earning.type === 'percentage' ? '' : 'KES'"
+                :suffix="earning.type === 'percentage' ? '%' : ''" 
+                type="number"
+                :rules="[v => !!v || (earning.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                dense 
+                required 
+                hide-details>
+              </v-text-field>
+
+              <v-btn icon small color="primary" @click="editEarning(index)">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn icon small color="red" @click="deleteEarning(index)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+              <!-- add edit and delete  -->
               </v-col>
             </v-row>
-          </div>
+            </div>
         </div>
 
         <!-- Deductions Section -->
@@ -492,33 +501,32 @@
           </div>
           
           <!-- Show default deductions form if no existing deductions -->
-          <div v-else>
-            <v-row v-for="(deduction, index) in salaryInfo.deductions" :key="`deduction-${index}`" class="mb-2">
+            <div v-else>
+            <v-row v-for="(deduction, index) in allDeductions" :key="`deduction-${index}`" class="mb-2">
               <v-col cols="7">
-                <v-text-field 
-                  :label="deduction.label" 
-                  :value="deduction.label" 
-                  readonly 
-                  dense
-                  hide-details>
-                </v-text-field>
+              <v-text-field 
+                :label="deduction.label || deduction.name" 
+                :value="deduction.label || deduction.name" 
+                readonly 
+                dense
+                hide-details>
+              </v-text-field>
               </v-col>
               <v-col cols="5">
-                <v-text-field 
-                  v-model="deduction.amount"
-                  :label="deduction.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
-                  :prefix="deduction.type === 'percentage' ? '' : 'KES'"
-                  :suffix="deduction.type === 'percentage' ? '%' : ''" 
-                  type="number"
-                  :rules="[v => !!v || (deduction.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
-                  dense 
-                  required 
-                  hide-details>
-                </v-text-field>
+              <v-text-field 
+                v-model="userDeductions[index].amount"
+                :label="deduction.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
+                :prefix="deduction.type === 'percentage' ? '' : 'KES'"
+                :suffix="deduction.type === 'percentage' ? '%' : ''" 
+                type="number"
+                :rules="[v => !!v || (deduction.type === 'percentage' ? 'Percentage is required' : 'Amount is required')]"
+                dense 
+                required 
+                hide-details>
+              </v-text-field>
               </v-col>
             </v-row>
-          </div>
-        </div>
+            </div></div>
       </v-form>
     </v-card-text>
     <v-card-actions>
@@ -570,6 +578,7 @@ export default {
 
   data() {
     return {
+      // earnings: [],
       // Dialog states
       salaryDialog: false,
       switchRoleDialog: false,
@@ -820,25 +829,26 @@ export default {
         this.loading.salary = false;
       }
     },
-
     async updateUserSalaryInfo() {
       const payload = {
-        user_id: this.selectedUser.id,
-        earnings: this.userEarnings.filter(e => e.amount && parseFloat(e.amount) > 0),
-        deductions: this.userDeductions.filter(d => d.amount && parseFloat(d.amount) > 0)
+      user_id: this.selectedUser.id,
+      earnings: this.userEarnings.filter(e => e.amount && parseFloat(e.amount) > 0),
+      deductions: this.userDeductions.filter(d => d.amount && parseFloat(d.amount) > 0)
       };
 
       const [earningsRes, deductionsRes] = await Promise.all([
-        axios.put(`/api/v1/earnings/user-earnings/${this.selectedUser.id}`, {
-          earnings: payload.earnings
-        }),
-        axios.put(`/api/v1/deductions/user-deductions/${this.selectedUser.id}`, {
-          deductions: payload.deductions
-        })
+      axios.put(`/api/v1/earnings/user-earnings/${this.selectedUser.id}`, {
+        user_id: this.selectedUser.id,
+        earnings: payload.earnings
+      }),
+      axios.put(`/api/v1/deductions/user-deductions/${this.selectedUser.id}`, {
+        user_id: this.selectedUser.id,
+        deductions: payload.deductions
+      })
       ]);
 
       if (!earningsRes.data.success || !deductionsRes.data.success) {
-        throw new Error('API returned error status');
+      throw new Error('API returned error status');
       }
     },
 

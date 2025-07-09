@@ -75,9 +75,28 @@ class UserDeductionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUserDeductionRequest $request, UserDeduction $userDeduction)
+    public function update(UpdateUserDeductionRequest $request, UserDeduction $userDeduction): JsonResponse
     {
-        //
+        $userId = $request->input('user_id', default: $userDeduction->user_id);
+
+        // Update deductions
+        foreach ($request->input('deductions', []) as $deduction) {
+            UserDeduction::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'deduction_id' => $deduction['deduction_id']
+                ],
+                [
+                    'amount' => $deduction['amount'],
+                    'type' => $deduction['type'] ?? null
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salary information updated successfully.'
+        ]);
     }
 
     /**
