@@ -500,7 +500,11 @@ class AttendanceApiController extends Controller
         }
 
         // Check if it's a holiday for the specific date of the clock-in
-        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+        // check if there is a holiday in the unit_id = user,unit
+        // $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+         $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
 
         // Determine which threshold to use based on the day of the week and holidays
         $lateThreshold = '';
@@ -766,51 +770,85 @@ class AttendanceApiController extends Controller
 
 
 
-    private function isLateFromZkteco($clockInTime, $unit)
-    {
-        if (!$unit) {
-            Log::warning('Missing unit for lateness check');
-            return false;
+        private function isLateFromZkteco($clockInTime, $unit)
+        {
+            Log::info('isLateFromZkteco called', [
+                'clockInTime' => $clockInTime,
+                'unit_id' => $unit ? $unit->id : null,
+                'unit_timezone' => $unit ? $unit->timezone : null,
+                'unit_late_threshold' => $unit->late_threshold ?? null,
+                'unit_weekend_threshold' => $unit->weekend_threshold ?? null,
+                'unit_sunday_threshold' => $unit->sunday_threshold ?? null,
+                'unit_weekend_day' => $unit->weekend_day ?? null,
+            ]);
+
+            if (!$unit) {
+                Log::warning('Missing unit for lateness check');
+                return false;
+            }
+
+            try {
+                $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+            } catch (\Exception $e) {
+                Log::error('Failed to parse clockInTime in isLateFromZkteco', [
+                    'clockInTime' => $clockInTime,
+                    'error' => $e->getMessage(),
+                ]);
+                return false;
+            }
+
+            $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+            $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+            $sundayThreshold = $unit->sunday_threshold ?? '11:00';
+
+            // Always override with 11:00 for Sunday threshold as in original code
+            $sundayThreshold = '11:00';
+
+            $userDayOfWeek = $userTime->dayOfWeek;
+
+            $weekendDays = is_array($unit->weekend_day)
+                ? $unit->weekend_day
+                : [$unit->weekend_day ?? Carbon::SATURDAY];
+
+            $isWeekend = in_array($userDayOfWeek, $weekendDays);
+            $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+            Log::info('isLateFromZkteco day checks', [
+                'user_day_of_week' => $userDayOfWeek,
+                'is_weekend' => $isWeekend,
+                'is_holiday' => $isHoliday,
+                'weekend_days' => $weekendDays,
+            ]);
+
+            // Check for Sunday specifically
+            if ($userDayOfWeek === Carbon::SUNDAY) {
+                $lateThreshold = $sundayThreshold;
+            } elseif ($isWeekend || $isHoliday) {
+                $lateThreshold = $weekendThreshold;
+            } else {
+                $lateThreshold = $defaultLateThreshold;
+            }
+
+            $thresholdTime = Carbon::parse(
+                $userTime->toDateString() . ' ' . $lateThreshold,
+                $unit->timezone
+            )->setTimezone('UTC');
+
+            Log::info('Evaluating lateness for ZKTeco', [
+                'user_time' => $userTime->toDateTimeString(),
+                'threshold' => $thresholdTime->toDateTimeString(),
+                'lateThreshold' => $lateThreshold,
+                'comparison' => Carbon::parse($clockInTime)->toDateTimeString() . ' > ' . $thresholdTime->toDateTimeString(),
+            ]);
+
+            $isLate = Carbon::parse($clockInTime)->greaterThan($thresholdTime);
+
+            Log::info('isLateFromZkteco result', [
+                'isLate' => $isLate,
+            ]);
+
+            return $isLate;
         }
-
-        $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
-
-        $defaultLateThreshold = $unit->late_threshold ?? '08:00';
-        $weekendThreshold = $unit->weekend_threshold ?? '08:30';
-        // $sundayThreshold = $unit->sunday_threshold ?? '11:00'; 
-
-        $sundayThreshold = '11:00';
-
-        $userDayOfWeek = $userTime->dayOfWeek;
-
-        $weekendDays = is_array($unit->weekend_day)
-            ? $unit->weekend_day
-            : [$unit->weekend_day ?? Carbon::SATURDAY];
-
-        $isWeekend = in_array($userDayOfWeek, $weekendDays);
-        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
-
-        // Check for Sunday specifically
-        if ($userDayOfWeek === Carbon::SUNDAY) {
-            $lateThreshold = $sundayThreshold;
-        } elseif ($isWeekend || $isHoliday) {
-            $lateThreshold = $weekendThreshold;
-        } else {
-            $lateThreshold = $defaultLateThreshold;
-        }
-
-        $thresholdTime = Carbon::parse(
-            $userTime->toDateString() . ' ' . $lateThreshold,
-            $unit->timezone
-        )->setTimezone('UTC');
-
-        Log::info('Evaluating lateness for ZKTeco', [
-            'user_time' => $userTime->toDateTimeString(),
-            'threshold' => $thresholdTime->toDateTimeString(),
-        ]);
-
-        return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
-    }
 
 
 
