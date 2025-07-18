@@ -401,11 +401,22 @@
         <!-- Earnings Section -->
         <div class="mb-4">
           <h3 class="subtitle-1 font-weight-medium mb-2">Earnings</h3>
+
+
+           <v-btn
+                  size="small"
+                  color="primary"
+                  variant="text"
+                  prepend-icon="mdi-plus"
+                  @click="addEarning"
+                >
+                  Add Earning
+                </v-btn>
           
           <!-- Show user's existing earnings if assigned -->
           <div v-if="hasExistingEarnings">
             <v-row v-for="(earning, index) in userEarnings" :key="`user-earning-${index}`" class="mb-2">
-              <v-col cols="7">
+              <v-col cols="4">
                 <v-text-field 
                   :label="earning.label || 'Earning'" 
                   :value="earning.label || `Earning ${index + 1}`" 
@@ -414,7 +425,7 @@
                   hide-details>
                 </v-text-field>
               </v-col>
-              <v-col cols="5">
+              <v-col cols="4">
                 <v-text-field 
                   v-model="earning.amount"
                   :label="earning.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
@@ -428,6 +439,16 @@
                 </v-text-field>
                 
               </v-col>
+
+                 <v-col cols="4" >
+                  <v-btn
+                    icon="mdi-delete"
+                    variant="text"
+                    color="error"
+                    @click="removeEarning(index)"
+                    class="mt-2"
+                  ></v-btn>
+                </v-col>
             </v-row>
           </div>
           
@@ -456,12 +477,7 @@
                 hide-details>
               </v-text-field>
 
-              <v-btn icon small color="primary" @click="editEarning(index)">
-                <v-icon>mdi-pencil</v-icon>
-              </v-btn>
-              <v-btn icon small color="red" @click="deleteEarning(index)">
-                <v-icon>mdi-delete</v-icon>
-              </v-btn>
+             
               <!-- add edit and delete  -->
               </v-col>
             </v-row>
@@ -471,11 +487,22 @@
         <!-- Deductions Section -->
         <div class="mb-4">
           <h3 class="subtitle-1 font-weight-medium mb-2">Deductions</h3>
+
+
+              <v-btn
+                  size="small"
+                  color="primary"
+                  variant="text"
+                  prepend-icon="mdi-plus"
+                  @click="addDeduction"
+                >
+                  Add Deduction
+                </v-btn>
           
           <!-- Show user's existing deductions if assigned -->
           <div v-if="hasExistingDeductions">
             <v-row v-for="(deduction, index) in userDeductions" :key="`user-deduction-${index}`" class="mb-2">
-              <v-col cols="7">
+              <v-col cols="4">
                 <v-text-field 
                   :label="deduction.label || 'Deduction'" 
                   :value="deduction.label || `Deduction ${index + 1}`" 
@@ -484,7 +511,7 @@
                   hide-details>
                 </v-text-field>
               </v-col>
-              <v-col cols="5">
+              <v-col cols="4">
                 <v-text-field 
                   v-model="deduction.amount"
                   :label="deduction.type === 'percentage' ? 'Percentage (%)' : 'Amount (KES)'"
@@ -497,6 +524,17 @@
                   hide-details>
                 </v-text-field>
               </v-col>
+
+                  <v-col cols="4" md="2">
+                  <v-btn
+                    icon="mdi-delete"
+                    variant="text"
+                    color="error"
+                    @click="removeDeduction(index)"
+                    class="mt-2"
+                  ></v-btn>
+                </v-col>
+
             </v-row>
           </div>
           

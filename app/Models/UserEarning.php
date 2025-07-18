@@ -12,4 +12,11 @@ class UserEarning extends Model
 
 
     protected $fillable = [ 'user_id', 'earning_id', 'amount'];
+
+
+public function earningType()
+{
+    return $this->belongsTo(Earning::class, 'earning_id');
+}
+    
 }

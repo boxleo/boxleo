@@ -288,6 +288,7 @@ Route::post('v1/performance-reports/ranked-employees', [PerformanceApiReportCont
 
 
 Route::get('v1/payslips/{id}/with-user', [PayrollController::class, 'payslipWithUser']);
+Route::get('v1/generate-payslip', [PayrollApiController::class, 'generatePayslip']);
 
 
 

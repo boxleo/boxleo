@@ -21,7 +21,7 @@ class PayrollController extends Controller
 
     public function payslipWithUser($id)
     {
-        return User::with('userdetails','earnings','deductions')->findOrFail($id);
+        return User::with('userdetails','earnings.earningType','deductions.deductionType')->findOrFail($id);
 
     }   
 
