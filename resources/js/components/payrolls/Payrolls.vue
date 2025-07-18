@@ -410,7 +410,7 @@
                     label="Basic Pay"
                     type="number"
                     variant="outlined"
-                    prefix="$"
+                    prefix="Ksh"
                     :rules="[v => !!v || 'Basic pay is required']"
                     @input="calculatePayrollTotals"
                     required
@@ -487,7 +487,7 @@
                     type="number"
                     variant="outlined"
                     density="comfortable"
-                    prefix="$"
+                    prefix="ksh"
                     hide-details
                     @input="calculatePayrollTotals"
                   ></v-text-field>
@@ -536,7 +536,7 @@
                     type="number"
                     variant="outlined"
                     density="comfortable"
-                    prefix="$"
+                    prefix="ksh"
                     hide-details
                     @input="calculatePayrollTotals"
                   ></v-text-field>
