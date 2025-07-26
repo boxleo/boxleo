@@ -30,7 +30,7 @@ class PerformanceEvaluation extends Model
         'leadership',
         'total_score',
         'percentage',
-        
+
     ];
 
 

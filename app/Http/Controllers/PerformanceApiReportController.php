@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class PerformanceApiReportController extends Controller
 {
-    
+
     // Export ranked evaluations as Excel
     public function exportRankedEmployees(Request $request)
     {
@@ -28,7 +28,7 @@ class PerformanceApiReportController extends Controller
         return Excel::download(new PerformanceExport($evaluations), 'performance_evaluations.xlsx');
     }
 
-    // Helper to assign ranking based on percentage
+    // Helper to assign ranking based on percentage 
     private function rankEvaluations(Collection $evaluations): Collection
     {
         return $evaluations->sortByDesc('percentage')->values()->map(function ($item, $index) {
