@@ -11,7 +11,7 @@ class UpdateUserDeductionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,10 @@ class UpdateUserDeductionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'user_id' => 'required|exists:users,id',
+            'deductions' => 'required|array|min:1',
+            'deductions.*.deduction_id' => 'sometimes|required|exists:deductions,id',
+            'deductions.*.amount' => 'sometimes|required|numeric|min:0',
         ];
     }
 }

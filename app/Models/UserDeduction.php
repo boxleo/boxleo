@@ -11,4 +11,10 @@ class UserDeduction extends Model
 
 
     protected $fillable = ['user_id', 'deduction_id', 'amount'];
+
+
+    public function deductionType()
+    {
+        return $this->belongsTo(Deduction::class, 'deduction_id'); 
+    }         
 }

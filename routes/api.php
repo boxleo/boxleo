@@ -167,7 +167,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
   Route::get('v1/holidays', [HolidayApiController::class, 'index']);
   Route::post('v1/holidays', [HolidayApiController::class, 'store']);
-  Route::put('v1/holidays', [HolidayApiController::class, 'update']);
+  Route::put('v1/holidays/{id}', [HolidayApiController::class, 'update']);
   Route::delete('v1/holidays/{id}', [HolidayApiController::class, 'destroy']);
 
   //leave types
@@ -288,6 +288,7 @@ Route::post('v1/performance-reports/ranked-employees', [PerformanceApiReportCont
 
 
 Route::get('v1/payslips/{id}/with-user', [PayrollController::class, 'payslipWithUser']);
+Route::get('v1/generate-payslip', [PayrollApiController::class, 'generatePayslip']);
 
 
 
@@ -309,6 +310,7 @@ Route::prefix('v1/earnings')->group(function () {
 
 
   Route::post('/user-earnings', [UserEarningController::class, 'store']);
+  Route::put('/user-earnings/{userEarning}', [UserEarningController::class, 'update']);
 
 });
 
@@ -334,6 +336,7 @@ Route::prefix('v1/deductions')->group(function () {
 
 
   Route::post('/user-deductions', [UserDeductionController::class, 'store']);
+  Route::put('/user-deductions/{userDeduction}', [UserDeductionController::class, 'update']);
 
 });
 

@@ -31,7 +31,13 @@ class UserEarningController extends Controller
     public function store(StoreUserEarningRequest $request): JsonResponse
     {
         $userId = auth()->user()->id;
-        Log::info('User ID: ' . $userId);
+        // Log::info('User ID: ' . $userId);
+
+    // Log the request data as an array
+    Log::info('Storing user earnings', [
+        'user_id' => $userId,
+        'data' => $request->all(),
+    ]);
 
         // Process earnings
         foreach ($request->input('earnings', []) as $earning) {
@@ -75,9 +81,37 @@ class UserEarningController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUserEarningRequest $request, UserEarning $userEarning)
+    public function update(UpdateUserEarningRequest $request, UserEarning $userEarning): JsonResponse
     {
-        //
+        // $userId = auth()->user()->id;
+                $userId = $request->input('user_id', default: $userEarning->user_id);
+
+        // Log::info(message: 'Updating User ID: ' . $userId);
+
+    // Log the request data as an array
+    Log::info('Storing user earnings', [
+        'user_id' => $userId,
+        'data' => $request->all(),
+    ]);
+
+
+        foreach ($request->input('earnings', []) as $earning) {
+            UserEarning::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'earning_id' => $earning['earning_id']
+                ],
+                [
+                    'amount' => $earning['amount'],
+                    // 'type' => $earning['type']
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salary information updated successfully.'
+        ]);
     }
 
     /**

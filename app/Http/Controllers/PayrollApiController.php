@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payslip;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PayrollApiController extends Controller
 {
@@ -80,5 +81,28 @@ class PayrollApiController extends Controller
 
         Payslip::destroy($id);
         return response()->json(['message' => 'Payslip deleted']);
+    }
+
+
+ public function generatePayslip(Request $request)
+    {
+
+
+        Log::info('Generating payslip for user: ' . $request->all());
+        // Logic to generate payslip
+        // This is a placeholder, implement your logic here
+        $userId = $request->input('user_id');
+        $month = $request->input('month');
+        $year = $request->input('year');
+
+        // Example logic to create a payslip
+        $payslip = Payslip::create([
+            'user_id' => $userId,
+            'month' => $month,
+            'year' => $year,
+            'amount' => 0, // Calculate the amount based on earnings and deductions
+        ]);
+
+        return response()->json($payslip);
     }
 }

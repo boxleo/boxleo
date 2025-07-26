@@ -410,7 +410,7 @@
                     label="Basic Pay"
                     type="number"
                     variant="outlined"
-                    prefix="$"
+                    prefix="Ksh"
                     :rules="[v => !!v || 'Basic pay is required']"
                     @input="calculatePayrollTotals"
                     required
@@ -473,7 +473,7 @@
               <v-row v-for="(earning, index) in payrollForm.earnings" :key="`earning-${index}`" class="mb-1">
                 <v-col cols="12" md="5">
                   <v-text-field
-                    v-model="earning.type"
+                    v-model="earning.earning_type.label"
                     label="Earning Type"
                     variant="outlined"
                     density="comfortable"
@@ -487,7 +487,7 @@
                     type="number"
                     variant="outlined"
                     density="comfortable"
-                    prefix="$"
+                    prefix="ksh"
                     hide-details
                     @input="calculatePayrollTotals"
                   ></v-text-field>
@@ -522,7 +522,7 @@
               <v-row v-for="(deduction, index) in payrollForm.deductions" :key="`deduction-${index}`" class="mb-1">
                 <v-col cols="12" md="5">
                   <v-text-field
-                    v-model="deduction.type"
+                    v-model="deduction.deduction_type.label"
                     label="Deduction Type"
                     variant="outlined"
                     density="comfortable"
@@ -536,7 +536,7 @@
                     type="number"
                     variant="outlined"
                     density="comfortable"
-                    prefix="$"
+                    prefix="ksh"
                     hide-details
                     @input="calculatePayrollTotals"
                   ></v-text-field>
@@ -1590,7 +1590,7 @@ export default {
     },
     
     showNotification(text, color = 'success') {
-      this.snackbar = {
+      this.nackbar = {
         show: true,
         text,
         color
