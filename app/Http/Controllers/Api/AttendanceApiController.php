@@ -90,9 +90,27 @@ class AttendanceApiController extends Controller
 
             $this->validateAttendanceRequest($request);
 
+            // Find existing attendance for this user and date
             $existingAttendance = Attendance::where('user_id', $request->user_id)
                 ->where('attendance_date', $request->attendance_date)
                 ->first();
+
+            // If clocking in and no record exists, allow creation
+            // If clocking out and record exists with clock_in_time but no clock_out_time, allow clock out
+            // If clocking in and record exists with clock_in_time, prevent duplicate clock in
+            // If clocking out and record exists with clock_out_time, prevent duplicate clock out
+
+            if (
+                ($request->attendance_type === 'clock_in' && $existingAttendance && $existingAttendance->clock_in_time) ||
+                ($request->attendance_type === 'clock_out' && (!$existingAttendance || $existingAttendance->clock_out_time))
+            ) {
+                Log::warning('Attendance already marked', [
+                    'user_id' => $request->user_id,
+                    'attendance_date' => $request->attendance_date,
+                    'attendance_type' => $request->attendance_type,
+                ]);
+                return response()->json(['message' => 'Attendance is already marked!'], 400);
+            }
 
             if ($existingAttendance) {
                 Log::warning('Attendance already marked', [
