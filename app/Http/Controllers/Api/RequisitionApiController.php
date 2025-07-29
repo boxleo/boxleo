@@ -654,8 +654,16 @@ class RequisitionApiController extends Controller
                 // Do something for Finance Manager
                 Log::info("Approver is Finance Manager");
 
-                if ($approver->is_line_manager === 1 || ($approver->designation_id === 1 && $requisition->status === 'Pending')) {
-                    if ($approverDepartment === $requestDepartment) {
+                if (
+                    $approver->is_line_manager === 1 ||
+                    ($approver->designation_id === 1 && $requisition->status === 'Pending')
+                ) {
+                    // Allow approval if approver is in the same department,
+                    // OR if requisition is for department 11 and approver is line manager of department 9
+                    if (
+                        $approverDepartment === $requestDepartment ||
+                        ($requestDepartment == 11 && $approverDepartment == 9)
+                    ) {
                         $requisition->status = 'Manager Approved';
                         $requisition->is_line_manager = 1;
 
@@ -666,7 +674,12 @@ class RequisitionApiController extends Controller
                         Log::warning('Department Mismatch');
                         return response()->json(['error' => 'You can only approve requests in your department'], 403);
                     }
-                } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'Manager Approved') {
+                }
+                
+                
+                
+                
+                elseif ($approver->is_finance_manager === 1 && $requisition->status === 'Manager Approved') {
                     $requisition->status = 'Approved';
                     $requisition->is_finance_manager = 1;
 

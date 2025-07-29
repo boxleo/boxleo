@@ -789,8 +789,34 @@ class LeaveApiController extends Controller
         'requestData' => $request->all()
       ]);
 
+
+
+      // new code
+      $user = User::findOrFail($request->user_id);
+
+      return $user;
+$designation = $user->designation ? strtolower($user->designation->name) : null;
+$country = $user->office ? strtolower($user->office->country ?? 'kenya') : 'kenya';
+
+// $customApproval = false;
+
+if (in_array($designation, ['intern', 'assistant']) && $country !== 'kenya') {
+    // $customApproval = true;
+    $leave->status = 'Manager Approval Only';
+    Log::info('Custom approval route for intern/assistant outside Kenya');
+}
+
+
+$isInternOrAssistantOutsideKenya = in_array(strtolower($leave->user->designation->name ?? ''), ['intern', 'assistant']) &&
+                                    strtolower($leave->user->office->country ?? 'kenya') !== 'kenya';
+
       $userId = $request->input('userId');
       $approver = User::find($userId);
+
+
+
+
+
       // approver heads mutiple departments and can only approve leave for their departments
 
 
