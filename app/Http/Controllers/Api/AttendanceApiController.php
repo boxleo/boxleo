@@ -230,8 +230,8 @@ class AttendanceApiController extends Controller
             'office_lng' => $office->longitude,
         ]);
 
-        $distanceFromPremise = $this->validateLocation($request->latitude, $request->longitude, $office);
-        $formattedDistance = number_format($distanceFromPremise, 2) . ' km';
+        $distanceInKilometers = $this->haversineDistance($office->latitude, $office->longitude, $request->latitude, $request->longitude);
+        $formattedDistance = number_format($distanceInKilometers, 2) . ' km';
         Log::info('Distance from premise calculated', ['distance' => $formattedDistance]);
 
         $notes = "Distance from the premise: " . $formattedDistance;
