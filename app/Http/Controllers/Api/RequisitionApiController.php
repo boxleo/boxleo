@@ -981,30 +981,3 @@ class RequisitionApiController extends Controller
 
 
 
-
-     // finance manager is final approval 
-            elseif ($requisition->approver_type === "Finance Manager") {
-                // Do something for Finance Manager
-                Log::info("Approver is Finance Manager");
-
-                if (
-                    $approver->is_line_manager === 1 ||
-                    ($approver->designation_id === 1 && $requisition->status === 'Pending')
-                ) {
-                    // Allow approval if approver is in the same department,
-                    // OR if requisition is for department 11 and approver is line manager of department 9
-                    if (
-                        $approverDepartment === $requestDepartment ||
-                        ($requestDepartment == 11 && $approverDepartment == 9)
-                    ) {
-                        $requisition->status = 'Manager Approved';
-                        $requisition->is_line_manager = 1;
-
-                        // Log the approval action
-                        $this->logRequisitionAction($requisition, 'Manager Approved', $details, $userId);
-                        Log::info('Requisition Status Updated', ['newStatus' => 'Manager Approved']);
-                    } else {
-                        Log::warning('Department Mismatch');
-                        return response()->json(['error' => 'You can only approve requests in your department'], 403);
-                    }
-                }
