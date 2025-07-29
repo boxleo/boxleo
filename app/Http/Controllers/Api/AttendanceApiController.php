@@ -98,19 +98,38 @@ class AttendanceApiController extends Controller
             // If clocking in and no record exists, allow creation
             // If clocking out and record exists with clock_in_time but no clock_out_time, allow clock out
             // If clocking in and record exists with clock_in_time, prevent duplicate clock in
-            // If clocking out and record exists with clock_out_time, prevent duplicate clock out
+            // If clocking out and record exists with clock_out_time, update  clock out
 
-            if (
-                ($request->attendance_type === 'clock_in' && $existingAttendance && $existingAttendance->clock_in_time) ||
-                ($request->attendance_type === 'clock_out' && (!$existingAttendance || $existingAttendance->clock_out_time))
-            ) {
-                Log::warning('Attendance already marked', [
+            // if (
+            //     ($request->attendance_type === 'clock_in' && $existingAttendance && $existingAttendance->clock_in_time) ||
+            //     ($request->attendance_type === 'clock_out' && (!$existingAttendance || $existingAttendance->clock_out_time))
+            // ) {
+            //     Log::warning('Attendance already marked', [
+            //         'user_id' => $request->user_id,
+            //         'attendance_date' => $request->attendance_date,
+            //         'attendance_type' => $request->attendance_type,
+            //     ]);
+            //     return response()->json(['message' => 'Attendance is already marked!'], 400);
+            // }
+
+
+
+            if ($request->attendance_type === 'clock_in' && $existingAttendance && $existingAttendance->clock_in_time) {
+                Log::warning('Clock-in already marked', [
                     'user_id' => $request->user_id,
                     'attendance_date' => $request->attendance_date,
-                    'attendance_type' => $request->attendance_type,
                 ]);
-                return response()->json(['message' => 'Attendance is already marked!'], 400);
+                return response()->json(['message' => 'Clock-in already marked!'], 400);
             }
+
+            if ($request->attendance_type === 'clock_out' && !$existingAttendance) {
+                Log::warning('Cannot clock out without clocking in', [
+                    'user_id' => $request->user_id,
+                    'attendance_date' => $request->attendance_date,
+                ]);
+                return response()->json(['message' => 'No clock-in record found!'], 400);
+            }
+
 
             if ($existingAttendance) {
                 Log::warning('Attendance already marked', [
