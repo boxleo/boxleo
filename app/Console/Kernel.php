@@ -56,7 +56,7 @@ class Kernel extends ConsoleKernel
 
             // $schedule->job(new \App\Jobs\DailyAttendanceJob)->everyTwoMinutes();
 
-            // $schedule->job(new \App\Jobs\DailyAttendanceJob)->dailyAt('11:59');
+            $schedule->job(new \App\Jobs\DailyAttendanceJob)->dailyAt('11:59');
 
 
 

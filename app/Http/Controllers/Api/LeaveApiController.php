@@ -24,9 +24,6 @@ use App\Notifications\TaskAssignedNotification;
 class LeaveApiController extends Controller
 {
 
-
-
-
   public function index(Request $request)
   {
     Log::info('Fetching leave records', ['user_id' => auth()->id(), 'request_params' => $request->all()]);
@@ -792,23 +789,23 @@ class LeaveApiController extends Controller
 
 
       // new code
-      $user = User::findOrFail($request->user_id);
+      $user = User::findOrFail($request->userId);
 
-      return $user;
-$designation = $user->designation ? strtolower($user->designation->name) : null;
-$country = $user->office ? strtolower($user->office->country ?? 'kenya') : 'kenya';
+      // return $user;
+      $designation = $user->designation ? strtolower($user->designation->name) : null;
+      $country = $user->office ? strtolower($user->office->country ?? 'kenya') : 'kenya';
 
-// $customApproval = false;
+      // $customApproval = false;
 
-if (in_array($designation, ['intern', 'assistant']) && $country !== 'kenya') {
-    // $customApproval = true;
-    $leave->status = 'Manager Approval Only';
-    Log::info('Custom approval route for intern/assistant outside Kenya');
-}
+      if (in_array($designation, ['intern', 'assistant']) && $country !== 'kenya') {
+        // $customApproval = true;
+        $leave->status = 'Manager Approval Only';
+        Log::info('Custom approval route for intern/assistant outside Kenya');
+      }
 
 
-$isInternOrAssistantOutsideKenya = in_array(strtolower($leave->user->designation->name ?? ''), ['intern', 'assistant']) &&
-                                    strtolower($leave->user->office->country ?? 'kenya') !== 'kenya';
+      $isInternOrAssistantOutsideKenya = in_array(strtolower($leave->user->designation->name ?? ''), ['intern', 'assistant']) &&
+        strtolower($leave->user->office->country ?? 'kenya') !== 'kenya';
 
       $userId = $request->input('userId');
       $approver = User::find($userId);
