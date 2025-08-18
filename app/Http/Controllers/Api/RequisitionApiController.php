@@ -386,7 +386,7 @@ class RequisitionApiController extends Controller
         $validated = $request->validate([
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
-            'items.*.description' => 'required|string|max:255',
+            'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'items.*.total_cost' => 'required|numeric|min:0',
