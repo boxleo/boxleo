@@ -600,6 +600,7 @@ class LeaveApiController extends Controller
         // Special case: Only HR can approve, then goes directly to final approval (bypasses HOD)
         if ($approver->is_hr === 1) {
           $leave->status = 'Approved';
+
           $this->logLeaveAction($leave, 'Final Approved (HR Only - Special Case)', $userId);
           $this->notifyEmployee($leave);
           $this->notifyTaskAssignees($leave);
@@ -735,7 +736,8 @@ private function notifyTaskAssignees(Leave $leave)
     $assignee = User::find($task['assignee_id']);
 
     if ($assignee) {
-      $assignee->notify(new TaskAssignedNotification($leave, $task));
+      // $assignee->notify(new TaskAssignedNotification($leave, $task));
+      $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
       Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
     } else {
       Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
