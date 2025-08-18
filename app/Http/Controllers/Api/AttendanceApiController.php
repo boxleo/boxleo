@@ -202,13 +202,14 @@ class AttendanceApiController extends Controller
                 return response()->json(['message' => 'No valid clock-in record found!'], 400);
             }
 
-            if ($existingAttendance->clock_out_time) {
-                Log::info('Overriding existing clock-out time', [
-                    'user_id' => $request->user_id,
-                    'attendance_date' => $request->attendance_date,
-                    'previous_clock_out' => $existingAttendance->clock_out_time,
-                ]);
-            }
+            // Update the clock_out_time if it already exists, or set it if not
+            $existingAttendance->clock_out_time = $request->time;
+            Log::info('Clock-out time updated', [
+                'user_id' => $request->user_id,
+                'attendance_date' => $request->attendance_date,
+                'new_clock_out' => $request->time,
+            ]);
+            $existingAttendance->save();
         }
 
         $user = User::find($request->user_id);
