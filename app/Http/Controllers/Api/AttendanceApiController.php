@@ -356,7 +356,13 @@ class AttendanceApiController extends Controller
 
         if ($request->attendance_type === 'clock_in' && !$existingAttendance->clock_in_time) {
             $existingAttendance->clock_in_time = $request->time;
-            $existingAttendance->status = $this->isLate($request->time, $unit) ? 'Late' : 'In Time';
+            // $existingAttendance->status = $this->isLate($request->time, $unit) ? 'Late' : 'In Time';
+
+            $existingAttendance->status = $this->isLate($request->time, $unit, $request->attendance_date) ? 'Late' : 'In Time';
+
+
+
+
             Log::info('Clock-in time set', [
                 'clock_in_time' => $request->time,
                 'status' => $existingAttendance->status,
@@ -439,69 +445,95 @@ class AttendanceApiController extends Controller
 
 
 
+    private function isLate($clockInTime, $unit, $attendanceDate = null)
+    {
+        // Validate input
+        if (!$unit) {
+            Log::error('Invalid unit provided to isLate function');
+            return false;
+        }
 
-    private function isLate($clockInTime, $unit)
-{
-    // Validate input
-    if (!$unit) {
-        Log::error('Invalid unit provided to isLate function');
-        return false;
+        // Ensure we have a full date and time for processing.
+        // If clockInTime is just a time (HH:MM:SS) and attendanceDate is provided, combine them.
+        // Otherwise, assume clockInTime is a full datetime string.
+        $dateTimeToParse = $clockInTime;
+        if ($attendanceDate && preg_match('/^\d{2}:\d{2}:\d{2}$/', $clockInTime)) {
+            $dateTimeToParse = $attendanceDate . ' ' . $clockInTime;
+        }
+
+        Log::info('Time parsing', [
+            'original_clockInTime' => $clockInTime,
+            'attendanceDate_provided' => $attendanceDate,
+            'final_dateTimeToParse' => $dateTimeToParse
+        ]);
+
+        try {
+            // Parse the clock-in time and set it to the unit's timezone.
+            // This 'userTime' represents the actual clock-in moment in the user's local time.
+            $userTime = Carbon::parse($dateTimeToParse)->setTimezone($unit->timezone);
+        } catch (\Exception $e) {
+            Log::error('Failed to parse clockInTime or attendanceDate combination: ' . $e->getMessage(), [
+                'clockInTime' => $clockInTime,
+                'attendanceDate' => $attendanceDate
+            ]);
+            return false; // Or handle error appropriately
+        }
+
+        // Set default thresholds
+        // It's good practice to ensure these are valid time strings.
+        $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+        $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+        $sundayThreshold = $unit->sunday_threshold ?? '11:00'; // Specific Sunday threshold
+
+        // Get day of week (0 = Sunday, 6 = Saturday)
+        $userDayOfWeek = $userTime->dayOfWeek;
+
+        // Parse weekend day configuration - handle both integer and array inputs
+        $weekendDays = [];
+        if (isset($unit->weekend_day)) {
+            $weekendDays = is_array($unit->weekend_day)
+                ? $unit->weekend_day
+                : [$unit->weekend_day];
+        } else {
+            // Default to Saturday only if not configured
+            $weekendDays = [Carbon::SATURDAY];
+        }
+
+        // Check if it's a holiday for the specific date of the clock-in
+        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+
+        // Determine which threshold to use based on the day of the week and holidays
+        $lateThreshold = '';
+        if ($userDayOfWeek === Carbon::SUNDAY) {
+            $lateThreshold = $sundayThreshold;
+        } elseif (in_array($userDayOfWeek, $weekendDays) || $isHoliday) {
+            $lateThreshold = $weekendThreshold;
+        } else {
+            $lateThreshold = $defaultLateThreshold;
+        }
+
+        // Create the threshold time on the *same day* as the user's clock-in,
+        // and ensure it's in the *same timezone* as userTime for accurate comparison.
+        $thresholdTime = Carbon::parse(
+            $userTime->toDateString() . ' ' . $lateThreshold,
+            $unit->timezone
+        );
+
+        Log::info('Evaluating lateness', [
+            'clock_in_datetime' => $userTime->toDateTimeString(), // Clock-in in user's timezone
+            'user_day_of_week' => $userDayOfWeek,
+            'is_sunday' => $userDayOfWeek === Carbon::SUNDAY,
+            'is_weekend_day_configured' => in_array($userDayOfWeek, $weekendDays),
+            'is_holiday' => $isHoliday,
+            'threshold_used_time_string' => $lateThreshold, // The time string used (e.g., '08:00')
+            'threshold_time_full_datetime' => $thresholdTime->toDateTimeString(), // Threshold in user's timezone
+            'unit_timezone' => $unit->timezone
+        ]);
+
+        // Compare the user's actual clock-in time with the calculated threshold time.
+        // Both are now Carbon instances in the same timezone, allowing for a direct and accurate comparison.
+        return $userTime->greaterThan($thresholdTime);
     }
-
-    // Convert clock-in time to unit's timezone
-    $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
-
-    // Set default thresholds
-    $defaultLateThreshold = $unit->late_threshold ?? '08:00';
-    $weekendThreshold = $unit->weekend_threshold ?? '08:30';
-    $sundayThreshold = $unit->sunday_threshold ?? '11:00'; // Dynamic with fallback
-
-    // Get day of week (0 = Sunday, 6 = Saturday)
-    $userDayOfWeek = $userTime->dayOfWeek;
-
-    // Parse weekend day configuration - handle both integer and string inputs
-    $weekendDays = [];
-    if (isset($unit->weekend_day)) {
-        $weekendDays = is_array($unit->weekend_day)
-            ? $unit->weekend_day
-            : [$unit->weekend_day];
-    } else {
-        $weekendDays = [Carbon::SATURDAY]; // Default to Saturday
-    }
-
-    // Check if it's a weekend
-    $isWeekend = in_array($userDayOfWeek, $weekendDays);
-
-    // Check if it's a holiday
-    $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
-
-    // Decide which threshold to use
-    if ($userDayOfWeek === Carbon::SUNDAY) {
-        $lateThreshold = $sundayThreshold; // Prefer unit setting, fallback to 11:00
-    } elseif ($isWeekend || $isHoliday) {
-        $lateThreshold = $weekendThreshold;
-    } else {
-        $lateThreshold = $defaultLateThreshold;
-    }
-
-    // Create a Carbon instance for the threshold time on the same day
-    $thresholdTime = Carbon::parse(
-        $userTime->toDateString() . ' ' . $lateThreshold,
-        $unit->timezone
-    )->setTimezone('UTC');
-
-    Log::info('Evaluating lateness', [
-        'clock_in_time_utc' => $clockInTime,
-        'user_time' => $userTime->toDateTimeString(),
-        'is_weekend' => $isWeekend,
-        'is_holiday' => $isHoliday,
-        'threshold_local' => $lateThreshold,
-        'threshold_utc' => $thresholdTime->toDateTimeString(),
-    ]);
-
-    // Determine if the user is late
-    return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
-}
 
 
     public function fetchServerTime(): JsonResponse
@@ -676,49 +708,48 @@ class AttendanceApiController extends Controller
 
 
     private function isLateFromZkteco($clockInTime, $unit)
-{
-    if (!$unit) {
-        Log::warning('Missing unit for lateness check');
-        return false;
-    }
+    {
+        if (!$unit) {
+            Log::warning('Missing unit for lateness check');
+            return false;
+        }
 
-    $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
+        $userTime = Carbon::parse($clockInTime)->setTimezone($unit->timezone);
 
-    $defaultLateThreshold = $unit->late_threshold ?? '08:00';
-    $weekendThreshold = $unit->weekend_threshold ?? '08:30';
-    // $sundayThreshold = $unit->sunday_threshold ?? '11:00'; 
+        $defaultLateThreshold = $unit->late_threshold ?? '08:00';
+        $weekendThreshold = $unit->weekend_threshold ?? '08:30';
+        // $sundayThreshold = $unit->sunday_threshold ?? '11:00'; 
 
         $sundayThreshold = '11:00';
 
-    $userDayOfWeek = $userTime->dayOfWeek;
+        $userDayOfWeek = $userTime->dayOfWeek;
 
-    $weekendDays = is_array($unit->weekend_day)
-        ? $unit->weekend_day
-        : [$unit->weekend_day ?? Carbon::SATURDAY];
+        $weekendDays = is_array($unit->weekend_day)
+            ? $unit->weekend_day
+            : [$unit->weekend_day ?? Carbon::SATURDAY];
 
-    $isWeekend = in_array($userDayOfWeek, $weekendDays);
-    $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
+        $isWeekend = in_array($userDayOfWeek, $weekendDays);
+        $isHoliday = Holiday::whereDate('date', $userTime->toDateString())->exists();
 
-    // Check for Sunday specifically
-    if ($userDayOfWeek === Carbon::SUNDAY) {
-        $lateThreshold = $sundayThreshold;
-    } elseif ($isWeekend || $isHoliday) {
-        $lateThreshold = $weekendThreshold;
-    } else {
-        $lateThreshold = $defaultLateThreshold;
+        // Check for Sunday specifically
+        if ($userDayOfWeek === Carbon::SUNDAY) {
+            $lateThreshold = $sundayThreshold;
+        } elseif ($isWeekend || $isHoliday) {
+            $lateThreshold = $weekendThreshold;
+        } else {
+            $lateThreshold = $defaultLateThreshold;
+        }
+
+        $thresholdTime = Carbon::parse(
+            $userTime->toDateString() . ' ' . $lateThreshold,
+            $unit->timezone
+        )->setTimezone('UTC');
+
+        Log::info('Evaluating lateness for ZKTeco', [
+            'user_time' => $userTime->toDateTimeString(),
+            'threshold' => $thresholdTime->toDateTimeString(),
+        ]);
+
+        return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
     }
-
-    $thresholdTime = Carbon::parse(
-        $userTime->toDateString() . ' ' . $lateThreshold,
-        $unit->timezone
-    )->setTimezone('UTC');
-
-    Log::info('Evaluating lateness for ZKTeco', [
-        'user_time' => $userTime->toDateTimeString(),
-        'threshold' => $thresholdTime->toDateTimeString(),
-    ]);
-
-    return Carbon::parse($clockInTime)->greaterThan($thresholdTime);
-}
-
 }
