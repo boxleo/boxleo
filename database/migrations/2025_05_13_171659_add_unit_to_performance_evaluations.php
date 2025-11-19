@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('performance_evaluations', function (Blueprint $table) {
-            $table->foreignId('unit_id')
-              ->nullable()
-              ->after('evaluator_id')
-              ->constrained('units')
-              ->nullOnDelete();
-        });
+        if (!Schema::hasColumn('performance_evaluations', 'unit_id')) {
+            Schema::table('performance_evaluations', function (Blueprint $table) {
+                $table->foreignId('unit_id')
+                    ->nullable()
+                    ->after('evaluator_id')
+                    ->constrained('units')
+                    ->nullOnDelete();
+            });
+        }
     }
 
     /**
@@ -25,8 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('performance_evaluations', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('unit_id');
-        });
+        if (Schema::hasColumn('performance_evaluations', 'unit_id')) {
+            Schema::table('performance_evaluations', function (Blueprint $table) {
+                $table->dropConstrainedForeignId('unit_id');
+            });
+        }
     }
 };
