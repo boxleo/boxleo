@@ -83,68 +83,182 @@ class AttendanceApiController extends Controller
         return response()->json(['attendances' => $attendances]);
     }
 
+    // public function store(Request $request)
+    // {
+    //     try {
+    //         Log::info('Store method called', ['request' => $request->all()]);
+
+    //         $this->validateAttendanceRequest($request);
+
+    //         // Find existing attendance for this user and date
+    //         $existingAttendance = Attendance::where('user_id', $request->user_id)
+    //             ->where('attendance_date', $request->attendance_date)
+    //             ->first();
+
+         
+
+
+    //         if ($request->attendance_type === 'clock_in' && $existingAttendance && $existingAttendance->clock_in_time) {
+    //             Log::warning('Clock-in already marked', [
+    //                 'user_id' => $request->user_id,
+    //                 'attendance_date' => $request->attendance_date,
+    //             ]);
+    //             return response()->json(['message' => 'Clock-in already marked!'], 400);
+    //         }
+
+    //         if ($request->attendance_type === 'clock_out' && !$existingAttendance) {
+    //             Log::warning('Cannot clock out without clocking in', [
+    //                 'user_id' => $request->user_id,
+    //                 'attendance_date' => $request->attendance_date,
+    //             ]);
+    //             return response()->json(['message' => 'No clock-in record found!'], 400);
+    //         }
+
+
+    //         if ($existingAttendance) {
+    //             Log::warning('Attendance already marked', [
+    //                 'user_id' => $request->user_id,
+    //                 'attendance_date' => $request->attendance_date,
+    //             ]);
+    //             return response()->json(['message' => 'Attendance is already marked!'], 400);
+    //         }
+
+    //         $user = User::find($request->user_id);
+    //         if (!$user) {
+    //             Log::error('User not found', ['user_id' => $request->user_id]);
+    //             return response()->json(['error' => 'User not found'], 404);
+    //         }
+
+    //         $office = $user->office;
+    //         if (!$office) {
+    //             Log::error('Office not found for user', ['user_id' => $request->user_id]);
+    //             return response()->json(['error' => 'Office not found'], 404);
+    //         }
+
+    //         Log::info('Validating location', [
+    //             'latitude' => $request->latitude,
+    //             'longitude' => $request->longitude,
+    //             'office' => $office,
+    //         ]);
+
+    //         $distanceFromPremise = $this->validateLocation($request->latitude, $request->longitude, $office);
+
+    //         Log::info('Distance from premise calculated', ['distance' => $distanceFromPremise]);
+
+    //         $notes = $distanceFromPremise ? "Distance from the premise: " . $distanceFromPremise : null;
+
+    //         Log::info('Processing attendance', [
+    //             'user_id' => $request->user_id,
+    //             'attendance_date' => $request->attendance_date,
+    //             'notes' => $notes,
+    //         ]);
+
+    //         $this->processAttendance($request, $notes);
+
+    //         Log::info('Attendance record created successfully', [
+    //             'user_id' => $request->user_id,
+    //             'attendance_date' => $request->attendance_date,
+    //         ]);
+
+    //         return response()->json(['message' => 'Record created!'], 200);
+    //     } catch (\Exception $e) {
+    //         Log::error('Error in store method', ['error' => $e->getMessage()]);
+    //         return response()->json(['error' => $e->getMessage()], 500);
+    //     }
+    // }
+
+
+
+
     public function store(Request $request)
-    {
-        try {
-            Log::info('Store method called', ['request' => $request->all()]);
+{
+    try {
+        Log::info('Store method called', ['request' => $request->all()]);
 
-            $this->validateAttendanceRequest($request);
+        $this->validateAttendanceRequest($request);
 
-            $existingAttendance = Attendance::where('user_id', $request->user_id)
-                ->where('attendance_date', $request->attendance_date)
-                ->first();
+        $existingAttendance = Attendance::where('user_id', $request->user_id)
+            ->where('attendance_date', $request->attendance_date)
+            ->first();
 
-            if ($existingAttendance) {
-                Log::warning('Attendance already marked', [
+        // Handle clock-in
+        if ($request->attendance_type === 'clock_in') {
+            if ($existingAttendance && $existingAttendance->clock_in_time) {
+                Log::warning('Clock-in already marked', [
                     'user_id' => $request->user_id,
                     'attendance_date' => $request->attendance_date,
                 ]);
-                return response()->json(['message' => 'Attendance is already marked!'], 400);
+                return response()->json(['message' => 'Clock-in already marked!'], 400);
             }
-
-            $user = User::find($request->user_id);
-            if (!$user) {
-                Log::error('User not found', ['user_id' => $request->user_id]);
-                return response()->json(['error' => 'User not found'], 404);
-            }
-
-            $office = $user->office;
-            if (!$office) {
-                Log::error('Office not found for user', ['user_id' => $request->user_id]);
-                return response()->json(['error' => 'Office not found'], 404);
-            }
-
-            Log::info('Validating location', [
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'office' => $office,
-            ]);
-
-            $distanceFromPremise = $this->validateLocation($request->latitude, $request->longitude, $office);
-
-            Log::info('Distance from premise calculated', ['distance' => $distanceFromPremise]);
-
-            $notes = $distanceFromPremise ? "Distance from the premise: " . $distanceFromPremise : null;
-
-            Log::info('Processing attendance', [
-                'user_id' => $request->user_id,
-                'attendance_date' => $request->attendance_date,
-                'notes' => $notes,
-            ]);
-
-            $this->processAttendance($request, $notes);
-
-            Log::info('Attendance record created successfully', [
-                'user_id' => $request->user_id,
-                'attendance_date' => $request->attendance_date,
-            ]);
-
-            return response()->json(['message' => 'Record created!'], 200);
-        } catch (\Exception $e) {
-            Log::error('Error in store method', ['error' => $e->getMessage()]);
-            return response()->json(['error' => $e->getMessage()], 500);
         }
+
+        // Handle clock-out
+        if ($request->attendance_type === 'clock_out') {
+            if (!$existingAttendance || !$existingAttendance->clock_in_time) {
+                Log::warning('Cannot clock out without valid clock-in', [
+                    'user_id' => $request->user_id,
+                    'attendance_date' => $request->attendance_date,
+                ]);
+                return response()->json(['message' => 'No valid clock-in record found!'], 400);
+            }
+
+            // Update the clock_out_time if it already exists, or set it if not
+            $existingAttendance->clock_out_time = $request->time;
+            Log::info('Clock-out time updated', [
+                'user_id' => $request->user_id,
+                'attendance_date' => $request->attendance_date,
+                'new_clock_out' => $request->time,
+            ]);
+            $existingAttendance->save();
+        }
+
+        $user = User::find($request->user_id);
+        if (!$user) {
+            Log::error('User not found', ['user_id' => $request->user_id]);
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $office = $user->office;
+        if (!$office) {
+            Log::error('Office not found for user', ['user_id' => $request->user_id]);
+            return response()->json(['error' => 'Office not found'], 404);
+        }
+
+        Log::info('Validating location', [
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'office_lat' => $office->latitude,
+            'office_lng' => $office->longitude,
+        ]);
+
+        $distanceInKilometers = $this->haversineDistance($office->latitude, $office->longitude, $request->latitude, $request->longitude);
+        $formattedDistance = number_format($distanceInKilometers, 2) . ' km';
+        Log::info('Distance from premise calculated', ['distance' => $formattedDistance]);
+
+        $notes = "Distance from the premise: " . $formattedDistance;
+
+        Log::info('Processing attendance', [
+            'user_id' => $request->user_id,
+            'attendance_type' => $request->attendance_type,
+            'attendance_date' => $request->attendance_date,
+            'notes' => $notes,
+        ]);
+
+        $this->processAttendance($request, $notes);
+
+        Log::info('Attendance record saved successfully', [
+            'user_id' => $request->user_id,
+            'attendance_date' => $request->attendance_date,
+            'type' => $request->attendance_type,
+        ]);
+
+        return response()->json(['message' => 'Record created!'], 200);
+    } catch (\Exception $e) {
+        Log::error('Error in store method', ['error' => $e->getMessage()]);
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
+
 
     public function update(Request $request, Attendance $attendance)
     {

@@ -527,6 +527,8 @@ export default {
           const allLeaves = response.data.leaves.filter(leave =>
             leave.status == 'Pending' ||
             leave.status == 'Manager Approved' ||
+           leave.status === 'Manager Approval Only'||
+            
             leave.status == 'Hr Approved'
           ).map(leave => {
             if (leave.user && leave.user.firstname && leave.user.lastname) {
@@ -543,7 +545,12 @@ export default {
             if (this.user.is_hr) {
               console.log("User  is HR.");
               // HR: See 'Pending' and 'Manager Approved' leaves
-              this.pendingLeaves = allLeaves.filter(leave => leave.status === 'Pending' || leave.status === 'Manager Approved');
+              this.pendingLeaves = allLeaves.filter(
+                leave =>
+                  leave.status === 'Pending' ||
+                  leave.status === 'Manager Approved' ||
+                  leave.status === 'Manager Approval Only'
+              );
               console.log("Pending leaves for HR:", this.pendingLeaves); // Debugging: Log the pending leaves for HR
             } else if (this.user.is_hod === 1) {
               console.log("User  is HOD.");

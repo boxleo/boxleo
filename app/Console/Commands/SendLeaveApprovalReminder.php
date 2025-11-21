@@ -74,6 +74,11 @@ class SendLeaveApprovalReminder extends Command
                 $approvers = User::where('is_hr', true)->get();
                 break;
 
+            case 'Manager Approval Only':
+                // Notify HR for special case
+                $approvers = User::where('is_hr', true)->get();
+                break;
+
             case 'Hr Approved':
                 // Notify HOD
                 // $approvers = User::where('is_hod', true)

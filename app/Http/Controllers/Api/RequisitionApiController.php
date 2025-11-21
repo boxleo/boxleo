@@ -386,7 +386,7 @@ class RequisitionApiController extends Controller
         $validated = $request->validate([
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
-            'items.*.description' => 'required|string|max:255',
+            'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'items.*.total_cost' => 'required|numeric|min:0',
@@ -655,7 +655,12 @@ class RequisitionApiController extends Controller
                 Log::info("Approver is Finance Manager");
 
                 if ($approver->is_line_manager === 1 || ($approver->designation_id === 1 && $requisition->status === 'Pending')) {
-                    if ($approverDepartment === $requestDepartment) {
+                    if ($approverDepartment === $requestDepartment   || ($requestDepartment == 11 && $approverDepartment == 9)
+
+                    
+                    
+                    
+                    ) {
                         $requisition->status = 'Manager Approved';
                         $requisition->is_line_manager = 1;
 
@@ -666,6 +671,7 @@ class RequisitionApiController extends Controller
                         Log::warning('Department Mismatch');
                         return response()->json(['error' => 'You can only approve requests in your department'], 403);
                     }
+                    
                 } elseif ($approver->is_finance_manager === 1 && $requisition->status === 'Manager Approved') {
                     $requisition->status = 'Approved';
                     $requisition->is_finance_manager = 1;
@@ -971,3 +977,7 @@ class RequisitionApiController extends Controller
         }
     }
 }
+
+
+
+

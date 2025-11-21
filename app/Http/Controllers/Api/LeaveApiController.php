@@ -24,9 +24,6 @@ use App\Notifications\TaskAssignedNotification;
 class LeaveApiController extends Controller
 {
 
-
-
-
   public function index(Request $request)
   {
     Log::info('Fetching leave records', ['user_id' => auth()->id(), 'request_params' => $request->all()]);
@@ -120,94 +117,7 @@ class LeaveApiController extends Controller
     return response()->json(['leaves' => $leaves]);
   }
 
-  // public function index(Request $request)
-  // {
-
-  //   $query = Leave::with('leave_type', 'user.department')
-  //     ->whereHas('user', function ($query) {
-  //       $query->whereNull('deleted_at');
-  //     });
-
-
-
-  //   $user = auth()->user();
-  //   $unitId = $user->unit_id;
-
-
-  //   $isHod = $user->is_hod;
-  //   $isHr = $user->is_hr; // Assuming HR role check
-
-  //   // If the user is not HR or HOD, restrict leaves to their unit
-  //   if (!$isHod && !$isHr) {
-  //     $query->whereHas('user', function ($q) use ($unitId) {
-  //       $q->where('unit_id', $unitId);
-  //     });
-  //   }
-
-  //   if ($user && $user->is_hod) {
-  //     // Get HOD's department IDs
-  //     $hodDepartmentIds = $user->departments?->pluck('id')->toArray() ?? [];
-
-  //     // Filter leaves to only include users within the HOD’s departments and HR Approved status
-  //     $query->whereHas('user', function ($query) use ($hodDepartmentIds) {
-  //       $query->whereIn('department_id', $hodDepartmentIds);
-  //     })->where('status', 'Hr Approved');
-  //   }
-
-  //   // if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
-  //   //   // dd($request->user_ids);
-  //   //   $query->whereIn('user_id', $request->input('user_ids'));
-  //   // }
-
-
-
-  //   if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
-  //     $userIds = collect($request->input('user_ids'))->flatten()->toArray();
-  //     $query->whereIn('user_id', $userIds);
-  //   }
-
-  //   if ($request->has('unit_ids') && is_array($request->input('unit_ids'))) {
-
-  //     $query->whereHas('user', function ($query) use ($request) {
-  //       $query->whereIn('unit_id', $request->input('unit_ids'));
-  //     });
-  //   }
-
-  //   if ($request->has('leave_type_ids') && is_array($request->input('leave_type_ids'))) {
-  //     $query->whereIn('leave_type_id', $request->input('leave_type_ids'));
-  //   }
-
-  //   if ($request->has('application_date')) {
-  //     $applicationDate = $request->input('application_date');
-  //     $query->whereDate('created_at', $applicationDate);
-  //   }
-
-
-  //   if ($request->has('status')) {
-  //     $status = $request->input('status');
-  //     $query->where('status', $status);
-  //   }
-
-  //   if ($request->has('from')) {
-  //     $startDate = $request->input('from');
-  //     $query->whereDate('from', $startDate);
-  //   }
-
-  //   if ($request->has('statuses') && is_array($request->input('statuses'))) {
-  //     $query->whereIn('status', $request->input('statuses'));
-  //   }
-
-  //   $leaves = $query
-  //     ->orderBy('created_at', 'desc')->get();
-
-  //   $leaves = $leaves->map(function ($leave) {
-  //     $leave->user->name = $leave->user->firstname . ' ' . $leave->user->lastname;
-  //     return $leave;
-  //   });
-
-  //   return response()->json(['leaves' => $leaves]);
-  // }
-
+ 
   public function userLeaves(Request $request)
   {
 
@@ -323,323 +233,6 @@ class LeaveApiController extends Controller
   }
 
 
-  // public function store(Request $request)
-  // {
-  //   $this->validate($request, [
-  //     'user_id' => 'required',
-  //     'leave_type_id' => 'required',
-  //     'from' => 'required|date',
-  //     'to' => 'required|date|after_or_equal:from',
-  //     'phone' => 'required|string|min:10',
-  //     'days' => 'required|integer',
-  //     'hod' => 'required|exists:users,id',
-  //     'manager' => 'required|exists:users,id',
-  //     'document' => 'nullable|file|mimes:pdf,doc,docx',
-  //   ]);
-
-  //   $startDate = new DateTime($request->from);
-  //   $endDate = new DateTime($request->to);
-
-  //   // Define holidays (can be moved to a database for flexibility)
-  //   $holidays = [
-  //     '12-25', // Christmas
-  //     '12-26', // Boxing Day
-  //     '01-01', // New Year's Day
-  //   ];
-
-  //   $leaveDays = 0;
-
-  //   while ($startDate <= $endDate) {
-  //     $isSunday = $startDate->format('N') == 7; // Sunday
-
-  //     // Include all days except Sundays and holidays
-  //     if (!$isSunday && !in_array($startDate->format('m-d'), $holidays)) {
-  //       $leaveDays++;
-  //     }
-
-  //     $startDate->modify('+1 day');
-  //   }
-
-  //   // Validate the number of leave days
-  //   if ($leaveDays != $request->days) {
-  //     return response()->json(['error' => 'The number of leave days does not match the provided days.'], 400);
-  //   }
-
-  //   // Validate HOD and Manager
-  //   $hodUser = User::find($request->hod);
-  //   $managerUser = User::find($request->manager);
-
-  //   if (!$hodUser || !$managerUser) {
-  //     return response()->json(['error' => 'HOD or Manager not found.'], 404);
-  //   }
-
-  //   $hrUser = User::where('is_hr', 1)->first();
-
-  //   if (!$hrUser) {
-  //     return response()->json(['error' => 'HR user not found.'], 404);
-  //   }
-
-  //   // Handle document upload
-  //   $documentName = null;
-  //   if ($request->hasFile('document')) {
-  //     $documentName = time() . '.' . $request->file('document')->extension();
-  //     $request->file('document')->storeAs('leave/documents', $documentName, 'public');
-  //   }
-
-  //   // Create the leave record
-  //   $leave = Leave::create([
-  //     'user_id' => $request->user_id,
-  //     'leave_type_id' => $request->leave_type_id,
-  //     'from' => $request->from,
-  //     'to' => $request->to,
-  //     'days' => $leaveDays,
-  //     'phone' => $request->phone,
-  //     'comment' => $request->comment,
-  //     'status' => 'Pending',
-  //     'document' => $documentName,
-  //   ]);
-
-  //   // Update the leave balance
-  //   $leaveType = LeaveType::find($request->leave_type_id);
-
-  //   if ($leaveType) {
-  //     $userLeaveBalance = LeaveBalance::firstOrCreate([
-  //       'user_id' => $request->user_id,
-  //       'leave_type_id' => $request->leave_type_id,
-  //     ], [
-  //       'balance' => $leaveType->days,
-  //       'taken' => 0,
-  //     ]);
-
-  //     $userLeaveBalance->decrement('balance', $leaveDays);
-  //     $userLeaveBalance->increment('taken', $leaveDays);
-  //   } else {
-  //     return response()->json(['error' => 'Leave type not found.'], 404);
-  //   }
-
-  //   // Log the leave creation action
-  //   $this->logLeaveAction($leave, 'created', $request->user_id);
-
-  //   // Notify relevant users
-  //   Queue::push(function () use ($leave, $hodUser, $managerUser, $hrUser) {
-  //     $usersToNotify = collect([$hodUser->email, $managerUser->email, $hrUser->email]);
-  //     foreach ($usersToNotify as $email) {
-  //       $user = User::where('email', $email)->first();
-  //       if ($user) {
-  //         $user->notify(new LeaveCreatedNotification($leave));
-  //       }
-  //     }
-  //   });
-
-  //   return response()->json(['message' => 'Leave application submitted successfully!']);
-  // }
-
-
-  // public function store(Request $request)
-  // {
-  //   // return $request->all();
-  //   // $documentName = null;
-  //   // if ($request->hasFile('document')) {
-  //   //     $documentName = time() . '.' . $request->file('document')->extension();
-  //   //     $request->file('document')->storeAs('leave/documents', $documentName, 'public');
-  //   //     Log::info('Document uploaded', ['document' => $documentName]);
-  //   // } else {
-  //   //   Log::info('Document not found', ['document' => $documentName]);
-
-  //   // }
-
-  //   // return; 
-  //     Log::info('Leave application request received', ['request_data' => $request->all()]);
-
-  //     $this->validate($request, [
-  //         'user_id' => 'required',
-  //         'leave_type_id' => 'required',
-  //         'from' => 'required|date',
-  //         'to' => 'required|date|after_or_equal:from',
-  //         'phone' => 'required|string|min:10',
-  //         'days' => 'required|integer',
-  //         'hod' => 'required|exists:users,id',
-  //         'manager' => 'required|exists:users,id',
-  //         'document' => 'nullable|file|mimes:pdf,doc,docx',
-  //     ]);
-
-  //     // dd($request->document);
-
-  //     Log::info('Validation passed');
-
-  //     $startDate = new DateTime($request->from);
-  //     $endDate = new DateTime($request->to);
-
-  //     $holidays = ['12-25', '12-26', '01-01']; // Christmas, Boxing Day, New Year
-  //     $leaveDays = 0;
-
-  //     while ($startDate <= $endDate) {
-  //         $isSunday = $startDate->format('N') == 7;
-  //         if (!$isSunday && !in_array($startDate->format('m-d'), $holidays)) {
-  //             $leaveDays++;
-  //         }
-  //         $startDate->modify('+1 day');
-  //     }
-
-  //     Log::info('Calculated leave days', ['leave_days' => $leaveDays]);
-
-  //     if ($leaveDays != $request->days) {
-  //         Log::warning('Leave days mismatch', ['expected' => $request->days, 'calculated' => $leaveDays]);
-  //         return response()->json(['error' => 'The number of leave days does not match the provided days.'], 400);
-  //     }
-
-  //     $hodUser = User::find($request->hod);
-  //     $managerUser = User::find($request->manager);
-  //     $hrUser = User::where('is_hr', 1)->first();
-
-  //     if (!$hodUser || !$managerUser) {
-  //         Log::error('HOD or Manager not found', ['hod_id' => $request->hod, 'manager_id' => $request->manager]);
-  //         return response()->json(['error' => 'HOD or Manager not found.'], 404);
-  //     }
-
-  //     if (!$hrUser) {
-  //         Log::error('HR user not found');
-  //         return response()->json(['error' => 'HR user not found.'], 404);
-  //     }
-
-  //     $documentName = null;
-  //     if ($request->hasFile('document')) {
-  //         $documentName = time() . '.' . $request->file('document')->extension();
-  //         $request->file('document')->storeAs('leave/documents', $documentName, 'public');
-  //         Log::info('Document uploaded', ['document' => $documentName]);
-  //     }
-
-  //     $leave = Leave::create([
-  //         'user_id' => $request->user_id,
-  //         'leave_type_id' => $request->leave_type_id,
-  //         'from' => $request->from,
-  //         'to' => $request->to,
-  //         'days' => $leaveDays,
-  //         'phone' => $request->phone,
-  //         'comment' => $request->comment,
-  //         'status' => 'Pending',
-  //         'document' => $documentName,
-  //     ]);
-
-  //     Log::info('Leave application created', ['leave_id' => $leave->id]);
-
-  //     $leaveType = LeaveType::find($request->leave_type_id);
-
-  //     if ($leaveType) {
-  //         $userLeaveBalance = LeaveBalance::firstOrCreate([
-  //             'user_id' => $request->user_id,
-  //             'leave_type_id' => $request->leave_type_id,
-  //         ], [
-  //             'balance' => $leaveType->days,
-  //             'taken' => 0,
-  //         ]);
-
-  //         $userLeaveBalance->decrement('balance', $leaveDays);
-  //         $userLeaveBalance->increment('taken', $leaveDays);
-
-  //         Log::info('Leave balance updated', [
-  //             'user_id' => $request->user_id,
-  //             'leave_type_id' => $request->leave_type_id,
-  //             'new_balance' => $userLeaveBalance->balance,
-  //             'taken' => $userLeaveBalance->taken,
-  //         ]);
-  //     } else {
-  //         Log::error('Leave type not found', ['leave_type_id' => $request->leave_type_id]);
-  //         return response()->json(['error' => 'Leave type not found.'], 404);
-  //     }
-
-  //     $this->logLeaveAction($leave, 'created', $request->user_id);
-
-  //     Queue::push(function () use ($leave, $hodUser, $managerUser, $hrUser) {
-  //         $usersToNotify = collect([
-  //           $hodUser->email, 
-  //           $managerUser->email,
-  //           $hrUser->email]
-  //           );
-  //         foreach ($usersToNotify as $email) {
-  //             $user = User::where('email', $email)->first();
-  //             if ($user) {
-  //                 $user->notify(new LeaveCreatedNotification($leave));
-  //                 Log::info('Notification sent', ['email' => $email]);
-  //             }
-  //         }
-  //     });
-
-  //     return response()->json(['message' => 'Leave application submitted successfully!']);
-  // }
-
-
-
-
-  // public function approveLeave(Request $request, Leave $leave)
-  // {
-
-  //   try {
-
-  //     Log::info('Approve Leave Request', [
-  //       'userId' => $request->input('userId'),
-  //       'leaveId' => $leave->id,
-  //       'requestData' => $request->all()
-  //     ]);
-
-  //     $userId = $request->input('userId');
-  //     $approver = User::find($userId);
-
-  //     if ($approver) {
-  //       if (
-  //         ($approver->designation_id === 1 && $leave->status === 'Pending') ||
-  //         ($approver->is_hr === 1 && $leave->status === 'Pending' && $approver->department_id === 1)
-  //       ) {
-  //         $leave->status = 'Manager Approved';
-  //         $leave->save();
-
-  //         $this->logLeaveAction($leave, 'Manager Approved', $userId);
-
-  //         return response()->json(['message' => 'Leave approved successfully'], 200);
-  //       } elseif ($approver->is_hr === 1 && $leave->status === 'Manager Approved') {
-  //         $leave->status = 'Hr Approved';
-  //         $leave->save();
-
-  //         $this->logLeaveAction($leave, 'Hr Approved', $userId);
-
-  //         return response()->json(['message' => 'Leave approved successfully'], 200);
-  //       } elseif ($approver->is_hod === 1 && $leave->status === 'Hr Approved') {
-  //         $leave->status = 'Approved';
-  //         $leave->save();
-
-  //         $this->logLeaveAction($leave, 'Approved', $userId);
-
-  //         $employeePhone = $leave->phone;
-  //         $approvedMessage = "Hello {$leave->user->firstname}, Your leave request from {$leave->from} to {$leave->to} has been approved.";
-
-  //         $employee_unit_id = $leave->user->unit_id;
-
-  //         $sms_util = new SMSUtil();
-  //         $ug_sms_util = new UGSMSUtil();
-  //         $tz_sms_util = new TZSMSUtil();
-
-  //         if ($employee_unit_id == 2) {
-  //           $ug_sms_util->sendSMS($employeePhone, $approvedMessage);
-  //         } else if ($employee_unit_id == 3) {
-  //           $tz_sms_util->sendSMS($employeePhone, $approvedMessage);
-  //         } else {
-
-  //           $sms_util->sendSMS($employeePhone, $approvedMessage);
-  //         }
-  //         return response()->json(['message' => 'Leave approved successfully'], 200);
-  //       } else {
-  //         return response()->json(['error' => 'Unauthorized or invalid status for approval'], 403);
-  //       }
-  //     } else {
-  //       return response()->json(['error' => 'Approver not found'], 404);
-  //     }
-  //   } catch (\Exception $e) {
-  //     Log::error($e);
-
-  //     return response()->json(['error' => 'Failed to approve leave'], 500);
-  //   }
-  // }
-
 
 
   public function store(Request $request)
@@ -735,15 +328,7 @@ class LeaveApiController extends Controller
         Log::error('Failed to save delegated tasks', ['error' => $e->getMessage()]);
       }
     }
-    // if ($request->has('delegatedTasks')) {
-    //     foreach ($request->delegatedTasks as $task) {
-    //         $leave->tasks()->create([
-    //             'assignee_id' => $task['assignee_id'],
-    //             'task_description' => $task['task_description'],
-    //         ]);
-    //     }
-    //     Log::info('Delegated tasks saved', ['task_count' => count($request->delegatedTasks)]);
-    // }
+   
 
     $leaveType = LeaveType::find($request->leave_type_id);
     if ($leaveType) {
@@ -780,184 +365,387 @@ class LeaveApiController extends Controller
 
 
 
-  public function approveLeave(Request $request, Leave $leave)
-  {
-    try {
-      Log::info('Approve Leave Request', [
-        'userId' => $request->input('userId'),
-        'leaveId' => $leave->id,
-        'requestData' => $request->all()
-      ]);
-
-      $userId = $request->input('userId');
-      $approver = User::find($userId);
-      // approver heads mutiple departments and can only approve leave for their departments
-
-
-      // // Many-to-Many relationship for HODs
-      //  public function hodDepartments()
-      //  {
-      //      return $this->belongsToMany(Department::class, 'hod_departments', 'user_id', 'department_id');
-      //  }
-
-
-      if (!$approver) {
-        return response()->json(['error' => 'Approver not found'], 404);
-      }
-
-      switch ($leave->status) {
-        case 'Pending':
-          if ($approver->designation_id === 1 || ($approver->is_hr === 1 && $approver->department_id === 1)) {
-            $leave->status = 'Manager Approved';
-            $this->logLeaveAction($leave, 'Manager Approved', $userId);
-            $this->notifyNextApprover($leave, 'HR');
-          } else {
-            return response()->json(['error' => 'Unauthorized'], 403);
-          }
-          break;
-
-        case 'Manager Approved':
-          if ($approver->is_hr === 1) {
-            $leave->status = 'Hr Approved';
-            $this->logLeaveAction($leave, 'Hr Approved', $userId);
-            $this->notifyNextApprover($leave, 'HOD');
-          } else {
-            return response()->json(['error' => 'Unauthorized'], 403);
-          }
-          break;
-
-        case 'Hr Approved':
-          if ($approver->is_hod === 1) {
-            $leave->status = 'Approved';
-            $this->logLeaveAction($leave, 'Approved', $userId);
-            $this->notifyEmployee($leave);
-            $this->notifyTaskAssignees($leave);
-          } else {
-            return response()->json(['error' => 'Unauthorized'], 403);
-          }
-          break;
-
-        default:
-          return response()->json(['error' => 'Invalid leave status'], 400);
-      }
-
-      $leave->save();
-      return response()->json(['message' => 'Leave approved successfully'], 200);
-    } catch (\Exception $e) {
-      Log::error('Error approving leave', ['exception' => $e]);
-      return response()->json(['error' => 'Failed to approve leave'], 500);
-    }
-  }
-
-  /**
-   * Notify the next approver based on the approval stage
-   */
-  // private function notifyNextApprover(Leave $leave, string $role)
+  // public function approveLeave(Request $request, Leave $leave)
   // {
-  //   $nextApprover = match ($role) {
-  //     'HR' => User::where('is_hr', 1)->first(),
-  //     'HOD' => User::where('is_hod', 1)->first(),
-  //     default => null,
-  //   };
+  //   try {
+  //     Log::info('Approve Leave Request', [
+  //       'userId' => $request->input('userId'),
+  //       'leaveId' => $leave->id,
+  //       'requestData' => $request->all()
+  //     ]);
 
-  //   if ($nextApprover) {
-  //     // Example notification logic (Email/SMS)
-  //     $nextApprover->notify(new LeaveCreatedNotification($leave));
-  //     Log::info("Notified next approver ({$role}) for leave ID {$leave->id}");
+
+
+  //     // new code
+  //     $user = User::findOrFail($request->userId);
+
+  //     // return $user;
+  //     $designation = $user->designation ? strtolower($user->designation->name) : null;
+  //     $country = $user->office ? strtolower($user->office->country ?? 'kenya') : 'kenya';
+
+  //     // $customApproval = false;
+
+  //     if (in_array($designation, ['intern', 'assistant']) && $country !== 'kenya') {
+  //       // $customApproval = true;
+  //       $leave->status = 'Manager Approval Only';
+  //       Log::info('Custom approval route for intern/assistant outside Kenya');
+  //     }
+
+
+  //     $isInternOrAssistantOutsideKenya = in_array(strtolower($leave->user->designation->name ?? ''), ['intern', 'assistant']) &&
+  //       strtolower($leave->user->office->country ?? 'kenya') !== 'kenya';
+
+  //     $userId = $request->input('userId');
+  //     $approver = User::find($userId);
+
+
+
+
+
+  //     // approver heads mutiple departments and can only approve leave for their departments
+
+
+  //     // // Many-to-Many relationship for HODs
+  //     //  public function hodDepartments()
+  //     //  {
+  //     //      return $this->belongsToMany(Department::class, 'hod_departments', 'user_id', 'department_id');
+  //     //  }
+
+
+  //     if (!$approver) {
+  //       return response()->json(['error' => 'Approver not found'], 404);
+  //     }
+
+  //     switch ($leave->status) {
+  //       case 'Pending':
+  //         if ($approver->designation_id === 1 || ($approver->is_hr === 1 && $approver->department_id === 1)) {
+  //           $leave->status = 'Manager Approved';
+  //           $this->logLeaveAction($leave, 'Manager Approved', $userId);
+  //           $this->notifyNextApprover($leave, 'HR');
+  //         } else {
+  //           return response()->json(['error' => 'Unauthorized'], 403);
+  //         }
+  //         break;
+
+  //       case 'Manager Approved':
+  //         if ($approver->is_hr === 1) {
+  //           $leave->status = 'Hr Approved';
+  //           $this->logLeaveAction($leave, 'Hr Approved', $userId);
+  //           $this->notifyNextApprover($leave, 'HOD');
+  //         } else {
+  //           return response()->json(['error' => 'Unauthorized'], 403);
+  //         }
+  //         break;
+
+  //       case 'Hr Approved':
+  //         if ($approver->is_hod === 1) {
+  //           $leave->status = 'Approved';
+  //           $this->logLeaveAction($leave, 'Approved', $userId);
+  //           $this->notifyEmployee($leave);
+  //           $this->notifyTaskAssignees($leave);
+  //         } else {
+  //           return response()->json(['error' => 'Unauthorized'], 403);
+  //         }
+  //         break;
+
+  //       default:
+  //         return response()->json(['error' => 'Invalid leave status'], 400);
+  //     }
+
+  //     $leave->save();
+  //     return response()->json(['message' => 'Leave approved successfully'], 200);
+  //   } catch (\Exception $e) {
+  //     Log::error('Error approving leave', ['exception' => $e]);
+  //     return response()->json(['error' => 'Failed to approve leave'], 500);
   //   }
   // }
 
 
 
-  private function notifyNextApprover(Leave $leave, string $role)
-  {
-    $nextApprovers = match ($role) {
-      'HR' => User::where('is_hr', 1)->get(),  // Get all HRs
-      'HOD' => User::whereHas('hodDepartments', function ($query) use ($leave) {
-        $query->where('department_id', $leave->user->department_id);
-      })->get(),  // Get HODs ONLY for the leave applicant’s department
-      default => collect(),
-    };
 
-    foreach ($nextApprovers as $approver) {
-      $approver->notify(new LeaveCreatedNotification($leave));
+  // private function notifyNextApprover(Leave $leave, string $role)
+  // {
+  //   $nextApprovers = match ($role) {
+  //     'HR' => User::where('is_hr', 1)->get(),  // Get all HRs
+  //     'HOD' => User::whereHas('hodDepartments', function ($query) use ($leave) {
+  //       $query->where('department_id', $leave->user->department_id);
+  //     })->get(),  // Get HODs ONLY for the leave applicant’s department
+  //     default => collect(),
+  //   };
+
+  //   foreach ($nextApprovers as $approver) {
+  //     $approver->notify(new LeaveCreatedNotification($leave));
+  //     Log::info("Notified HOD (User ID: {$approver->id}) for Department ID: {$leave->user->department_id} regarding Leave ID: {$leave->id}");
+  //   }
+  // }
+
+
+  // /**
+  //  * Notify the employee upon final approval
+  //  */
+  // private function notifyEmployee(Leave $leave)
+  // {
+  //   $message = "Hello {$leave->user->firstname}, Your leave request from {$leave->from} to {$leave->to} has been approved.";
+  //   $smsUtil = match ($leave->user->unit_id) {
+  //     2 => new UGSMSUtil(),
+  //     3 => new TZSMSUtil(),
+  //     default => new SMSUtil(),
+  //   };
+
+  //   try {
+  //     $smsUtil->sendSMS($leave->phone, $message);
+  //     $leave->user->notify(new LeaveApprovalNotification($leave));
+
+  //     Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
+  //     Log::info("Sent leave approval SMS to employee {$leave->user->firstname} (Phone: {$leave->phone})");
+  //   } catch (\Exception $e) {
+  //     Log::error("Failed to send SMS, sending email instead", ['exception' => $e]);
+
+  //     // Send email as a fallback
+  //     // $leave->user->notify(new LeaveCreatedNotification($leave));
+
+  //     $leave->user->notify(new LeaveApprovalNotification($leave));
+
+  //     Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
+  //   }
+  // }
+
+  // /**
+  //  * Notify task assignees after leave approval
+  //  */
+  // private function notifyTaskAssignees(Leave $leave)
+  // {
+  //   // Get the delegated tasks
+  //   $tasks = $leave->tasks ?? [];
+
+  //   foreach ($tasks as $task) {
+  //     // Skip tasks with no assignee
+  //     if (empty($task['assignee_id'])) {
+  //       continue;
+  //     }
+
+  //     // Find the assignee user
+  //     $assignee = User::find($task['assignee_id']);
+
+  //     if ($assignee) {
+  //       // Notify the assignee through email
+  //       $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
+
+  //       Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
+  //     } else {
+  //       Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
+  //     }
+  //   }
+  // }
+
+
+
+
+
+
+  public function approveLeave(Request $request, Leave $leave)
+{
+  try {
+    Log::info('Approve Leave Request', [
+      'userId' => $request->input('userId'),
+      'leaveId' => $leave->id,
+      'requestData' => $request->all()
+    ]);
+
+    $userId = $request->input('userId');
+    $approver = User::find($userId);
+
+    if (!$approver) {
+      return response()->json(['error' => 'Approver not found'], 404);
+    }
+
+    // Check if this is an intern/assistant outside Kenya
+    $userCountry = strtolower($leave->user->unit->name ?? 'kenya');
+    $userDesignation = strtolower($leave->user->designation->name ?? '');
+    Log::info('Approving leave for user', [
+      'user_country' => $userCountry,
+      'user_designation' => $userDesignation,
+      'user_id' => $leave->user->id
+    ]);
+    $isInternOrAssistantOutsideKenya = in_array($userDesignation, ['intern', 'assistant']) && $userCountry !== 'kenya';
+
+    Log::info('Leave approval check', [
+      'designation' => $leave->user->designation->name ?? 'unknown',
+      'country' => $leave->user->unit->name ?? 'kenya',
+      'isSpecialCase' => $isInternOrAssistantOutsideKenya
+    ]);
+
+    switch ($leave->status) {
+      case 'Pending':
+        // Only Country Manager (designation_id === 1) or HR can approve initial request
+        if ($approver->designation_id === 1 || ($approver->is_hr === 1 && $approver->department_id === 1)) {
+          if ($isInternOrAssistantOutsideKenya) {
+            // Special case: Set custom status for interns/assistants outside Kenya
+            $leave->status = 'Manager Approval Only';
+            $this->logLeaveAction($leave, 'Manager Approved (Special Case)', $userId);
+            $this->notifyNextApprover($leave, 'HR');
+            Log::info('Applied special approval route for intern/assistant outside Kenya');
+          } else {
+            // Standard flow
+            $leave->status = 'Manager Approved';
+            $this->logLeaveAction($leave, 'Manager Approved', $userId);
+            $this->notifyNextApprover($leave, 'HR');
+          }
+        } else {
+          return response()->json(['error' => 'Unauthorized - Only Country Manager or HR can approve initial requests'], 403);
+        }
+        break;
+
+      case 'Manager Approval Only':
+        // Special case: Only HR can approve, then goes directly to final approval (bypasses HOD)
+        if ($approver->is_hr === 1) {
+          $leave->status = 'Approved';
+
+          $this->logLeaveAction($leave, 'Final Approved (HR Only - Special Case)', $userId);
+          $this->notifyEmployee($leave);
+          $this->notifyTaskAssignees($leave);
+          Log::info('Special case approval completed - HOD bypassed for intern/assistant outside Kenya');
+        } else {
+          return response()->json(['error' => 'Unauthorized - Only HR can approve this special case'], 403);
+        }
+        break;
+
+      case 'Manager Approved':
+        // Standard flow: HR approval required
+        if ($approver->is_hr === 1) {
+          $leave->status = 'Hr Approved';
+          $this->logLeaveAction($leave, 'Hr Approved', $userId);
+          $this->notifyNextApprover($leave, 'HOD');
+        } else {
+          return response()->json(['error' => 'Unauthorized - Only HR can approve at this stage'], 403);
+        }
+        break;
+
+      case 'Hr Approved':
+        // Standard flow: HOD approval required
+        if ($approver->is_hod === 1) {
+          // Verify HOD has authority over the leave applicant's department
+          $hasAuthority = $approver->hodDepartments()
+            ->where('department_id', $leave->user->department_id)
+            ->exists();
+          
+          if ($hasAuthority) {
+            $leave->status = 'Approved';
+            $this->logLeaveAction($leave, 'Final Approved (Standard Flow)', $userId);
+            $this->notifyEmployee($leave);
+            $this->notifyTaskAssignees($leave);
+            Log::info("HOD approval completed for Department ID: {$leave->user->department_id}");
+          } else {
+            return response()->json(['error' => 'Unauthorized - HOD does not have authority over this department'], 403);
+          }
+        } else {
+          return response()->json(['error' => 'Unauthorized - Only HOD can approve at this stage'], 403);
+        }
+        break;
+
+      default:
+        return response()->json(['error' => 'Invalid leave status for approval'], 400);
+    }
+
+    $leave->save();
+    
+    $responseMessage = $isInternOrAssistantOutsideKenya && $leave->status === 'Approved' 
+      ? 'Leave approved successfully (Special approval process - HOD bypassed)'
+      : 'Leave approved successfully';
+    
+    return response()->json(['message' => $responseMessage], 200);
+    
+  } catch (\Exception $e) {
+    Log::error('Error approving leave', ['exception' => $e]);
+    return response()->json(['error' => 'Failed to approve leave'], 500);
+  }
+}
+
+/**
+ * Enhanced notification method that handles special cases
+ */
+private function notifyNextApprover(Leave $leave, string $role)
+{
+  // Check if this is a special case that should skip HOD
+  $isInternOrAssistantOutsideKenya = in_array(strtolower($leave->user->designation->name ?? ''), ['intern', 'assistant']) &&
+    strtolower($leave->user->office->country ?? 'kenya') !== 'kenya';
+
+  // Skip HOD notification for special cases
+  if ($role === 'HOD' && $isInternOrAssistantOutsideKenya) {
+    Log::info('Skipping HOD notification for intern/assistant outside Kenya (Leave ID: ' . $leave->id . ')');
+    return;
+  }
+
+  $nextApprovers = match ($role) {
+    'HR' => User::where('is_hr', 1)->get(),
+    'HOD' => User::whereHas('hodDepartments', function ($query) use ($leave) {
+      $query->where('department_id', $leave->user->department_id);
+    })->get(),
+    default => collect(),
+  };
+
+  foreach ($nextApprovers as $approver) {
+    $approver->notify(new LeaveCreatedNotification($leave));
+    
+    if ($role === 'HR') {
+      Log::info("Notified HR (User ID: {$approver->id}) regarding Leave ID: {$leave->id}");
+    } else {
       Log::info("Notified HOD (User ID: {$approver->id}) for Department ID: {$leave->user->department_id} regarding Leave ID: {$leave->id}");
     }
   }
+}
 
+/**
+ * Notify the employee upon final approval
+ */
+private function notifyEmployee(Leave $leave)
+{
+  $message = "Hello {$leave->user->firstname}, Your leave request from {$leave->from} to {$leave->to} has been approved.";
+  $smsUtil = match ($leave->user->unit_id) {
+    2 => new UGSMSUtil(),
+    3 => new TZSMSUtil(),
+    default => new SMSUtil(),
+  };
 
-  /**
-   * Notify the employee upon final approval
-   */
-  private function notifyEmployee(Leave $leave)
-  {
-    $message = "Hello {$leave->user->firstname}, Your leave request from {$leave->from} to {$leave->to} has been approved.";
-    $smsUtil = match ($leave->user->unit_id) {
-      2 => new UGSMSUtil(),
-      3 => new TZSMSUtil(),
-      default => new SMSUtil(),
-    };
+  try {
+    $smsUtil->sendSMS($leave->phone, $message);
+    $leave->user->notify(new LeaveApprovalNotification($leave));
 
-    try {
-      $smsUtil->sendSMS($leave->phone, $message);
-      $leave->user->notify(new LeaveApprovalNotification($leave));
+    Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
+    Log::info("Sent leave approval SMS to employee {$leave->user->firstname} (Phone: {$leave->phone})");
+  } catch (\Exception $e) {
+    Log::error("Failed to send SMS, sending email instead", ['exception' => $e]);
 
-      Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
-      Log::info("Sent leave approval SMS to employee {$leave->user->firstname} (Phone: {$leave->phone})");
-    } catch (\Exception $e) {
-      Log::error("Failed to send SMS, sending email instead", ['exception' => $e]);
+    $leave->user->notify(new LeaveApprovalNotification($leave));
+    Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
+  }
+}
 
-      // Send email as a fallback
-      // $leave->user->notify(new LeaveCreatedNotification($leave));
+/**
+ * Notify task assignees after leave approval
+ */
+private function notifyTaskAssignees(Leave $leave)
+{
+  $tasks = $leave->tasks ?? [];
 
-      $leave->user->notify(new LeaveApprovalNotification($leave));
+  foreach ($tasks as $task) {
+    if (empty($task['assignee_id'])) {
+      continue;
+    }
 
-      Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
+    $assignee = User::find($task['assignee_id']);
+
+    if ($assignee) {
+      // $assignee->notify(new TaskAssignedNotification($leave, $task));
+      $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
+      Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
+    } else {
+      Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
     }
   }
-
-  /**
-   * Notify task assignees after leave approval
-   */
-  private function notifyTaskAssignees(Leave $leave)
-  {
-    // Get the delegated tasks
-    $tasks = $leave->tasks ?? [];
-
-    foreach ($tasks as $task) {
-      // Skip tasks with no assignee
-      if (empty($task['assignee_id'])) {
-        continue;
-      }
-
-      // Find the assignee user
-      $assignee = User::find($task['assignee_id']);
-
-      if ($assignee) {
-        // Notify the assignee through email
-        $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
-
-        Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
-      } else {
-        Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
-      }
-    }
-  }
+}
 
 
-
-  // private function notifyEmployee(Leave $leave)
-  // {
-  //     $message = "Hello {$leave->user->firstname}, Your leave request from {$leave->from} to {$leave->to} has been approved.";
-  //     $smsUtil = match ($leave->user->unit_id) {
-  //         2 => new UGSMSUtil(),
-  //         3 => new TZSMSUtil(),
-  //         default => new SMSUtil(),
-  //     };
-
-  //     $smsUtil->sendSMS($leave->phone, $message);
-  //     Log::info("Sent leave approval SMS to employee {$leave->user->firstname} (Phone: {$leave->phone})");
-  // }
 
 
 

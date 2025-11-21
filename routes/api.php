@@ -267,7 +267,7 @@ Route::get('v1/requisitions-logs/{id}', [RequisitionApiController::class, 'requi
 Route::get('v1/requisitions/{id}/pdf', [RequisitionApiController::class, 'generatePdf']);
 Route::post('v1/filter-requisitions', [RequisitionApiController::class, 'filter']);
 Route::post('/v1/download-requisitions-report', [RequisitionApiController::class, 'downloadRequisitionsReport']);
-Route::post('/v1/accounts', [RequisitionApiController::class, 'saveAount']);
+Route::post('/v1/accounts', [RequisitionApiController::class, 'saveAccount']);
 Route::get('/v1/accounts', [RequisitionApiController::class, 'fetchAccounts']);
 
 
