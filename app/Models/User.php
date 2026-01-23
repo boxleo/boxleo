@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Salary;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -16,7 +17,7 @@ use Octopy\Impersonate\Concerns\HasImpersonation;
 
 class User extends Authenticatable
 {
-  use HasApiTokens, SoftDeletes, Notifiable, HasRoles, HasPermissions, HasPermissions, HasImpersonation;
+  use HasApiTokens, SoftDeletes, Notifiable, HasRoles, HasPermissions, HasImpersonation, HasFactory;
 
 
   /**

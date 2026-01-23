@@ -42,10 +42,7 @@ class Kernel extends ConsoleKernel
 
 
             $schedule->job(new AddMonthlyLeaveBalance)
-            ->dailyAt('00:00')
-            ->when(function () {
-                return now()->endOfMonth()->isToday();
-            })
+            ->monthlyOn(1, '00:00')
             ->onSuccess(function () {
                 Log::info("✅ AddMonthlyLeaveBalance job dispatched successfully on " . now()->toDateTimeString());
             })
