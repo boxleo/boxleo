@@ -170,7 +170,6 @@
               </v-col>
             </v-row>
             <v-row>
-            <v-row>
               <v-col cols="12">
                 <v-subheader class="font-weight-bold">Additional Roles</v-subheader>
               </v-col>
@@ -290,7 +289,6 @@
               </v-col>
             </v-row>
             <v-row>
-            <v-row>
               <v-col cols="12">
                 <v-subheader class="font-weight-bold">Additional Roles</v-subheader>
               </v-col>
@@ -316,6 +314,8 @@
               <v-btn color="primary" type="submit">Update</v-btn>
             </v-card-actions>
           </v-form>
+
+          
         </v-card-text>
       </v-card>
     </v-dialog>
