@@ -45,7 +45,12 @@ class User extends Authenticatable
     'office_id',
     'avatar',
     'zk_user_id', 
-    'zk_username'
+    'zk_username',
+    'is_hod',
+    'is_hr',
+    'is_coo',
+    'is_finance_manager',
+    'is_cfo'
   ];
 
   protected $hidden = [
