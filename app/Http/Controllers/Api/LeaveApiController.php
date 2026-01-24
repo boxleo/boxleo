@@ -286,7 +286,7 @@ class LeaveApiController extends Controller
     $documentName = null;
     if ($request->hasFile('document')) {
       $documentName = time() . '.' . $request->file('document')->extension();
-      $request->file('document')->storeAs('leave/documents', $documentName, 'local');
+      $request->file('document')->storeAs('leave-documents', $documentName, 'local');
       Log::info('Document uploaded', ['document' => $documentName]);
     }
 
