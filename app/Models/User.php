@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Salary;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -16,7 +17,7 @@ use Octopy\Impersonate\Concerns\HasImpersonation;
 
 class User extends Authenticatable
 {
-  use HasApiTokens, SoftDeletes, Notifiable, HasRoles, HasPermissions, HasPermissions, HasImpersonation;
+  use HasApiTokens, SoftDeletes, Notifiable, HasRoles, HasPermissions, HasImpersonation, HasFactory;
 
 
   /**
@@ -44,7 +45,12 @@ class User extends Authenticatable
     'office_id',
     'avatar',
     'zk_user_id', 
-    'zk_username'
+    'zk_username',
+    'is_hod',
+    'is_hr',
+    'is_coo',
+    'is_finance_manager',
+    'is_cfo'
   ];
 
   protected $hidden = [

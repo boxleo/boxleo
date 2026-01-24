@@ -170,20 +170,24 @@
               </v-col>
             </v-row>
             <v-row>
+            <v-row>
               <v-col cols="12">
-                <v-subheader class="font-weight-bold">Role</v-subheader>
+                <v-subheader class="font-weight-bold">Additional Roles</v-subheader>
               </v-col>
-              <v-col cols="12">
-                <v-radio-group v-model="formData.role" :rules="[v => !!v || 'Please select a role']">
-                  <v-row>
-                    <v-col>
-                      <v-radio label="Admin" value="admin"></v-radio>
-                    </v-col>
-                    <v-col>
-                      <v-radio label="Employee" value="employee"></v-radio>
-                    </v-col>
-                  </v-row>
-                </v-radio-group>
+              <v-col cols="4">
+                <v-switch v-model="formData.is_hod" label="Head of Dept (HOD)" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="formData.is_hr" label="Human Resource" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="formData.is_coo" label="COO" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="formData.is_finance_manager" label="Finance Manager" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="formData.is_cfo" label="CFO" color="primary" dense></v-switch>
               </v-col>
             </v-row>
             <v-card-actions>
@@ -286,20 +290,24 @@
               </v-col>
             </v-row>
             <v-row>
+            <v-row>
               <v-col cols="12">
-                <v-subheader class="font-weight-bold">Role</v-subheader>
+                <v-subheader class="font-weight-bold">Additional Roles</v-subheader>
               </v-col>
-              <v-col cols="12">
-                <v-radio-group v-model="editedUser.role" :rules="[v => !!v || 'Role is required']">
-                  <v-row>
-                    <v-col>
-                      <v-radio label="Admin" value="admin"></v-radio>
-                    </v-col>
-                    <v-col>
-                      <v-radio label="Employee" value="employee"></v-radio>
-                    </v-col>
-                  </v-row>
-                </v-radio-group>
+              <v-col cols="4">
+                <v-switch v-model="editedUser.is_hod" label="Head of Dept (HOD)" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="editedUser.is_hr" label="Human Resource" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="editedUser.is_coo" label="COO" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="editedUser.is_finance_manager" label="Finance Manager" color="primary" dense></v-switch>
+              </v-col>
+              <v-col cols="4">
+                <v-switch v-model="editedUser.is_cfo" label="CFO" color="primary" dense></v-switch>
               </v-col>
             </v-row>
             <v-card-actions>
@@ -669,6 +677,11 @@ export default {
         role: null,
         zk_user_id: '',
         zk_username: '',
+        is_hod: false,
+        is_hr: false,
+        is_coo: false,
+        is_finance_manager: false,
+        is_cfo: false,
       },
       
       editedUser: {
@@ -685,6 +698,11 @@ export default {
         role: null,
         zk_user_id: '',
         zk_username: '',
+        is_hod: false,
+        is_hr: false,
+        is_coo: false,
+        is_finance_manager: false,
+        is_cfo: false,
       },
       
       // Master data
@@ -943,6 +961,11 @@ export default {
           role: user.role,
           zk_user_id: user.zk_user_id,
           zk_username: user.zk_username,
+          is_hod: user.is_hod,
+          is_hr: user.is_hr,
+          is_coo: user.is_coo,
+          is_finance_manager: user.is_finance_manager,
+          is_cfo: user.is_cfo,
           earnings: user.earnings || [],
           deductions: user.deductions || [],
         }));
@@ -1075,6 +1098,11 @@ export default {
           gender: userData.gender,
           zk_user_id: userData.zk_user_id,
           zk_username: userData.zk_username,
+          is_hod: !!userData.is_hod,
+          is_hr: !!userData.is_hr,
+          is_coo: !!userData.is_coo,
+          is_finance_manager: !!userData.is_finance_manager,
+          is_cfo: !!userData.is_cfo,
         };
 
         this.editUserDialog = true;
@@ -1101,6 +1129,11 @@ export default {
           gender: this.editedUser.gender,
           zk_user_id: this.editedUser.zk_user_id,
           zk_username: this.editedUser.zk_username,
+          is_hod: this.editedUser.is_hod,
+          is_hr: this.editedUser.is_hr,
+          is_coo: this.editedUser.is_coo,
+          is_finance_manager: this.editedUser.is_finance_manager,
+          is_cfo: this.editedUser.is_cfo,
         };
 
         const response = await axios.put(
@@ -1288,6 +1321,11 @@ export default {
         role: null,
         zk_user_id: '',
         zk_username: '',
+        is_hod: false,
+        is_hr: false,
+        is_coo: false,
+        is_finance_manager: false,
+        is_cfo: false,
       };
     },
 

@@ -783,8 +783,9 @@ export default {
     },
 
     getDocumentUrl(documentName) {
-    return `/leave/documents/${documentName}`;
+      return `/leave/documents/${documentName}`;
     },
+
 
     generateExcel() {
       axios.post('/api/v1/leaves/generate-excel', { leaves: this.leaves })

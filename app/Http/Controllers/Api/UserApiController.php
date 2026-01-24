@@ -269,6 +269,11 @@ class UserApiController extends Controller
       'avatar' => 'nullable|file|image|mimes:jpg,jpeg,png,gif',
       'zk_user_id' => 'nullable|string|max:255',
       'zk_username' => 'nullable|string|max:255',
+      'is_hod' => 'nullable|boolean',
+      'is_hr' => 'nullable|boolean',
+      'is_coo' => 'nullable|boolean',
+      'is_finance_manager' => 'nullable|boolean',
+      'is_cfo' => 'nullable|boolean',
     ]);
 
     $imageName = null;
@@ -294,6 +299,11 @@ class UserApiController extends Controller
       'is_enabled' => true,
       'zk_user_id' => $request->zk_user_id,
       'zk_username' => $request->zk_username,
+      'is_hod' => $request->boolean('is_hod'),
+      'is_hr' => $request->boolean('is_hr'),
+      'is_coo' => $request->boolean('is_coo'),
+      'is_finance_manager' => $request->boolean('is_finance_manager'),
+      'is_cfo' => $request->boolean('is_cfo'),
     ]);
 
     $user->user_detail()->create();
@@ -516,6 +526,11 @@ public function update(Request $request, User $user)
     'gender' => 'required|string|in:Male,Female',
     'zk_user_id' => 'nullable|string|max:255',
     'zk_username' => 'nullable|string|max:255',
+    'is_hod' => 'nullable|boolean',
+    'is_hr' => 'nullable|boolean',
+    'is_coo' => 'nullable|boolean',
+    'is_finance_manager' => 'nullable|boolean',
+    'is_cfo' => 'nullable|boolean',
   ]);
 
   Log::info('User validation passed', ['validated_data' => $validatedData]);
