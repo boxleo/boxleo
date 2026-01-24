@@ -117,7 +117,7 @@ class LeaveApiController extends Controller
     return response()->json(['leaves' => $leaves]);
   }
 
- 
+
   public function userLeaves(Request $request)
   {
 
@@ -286,7 +286,7 @@ class LeaveApiController extends Controller
     $documentName = null;
     if ($request->hasFile('document')) {
       $documentName = time() . '.' . $request->file('document')->extension();
-      $request->file('document')->storeAs('leave/documents', $documentName, 'public');
+      $request->file('document')->storeAs('leave/documents', $documentName, 'local');
       Log::info('Document uploaded', ['document' => $documentName]);
     }
 
@@ -328,7 +328,7 @@ class LeaveApiController extends Controller
         Log::error('Failed to save delegated tasks', ['error' => $e->getMessage()]);
       }
     }
-   
+
 
     $leaveType = LeaveType::find($request->leave_type_id);
     if ($leaveType) {
@@ -544,206 +544,205 @@ class LeaveApiController extends Controller
 
 
   public function approveLeave(Request $request, Leave $leave)
-{
-  try {
-    Log::info('Approve Leave Request', [
-      'userId' => $request->input('userId'),
-      'leaveId' => $leave->id,
-      'requestData' => $request->all()
-    ]);
+  {
+    try {
+      Log::info('Approve Leave Request', [
+        'userId' => $request->input('userId'),
+        'leaveId' => $leave->id,
+        'requestData' => $request->all()
+      ]);
 
-    $userId = $request->input('userId');
-    $approver = User::find($userId);
+      $userId = $request->input('userId');
+      $approver = User::find($userId);
 
-    if (!$approver) {
-      return response()->json(['error' => 'Approver not found'], 404);
-    }
+      if (!$approver) {
+        return response()->json(['error' => 'Approver not found'], 404);
+      }
 
-    // Check if this is an intern/assistant outside Kenya
-    $userCountry = strtolower($leave->user->unit->name ?? 'kenya');
-    $userDesignation = strtolower($leave->user->designation->name ?? '');
-    Log::info('Approving leave for user', [
-      'user_country' => $userCountry,
-      'user_designation' => $userDesignation,
-      'user_id' => $leave->user->id
-    ]);
-    $isInternOrAssistantOutsideKenya = in_array($userDesignation, ['intern', 'assistant']) && $userCountry !== 'kenya';
+      // Check if this is an intern/assistant outside Kenya
+      $userCountry = strtolower($leave->user->unit->name ?? 'kenya');
+      $userDesignation = strtolower($leave->user->designation->name ?? '');
+      Log::info('Approving leave for user', [
+        'user_country' => $userCountry,
+        'user_designation' => $userDesignation,
+        'user_id' => $leave->user->id
+      ]);
+      $isInternOrAssistantOutsideKenya = in_array($userDesignation, ['intern', 'assistant']) && $userCountry !== 'kenya';
 
-    Log::info('Leave approval check', [
-      'designation' => $leave->user->designation->name ?? 'unknown',
-      'country' => $leave->user->unit->name ?? 'kenya',
-      'isSpecialCase' => $isInternOrAssistantOutsideKenya
-    ]);
+      Log::info('Leave approval check', [
+        'designation' => $leave->user->designation->name ?? 'unknown',
+        'country' => $leave->user->unit->name ?? 'kenya',
+        'isSpecialCase' => $isInternOrAssistantOutsideKenya
+      ]);
 
-    switch ($leave->status) {
-      case 'Pending':
-        // Only Country Manager (designation_id === 1) or HR can approve initial request
-        if ($approver->designation_id === 1 || ($approver->is_hr === 1 && $approver->department_id === 1)) {
-          if ($isInternOrAssistantOutsideKenya) {
-            // Special case: Set custom status for interns/assistants outside Kenya
-            $leave->status = 'Manager Approval Only';
-            $this->logLeaveAction($leave, 'Manager Approved (Special Case)', $userId);
-            $this->notifyNextApprover($leave, 'HR');
-            Log::info('Applied special approval route for intern/assistant outside Kenya');
+      switch ($leave->status) {
+        case 'Pending':
+          // Only Country Manager (designation_id === 1) or HR can approve initial request
+          if ($approver->designation_id === 1 || ($approver->is_hr === 1 && $approver->department_id === 1)) {
+            if ($isInternOrAssistantOutsideKenya) {
+              // Special case: Set custom status for interns/assistants outside Kenya
+              $leave->status = 'Manager Approval Only';
+              $this->logLeaveAction($leave, 'Manager Approved (Special Case)', $userId);
+              $this->notifyNextApprover($leave, 'HR');
+              Log::info('Applied special approval route for intern/assistant outside Kenya');
+            } else {
+              // Standard flow
+              $leave->status = 'Manager Approved';
+              $this->logLeaveAction($leave, 'Manager Approved', $userId);
+              $this->notifyNextApprover($leave, 'HR');
+            }
           } else {
-            // Standard flow
-            $leave->status = 'Manager Approved';
-            $this->logLeaveAction($leave, 'Manager Approved', $userId);
-            $this->notifyNextApprover($leave, 'HR');
+            return response()->json(['error' => 'Unauthorized - Only Country Manager or HR can approve initial requests'], 403);
           }
-        } else {
-          return response()->json(['error' => 'Unauthorized - Only Country Manager or HR can approve initial requests'], 403);
-        }
-        break;
+          break;
 
-      case 'Manager Approval Only':
-        // Special case: Only HR can approve, then goes directly to final approval (bypasses HOD)
-        if ($approver->is_hr === 1) {
-          $leave->status = 'Approved';
-
-          $this->logLeaveAction($leave, 'Final Approved (HR Only - Special Case)', $userId);
-          $this->notifyEmployee($leave);
-          $this->notifyTaskAssignees($leave);
-          Log::info('Special case approval completed - HOD bypassed for intern/assistant outside Kenya');
-        } else {
-          return response()->json(['error' => 'Unauthorized - Only HR can approve this special case'], 403);
-        }
-        break;
-
-      case 'Manager Approved':
-        // Standard flow: HR approval required
-        if ($approver->is_hr === 1) {
-          $leave->status = 'Hr Approved';
-          $this->logLeaveAction($leave, 'Hr Approved', $userId);
-          $this->notifyNextApprover($leave, 'HOD');
-        } else {
-          return response()->json(['error' => 'Unauthorized - Only HR can approve at this stage'], 403);
-        }
-        break;
-
-      case 'Hr Approved':
-        // Standard flow: HOD approval required
-        if ($approver->is_hod === 1) {
-          // Verify HOD has authority over the leave applicant's department
-          $hasAuthority = $approver->hodDepartments()
-            ->where('department_id', $leave->user->department_id)
-            ->exists();
-          
-          if ($hasAuthority) {
+        case 'Manager Approval Only':
+          // Special case: Only HR can approve, then goes directly to final approval (bypasses HOD)
+          if ($approver->is_hr === 1) {
             $leave->status = 'Approved';
-            $this->logLeaveAction($leave, 'Final Approved (Standard Flow)', $userId);
+
+            $this->logLeaveAction($leave, 'Final Approved (HR Only - Special Case)', $userId);
             $this->notifyEmployee($leave);
             $this->notifyTaskAssignees($leave);
-            Log::info("HOD approval completed for Department ID: {$leave->user->department_id}");
+            Log::info('Special case approval completed - HOD bypassed for intern/assistant outside Kenya');
           } else {
-            return response()->json(['error' => 'Unauthorized - HOD does not have authority over this department'], 403);
+            return response()->json(['error' => 'Unauthorized - Only HR can approve this special case'], 403);
           }
-        } else {
-          return response()->json(['error' => 'Unauthorized - Only HOD can approve at this stage'], 403);
-        }
-        break;
+          break;
 
-      default:
-        return response()->json(['error' => 'Invalid leave status for approval'], 400);
-    }
+        case 'Manager Approved':
+          // Standard flow: HR approval required
+          if ($approver->is_hr === 1) {
+            $leave->status = 'Hr Approved';
+            $this->logLeaveAction($leave, 'Hr Approved', $userId);
+            $this->notifyNextApprover($leave, 'HOD');
+          } else {
+            return response()->json(['error' => 'Unauthorized - Only HR can approve at this stage'], 403);
+          }
+          break;
 
-    $leave->save();
-    
-    $responseMessage = $isInternOrAssistantOutsideKenya && $leave->status === 'Approved' 
-      ? 'Leave approved successfully (Special approval process - HOD bypassed)'
-      : 'Leave approved successfully';
-    
-    return response()->json(['message' => $responseMessage], 200);
-    
-  } catch (\Exception $e) {
-    Log::error('Error approving leave', ['exception' => $e]);
-    return response()->json(['error' => 'Failed to approve leave'], 500);
-  }
-}
+        case 'Hr Approved':
+          // Standard flow: HOD approval required
+          if ($approver->is_hod === 1) {
+            // Verify HOD has authority over the leave applicant's department
+            $hasAuthority = $approver->hodDepartments()
+              ->where('department_id', $leave->user->department_id)
+              ->exists();
 
-/**
- * Enhanced notification method that handles special cases
- */
-private function notifyNextApprover(Leave $leave, string $role)
-{
-  // Check if this is a special case that should skip HOD
-  $isInternOrAssistantOutsideKenya = in_array(strtolower($leave->user->designation->name ?? ''), ['intern', 'assistant']) &&
-    strtolower($leave->user->office->country ?? 'kenya') !== 'kenya';
+            if ($hasAuthority) {
+              $leave->status = 'Approved';
+              $this->logLeaveAction($leave, 'Final Approved (Standard Flow)', $userId);
+              $this->notifyEmployee($leave);
+              $this->notifyTaskAssignees($leave);
+              Log::info("HOD approval completed for Department ID: {$leave->user->department_id}");
+            } else {
+              return response()->json(['error' => 'Unauthorized - HOD does not have authority over this department'], 403);
+            }
+          } else {
+            return response()->json(['error' => 'Unauthorized - Only HOD can approve at this stage'], 403);
+          }
+          break;
 
-  // Skip HOD notification for special cases
-  if ($role === 'HOD' && $isInternOrAssistantOutsideKenya) {
-    Log::info('Skipping HOD notification for intern/assistant outside Kenya (Leave ID: ' . $leave->id . ')');
-    return;
-  }
+        default:
+          return response()->json(['error' => 'Invalid leave status for approval'], 400);
+      }
 
-  $nextApprovers = match ($role) {
-    'HR' => User::where('is_hr', 1)->get(),
-    'HOD' => User::whereHas('hodDepartments', function ($query) use ($leave) {
-      $query->where('department_id', $leave->user->department_id);
-    })->get(),
-    default => collect(),
-  };
+      $leave->save();
 
-  foreach ($nextApprovers as $approver) {
-    $approver->notify(new LeaveCreatedNotification($leave));
-    
-    if ($role === 'HR') {
-      Log::info("Notified HR (User ID: {$approver->id}) regarding Leave ID: {$leave->id}");
-    } else {
-      Log::info("Notified HOD (User ID: {$approver->id}) for Department ID: {$leave->user->department_id} regarding Leave ID: {$leave->id}");
+      $responseMessage = $isInternOrAssistantOutsideKenya && $leave->status === 'Approved'
+        ? 'Leave approved successfully (Special approval process - HOD bypassed)'
+        : 'Leave approved successfully';
+
+      return response()->json(['message' => $responseMessage], 200);
+    } catch (\Exception $e) {
+      Log::error('Error approving leave', ['exception' => $e]);
+      return response()->json(['error' => 'Failed to approve leave'], 500);
     }
   }
-}
 
-/**
- * Notify the employee upon final approval
- */
-private function notifyEmployee(Leave $leave)
-{
-  $message = "Hello {$leave->user->firstname}, Your leave request from {$leave->from} to {$leave->to} has been approved.";
-  $smsUtil = match ($leave->user->unit_id) {
-    2 => new UGSMSUtil(),
-    3 => new TZSMSUtil(),
-    default => new SMSUtil(),
-  };
+  /**
+   * Enhanced notification method that handles special cases
+   */
+  private function notifyNextApprover(Leave $leave, string $role)
+  {
+    // Check if this is a special case that should skip HOD
+    $isInternOrAssistantOutsideKenya = in_array(strtolower($leave->user->designation->name ?? ''), ['intern', 'assistant']) &&
+      strtolower($leave->user->office->country ?? 'kenya') !== 'kenya';
 
-  try {
-    $smsUtil->sendSMS($leave->phone, $message);
-    $leave->user->notify(new LeaveApprovalNotification($leave));
-
-    Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
-    Log::info("Sent leave approval SMS to employee {$leave->user->firstname} (Phone: {$leave->phone})");
-  } catch (\Exception $e) {
-    Log::error("Failed to send SMS, sending email instead", ['exception' => $e]);
-
-    $leave->user->notify(new LeaveApprovalNotification($leave));
-    Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
-  }
-}
-
-/**
- * Notify task assignees after leave approval
- */
-private function notifyTaskAssignees(Leave $leave)
-{
-  $tasks = $leave->tasks ?? [];
-
-  foreach ($tasks as $task) {
-    if (empty($task['assignee_id'])) {
-      continue;
+    // Skip HOD notification for special cases
+    if ($role === 'HOD' && $isInternOrAssistantOutsideKenya) {
+      Log::info('Skipping HOD notification for intern/assistant outside Kenya (Leave ID: ' . $leave->id . ')');
+      return;
     }
 
-    $assignee = User::find($task['assignee_id']);
+    $nextApprovers = match ($role) {
+      'HR' => User::where('is_hr', 1)->get(),
+      'HOD' => User::whereHas('hodDepartments', function ($query) use ($leave) {
+        $query->where('department_id', $leave->user->department_id);
+      })->get(),
+      default => collect(),
+    };
 
-    if ($assignee) {
-      // $assignee->notify(new TaskAssignedNotification($leave, $task));
-      $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
-      Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
-    } else {
-      Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
+    foreach ($nextApprovers as $approver) {
+      $approver->notify(new LeaveCreatedNotification($leave));
+
+      if ($role === 'HR') {
+        Log::info("Notified HR (User ID: {$approver->id}) regarding Leave ID: {$leave->id}");
+      } else {
+        Log::info("Notified HOD (User ID: {$approver->id}) for Department ID: {$leave->user->department_id} regarding Leave ID: {$leave->id}");
+      }
     }
   }
-}
+
+  /**
+   * Notify the employee upon final approval
+   */
+  private function notifyEmployee(Leave $leave)
+  {
+    $message = "Hello {$leave->user->firstname}, Your leave request from {$leave->from} to {$leave->to} has been approved.";
+    $smsUtil = match ($leave->user->unit_id) {
+      2 => new UGSMSUtil(),
+      3 => new TZSMSUtil(),
+      default => new SMSUtil(),
+    };
+
+    try {
+      $smsUtil->sendSMS($leave->phone, $message);
+      $leave->user->notify(new LeaveApprovalNotification($leave));
+
+      Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
+      Log::info("Sent leave approval SMS to employee {$leave->user->firstname} (Phone: {$leave->phone})");
+    } catch (\Exception $e) {
+      Log::error("Failed to send SMS, sending email instead", ['exception' => $e]);
+
+      $leave->user->notify(new LeaveApprovalNotification($leave));
+      Log::info("Sent leave approval email to employee {$leave->user->firstname} (Email: {$leave->user->email})");
+    }
+  }
+
+  /**
+   * Notify task assignees after leave approval
+   */
+  private function notifyTaskAssignees(Leave $leave)
+  {
+    $tasks = $leave->tasks ?? [];
+
+    foreach ($tasks as $task) {
+      if (empty($task['assignee_id'])) {
+        continue;
+      }
+
+      $assignee = User::find($task['assignee_id']);
+
+      if ($assignee) {
+        // $assignee->notify(new TaskAssignedNotification($leave, $task));
+        $assignee->notify(new TaskAssignedNotification($leave, $task->toArray()));
+        Log::info("Notified task assignee {$assignee->firstname} (User ID: {$assignee->id}) for Leave ID: {$leave->id}, Task: {$task['task_description']}");
+      } else {
+        Log::warning("Task assignee not found for User ID: {$task['assignee_id']} on Leave ID: {$leave->id}");
+      }
+    }
+  }
 
 
 

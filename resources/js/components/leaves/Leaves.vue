@@ -783,7 +783,7 @@ export default {
     },
 
     getDocumentUrl(documentName) {
-      return `/storage/leave/documents/${documentName}`;
+    return `/leave/documents/${documentName}`;
     },
 
     generateExcel() {
