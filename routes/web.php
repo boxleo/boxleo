@@ -44,6 +44,8 @@ use App\Http\Controllers\UserController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CountryClockinController;
+use App\Http\Controllers\BulkLeaveBalanceController;
 
 // Guest routes
 Route::group(['middleware' => ['guest']], function () {
@@ -200,4 +202,21 @@ Route::group(['middleware' => ['auth']], function () {
 // block register route
 Route::middleware(['no-register'])->group(function () {
     Auth::routes();
+
+// Country Clock-in Settings
+Route::prefix('attendances/clockin-settings')->name('clockin-settings.')->group(function () {
+    Route::get('/', [CountryClockinController::class, 'index'])->name('index');
+    Route::post('/', [CountryClockinController::class, 'store'])->name('store');
+    Route::put('/{setting}', [CountryClockinController::class, 'update'])->name('update');
+    Route::post('/{setting}/overrides', [CountryClockinController::class, 'addOverride'])->name('overrides.store');
+    Route::delete('/overrides/{override}', [CountryClockinController::class, 'removeOverride'])->name('overrides.destroy');
+});
+
+// Bulk Leave Balance
+Route::prefix('leaves/bulk-balance')->name('leaves.bulk-balance.')->group(function () {
+    Route::get('/', [BulkLeaveBalanceController::class, 'index'])->name('index');
+    Route::post('/assign', [BulkLeaveBalanceController::class, 'bulkAssign'])->name('assign');
+    Route::post('/preview', [BulkLeaveBalanceController::class, 'preview'])->name('preview');
+    Route::get('/template', [BulkLeaveBalanceController::class, 'downloadTemplate'])->name('template');
+});
 });
